@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — reference-matched mobile feed
+
+- Reordered the mobile feed to match the supplied reference: specialty chips at the top, a compact one-line composer, a dark engineering-events strip, compact post cards, and a fixed four-action bottom navigation.
+- Replaced the duplicated engagement summary/action rows with a single compact like/comment action row that keeps live counts and existing API actions.
+- Simplified mobile post metadata, attachment sizing, and spacing while preserving the desktop feed and the underlying authentication, membership and posting behavior.
+- Added a dedicated “New post” navigation action that scrolls to the composer.
+- Added smoke coverage for the reference-matched order and mobile controls.
+
 ## Unreleased — professional feed refresh
 
 - Rebuilt the feed header, verified-community cue, post composer, specialty filter strip, post cards, comment threads, and empty/loading states for a more deliberate professional-network experience.

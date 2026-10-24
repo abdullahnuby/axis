@@ -44,6 +44,19 @@ await check("feed post controls use real API actions and accessible states", asy
   assert.match(feed, /aria-pressed=\{post\.has_liked\}/);
   assert.match(feed, /aria-expanded=\{openComments === post\.id\}/);
 });
+await check("mobile feed matches compact reference layout", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  const shell = await read("src/components/AppShell.tsx");
+  const styles = await read("src/app/globals.css");
+  assert.match(feed, /feed-mobile-filterbar/);
+  assert.match(feed, /feed-event-strip/);
+  assert.match(feed, /compose-input-row/);
+  assert.match(feed, /post-action-bar-compact/);
+  assert.match(feed, /id="compose"/);
+  assert.match(shell, /href="\/feed#compose"/);
+  assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
+  assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
+});
 await check("membership is encrypted and duplicate checked", async () => {
   const crypto = await read("src/lib/crypto.ts");
   const verify = await read("src/app/api/verification/route.ts");

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEv
 import {
   BadgeCheck,
   Camera,
+  CalendarDays,
   CheckCircle2,
   Flag,
   ImagePlus,
@@ -218,7 +219,15 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
-      <form className="card compose compose-professional" onSubmit={createPost}>
+      <section className="feed-mobile-filterbar" aria-label="تصفية الموجز حسب التخصص">
+        <div className="feed-mobile-filter-label"><SlidersHorizontal size={14}/><span>التخصص</span></div>
+        <div className="feed-filters feed-filters-mobile" role="group" aria-label="تصفية المنشورات حسب التخصص">
+          <button type="button" className={`feed-filter-chip ${!filter ? "active" : ""}`} aria-pressed={!filter} onClick={() => setFilter("")}>الكل</button>
+          {SPECIALTIES.map(item => <button type="button" key={item} className={`feed-filter-chip ${filter === item ? "active" : ""}`} aria-pressed={filter === item} onClick={() => setFilter(filter === item ? "" : item)}>{item}</button>)}
+        </div>
+      </section>
+
+      <form id="compose" className="card compose compose-professional" onSubmit={createPost}>
         <div className="compose-heading">
           <div className="user-line compose-user-line">
             <div className="avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
@@ -229,8 +238,12 @@ export function FeedClient({ user }: { user: SessionUser }) {
           </div>
           <span className="compose-private"><BadgeCheck size={15}/> للمجتمع الموثّق</span>
         </div>
-        <label className="sr-only" htmlFor="feed-post-body">محتوى المنشور</label>
-        <textarea id="feed-post-body" className="field compose-textarea" value={body} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="ما الخبرة أو الفكرة الهندسية التي تريد مشاركتها؟" aria-label="محتوى المنشور" />
+        <div className="compose-input-row">
+          <div className="avatar compose-mobile-avatar" style={{ background: user.avatar_color || "var(--blue)" }} aria-hidden="true">{user.display_name.slice(0, 1)}</div>
+          <label className="sr-only" htmlFor="feed-post-body">محتوى المنشور</label>
+          <textarea id="feed-post-body" className="field compose-textarea" value={body} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="شارك سؤالًا أو فكرة هندسية…" aria-label="محتوى المنشور" />
+          <label className="compose-quick-image" htmlFor="post-image" aria-label="إضافة صورة للمنشور" title="إضافة صورة"><ImagePlus size={19}/></label>
+        </div>
 
         {image && <div className="compose-attachment">
           {imagePreview ? <img src={imagePreview} alt="معاينة الصورة المرفقة"/> : <ImagePlus size={20}/>} 
@@ -251,10 +264,19 @@ export function FeedClient({ user }: { user: SessionUser }) {
           </div>
           <div className="compose-submit-row">
             <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("ar-EG")} / ٥٠٠٠</span>
-            <button type="submit" className="btn btn-primary compose-publish" disabled={busy || (!body.trim() && !image)}><Send size={16}/>{busy ? "جارٍ النشر…" : "نشر المنشور"}</button>
+            <button type="submit" className="btn btn-primary compose-publish" disabled={busy || (!body.trim() && !image)}><Send size={15}/><span>{busy ? "جارٍ النشر…" : "نشر"}</span></button>
           </div>
         </div>
       </form>
+
+      <div className="feed-event-strip" aria-label="أهم الأحداث الهندسية">
+        <span className="feed-event-strip-label"><CalendarDays size={13}/> أهم الأحداث</span>
+        <span className="feed-event-strip-divider" aria-hidden="true"/>
+        {events[0]?.event_url
+          ? <a href={events[0].event_url} target="_blank" rel="noreferrer">{events[0].title}</a>
+          : <span className="feed-event-strip-title">{events[0]?.title || "تابع الفعاليات والملتقيات الهندسية"}</span>}
+        {events[0]?.starts_at && <time dateTime={events[0].starts_at}>{new Date(events[0].starts_at).toLocaleDateString("ar-EG", { day: "numeric", month: "short" })}</time>}
+      </div>
 
       <section className="feed-stream" aria-label="منشورات المهندسين">
         <div className="feed-stream-header">
@@ -308,13 +330,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
             {post.body && <p className="post-body post-professional-body">{post.body}</p>}
             {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt={`صورة مرفقة بمنشور ${post.display_name}`} loading="lazy"/></a>}
 
-            <div className="post-engagement-summary">
-              <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={12}/></span>{post.like_count.toLocaleString("ar-EG")} إعجاب</span>
-              <button type="button" onClick={() => void toggleComments(post)} className="post-comment-summary">{post.comment_count.toLocaleString("ar-EG")} تعليق</button>
-            </div>
-            <div className="post-action-bar">
-              <button type="button" className={`post-action post-action-professional ${post.has_liked ? "liked" : ""}`} onClick={() => void toggleLike(post)} disabled={busyLikePostId === post.id} aria-pressed={post.has_liked}><ThumbsUp size={18}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span></button>
-              <button type="button" className={`post-action post-action-professional ${openComments === post.id ? "selected" : ""}`} onClick={() => void toggleComments(post)} aria-expanded={openComments === post.id}><MessageCircle size={18}/><span>التعليقات</span></button>
+            <div className="post-action-bar post-action-bar-compact">
+              <button type="button" className={`post-action post-action-professional ${post.has_liked ? "liked" : ""}`} onClick={() => void toggleLike(post)} disabled={busyLikePostId === post.id} aria-pressed={post.has_liked}>
+                <ThumbsUp size={15}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span><b>{post.like_count.toLocaleString("ar-EG")}</b>
+              </button>
+              <button type="button" className={`post-action post-action-professional ${openComments === post.id ? "selected" : ""}`} onClick={() => void toggleComments(post)} aria-expanded={openComments === post.id}>
+                <MessageCircle size={15}/><span>تعليق</span><b>{post.comment_count.toLocaleString("ar-EG")}</b>
+              </button>
             </div>
 
             {reportingPostId === post.id && <div className="post-report-panel">

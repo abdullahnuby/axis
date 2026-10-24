@@ -23,7 +23,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
         <button type="button" className="icon-btn mobile-search-toggle" aria-label={searchOpen ? "إغلاق البحث" : "فتح البحث"} onClick={() => setSearchOpen(open => !open)}>
           {searchOpen ? <X size={18}/> : <Search size={18}/>}
         </button>
-        <Link className="icon-btn" aria-label="الإشعارات" href="/notifications"><Bell size={18}/></Link>
+        <Link className="icon-btn header-notification" aria-label="الإشعارات" href="/notifications"><Bell size={18}/></Link>
         <Link href="/profile" className="user-name header-profile" style={{ paddingInline: 4 }} aria-label="ملفي المهني">
           <span className="avatar sm">{user.display_name.slice(0,1)}</span><span className="desktop-only">{user.display_name}</span>
         </Link>

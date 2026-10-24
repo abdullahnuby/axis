@@ -65,3 +65,28 @@ aa84ab36e787661f05130dc211e8ff998e36024bdc0e6b92f0e5e00ebbbf3ac5  public/icons/a
 e6d3fcccb9204404d34f229c21159dbf890d835e74a6b9ee7f39246b257e4d2d  src/lib/types.ts
 3c5a216aff1e7630ebfa65ea5274a4ec968727454c5e93d68e617f31be6c8821  scripts/smoke-check.mjs
 ```
+
+
+## Latest task handoff — reference-matched mobile feed (2026-10-25)
+
+### Goal
+Match the user's supplied mobile feed reference instead of applying a generic larger card layout.
+
+### Changes
+- `src/components/FeedClient.tsx`: put a mobile-only specialty strip before the composer; compact composer row with avatar, short placeholder, image action, and a concise publish action; added a dark engineering-events ribbon; consolidated post engagement actions into one row with live like/comment counts.
+- `src/components/AppShell.tsx`: replaced the mobile bottom bar with Home, New post, Notifications, and Profile; New post targets `/feed#compose`.
+- `src/components/AppHeader.tsx`: marked the notification control for the small unread-style accent dot while preserving its existing route.
+- `src/app/globals.css`: added final mobile-only rules to hide the large intro on small screens, show filters before composing, reduce post/card typography and spacing, crop post media responsively, and keep the fixed bottom navigation compact.
+- `scripts/smoke-check.mjs`: added a check for the target mobile composition, event strip, compact actions, and compose shortcut.
+- `CHANGELOG.md`: recorded the change.
+
+### Validation
+- `node scripts/smoke-check.mjs`: passed (11 checks).
+- `node scripts/pwa-check.mjs`: passed (8 checks).
+- A full `tsc --noEmit` attempt is blocked because dependencies are not installed in this runtime (`next`, `react`, `lucide-react`, `pg`, and Node type declarations are missing). This is an environment/dependency blocker, not a passing type check.
+- A production Next.js build was not verified because the dependency install previously timed out.
+- No database schema, auth/session logic, or application API contract was intentionally changed in this task.
+- No deployment was performed; the live Vercel site is unchanged.
+
+### Next step
+Install dependencies in a connected environment, run `npm run typecheck`, `npm run build`, then deploy and visually test the feed at 320–430 CSS-pixel widths and in PWA standalone display mode.

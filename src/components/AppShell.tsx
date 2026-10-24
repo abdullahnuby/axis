@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, Home, Settings, UserRound, Bell, SlidersHorizontal, ShieldCheck, BriefcaseBusiness } from "lucide-react";
+import { CalendarDays, Home, Settings, UserRound, Bell, SlidersHorizontal, ShieldCheck, BriefcaseBusiness, Plus } from "lucide-react";
 import type { SessionUser, EngineeringEvent } from "@/lib/types";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -27,6 +27,6 @@ export function AppShell({ user, children, events = [], active = "" }: { user: S
       <div className="card event-card"><div className="between"><h2 className="section-title">تصفية هندسية</h2><SlidersHorizontal size={17} className="muted"/></div><p className="small muted" style={{ margin: 0 }}>اختر تخصصًا من الفلاتر في الموجز لعرض المنشورات الأقرب لاهتماماتك.</p><div className="row"><BriefcaseBusiness size={16}/><span className="small">{user.specialty || "حدّد تخصصك من ملفك"}</span></div></div>
     </aside>
   </div>
-  <nav className="mobile-bottom" aria-label="التنقل"><Link href="/feed" className={active === "/feed" ? "active" : ""}><Home size={19}/><span>الرئيسية</span></Link><Link href="/profile" className={active === "/profile" ? "active" : ""}><UserRound size={19}/><span>ملفي</span></Link><Link href="/notifications" className={active === "/notifications" ? "active" : ""}><Bell size={19}/><span>الإشعارات</span></Link><Link href="/settings" className={active === "/settings" ? "active" : ""}><Settings size={19}/><span>الإعدادات</span></Link></nav>
+  <nav className="mobile-bottom" aria-label="التنقل الرئيسي"><Link href="/feed" className={active === "/feed" ? "active" : ""}><Home size={19}/><span>الرئيسية</span></Link><Link href="/feed#compose" className="mobile-compose-link"><Plus size={20}/><span>منشور</span></Link><Link href="/notifications" className={active === "/notifications" ? "active" : ""}><Bell size={19}/><span>إشعارات</span></Link><Link href="/profile" className={active === "/profile" ? "active" : ""}><UserRound size={19}/><span>حسابي</span></Link></nav>
   </div>;
 }
