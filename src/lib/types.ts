@@ -26,6 +26,7 @@ export interface FeedPost {
   author_id: string;
   username: string;
   display_name: string;
+  author_role?: UserRole;
   seniority_code: SeniorityCode;
   job_title: string | null;
   specialty: string | null;
@@ -46,6 +47,7 @@ export interface FeedComment {
   author_id: string;
   display_name: string;
   username: string;
+  author_role?: UserRole;
   seniority_code: SeniorityCode;
   verified_badges: string[];
   body: string;

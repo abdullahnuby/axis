@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "AXIS — مجتمع المهندسين",
+  "short_name": "AXIS",
+  "description": "مجتمع مهني مغلق للمهندسين، يفتح بعد مراجعة العضوية يدويًا.",
+  "lang": "ar-EG",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#F3F4F1",
+  "theme_color": "#0E1A2B",
+  "categories": ["social", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "الموجز", "short_name": "الموجز", "url": "/feed", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "ملفي المهني", "short_name": "ملفي", "url": "/profile", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

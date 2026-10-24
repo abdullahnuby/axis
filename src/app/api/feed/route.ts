@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const { user, response } = await getApiUser({ verified: true }); if (response) return response;
   const url = new URL(request.url); const specialty = cleanText(url.searchParams.get("specialty"), 80); const q = cleanText(url.searchParams.get("q"), 140);
   try {
-    const result = await query(`SELECT p.id,p.author_id,u.username,u.display_name,u.seniority_code,u.job_title,u.specialty AS profile_specialty,
+    const result = await query(`SELECT p.id,p.author_id,u.username,u.display_name,u.role AS author_role,u.seniority_code,u.job_title,u.specialty AS profile_specialty,
       u.verified_badges,u.avatar_color,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,
       (SELECT count(*)::int FROM post_likes l WHERE l.post_id=p.id) AS like_count,
       (SELECT count(*)::int FROM comments c WHERE c.post_id=p.id) AS comment_count,

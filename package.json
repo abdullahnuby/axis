@@ -11,7 +11,8 @@
     "admin:create": "node scripts/create-admin.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/smoke-check.mjs",
-    "secrets:generate": "node scripts/generate-secrets.mjs"
+    "secrets:generate": "node scripts/generate-secrets.mjs",
+    "pwa:check": "node scripts/pwa-check.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
