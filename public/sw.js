@@ -3,9 +3,11 @@
  * Only versioned Next.js static assets and public app icons may be cached.
  */
 const CACHE_PREFIX = "axis-public-static-";
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
 const PRECACHE_URLS = [
   "/offline.html",
+  "/axis-mark.svg",
+  "/axis-logo.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/apple-touch-icon.png"
@@ -35,7 +37,7 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin") || url.pathname.startsWith("/login") || url.pathname.startsWith("/register") || url.pathname.startsWith("/verification") || url.pathname.startsWith("/profile") || url.pathname.startsWith("/feed") || url.pathname.startsWith("/settings") || url.pathname.startsWith("/notifications")) return;
 
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname === "/axis-mark.svg" || url.pathname === "/axis-logo.svg") {
     event.respondWith(
       caches.open(CACHE_NAME).then(async cache => {
         const cached = await cache.match(request);

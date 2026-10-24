@@ -48,3 +48,14 @@
 - Added post sharing through Web Share on supported devices, clipboard fallback elsewhere, and a direct `?post=...#post-...` link that retrieves the requested post instead of assuming it is among the newest 50.
 - Added a per-comment reply composer, like count and state, child replies, and deletion of a comment with its descendants for permitted users. Corrected a duplicate comment-count increment.
 - Expanded desktop feed layout and comment-action styling while preserving mobile feed layout.
+
+
+## 2026-10-25 — approved AXIS logo and visual identity rollout
+
+- Rebuilt the supplied reference as clean vector assets instead of embedding the design-board image: a blue engineering-A/orbital symbol, cyan orbit, AXIS wordmark, and the descriptor `SOCIAL MEDIA PLATFORM`.
+- Added primary light and dark lockups (`public/axis-logo.svg`, `public/axis-logo-dark.svg`) and a symbol-only SVG (`public/axis-mark.svg`).
+- Replaced the prior compass/gold symbol in React with the same vector mark and generated PWA/app icons from a dedicated vector tile.
+- Applied `#007BFF` blue, `#00C4CC` cyan, and deep navy tokens across the interface; state colors remain semantic for success and error states.
+- Applied context-aware identity: full lockup in the landing brand area; compact symbol + AXIS in headers/auth/navigation; symbol-only profile-cover watermark; symbol-only app and browser icons.
+- Bumped the public-static service-worker cache version so updated icons are not hidden behind the previous cached assets.
+- Added smoke and PWA checks for logo assets, colors, and contextual logo usage.

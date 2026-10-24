@@ -143,6 +143,33 @@ await check("sensitive documents are limited to admin/reviewer", async () => {
   assert.match(await read("src/app/api/admin/documents/[documentId]/route.ts"), /\["admin", "reviewer"\]/);
   assert.match(await read("src/app/api/admin/verifications/route.ts"), /\["admin", "reviewer"\]/);
 });
+await check("AXIS logo uses the approved blue/cyan mark and full descriptor", async () => {
+  const logo = await read("public/axis-logo.svg");
+  const mark = await read("public/axis-mark.svg");
+  const markComponent = await read("src/components/AxisLogoMark.tsx");
+  assert.match(logo, /AXIS/);
+  assert.match(logo, /SOCIAL MEDIA PLATFORM/);
+  assert.match(logo, /#007BFF/);
+  assert.match(logo, /#00C4CC/);
+  assert.match(mark, /viewBox="0 0 160 160"/);
+  assert.match(markComponent, /linearGradient/);
+});
+await check("logo assets are used contextually, not as a repeated board image", async () => {
+  const brand = await read("src/components/Brand.tsx");
+  const homepage = await read("src/app/page.tsx");
+  const header = await read("src/components/AppHeader.tsx");
+  const profile = await read("src/components/ProfileClient.tsx");
+  const admin = await read("src/components/AdminClient.tsx");
+  const styles = await read("src/app/globals.css");
+  assert.match(brand, /"compact" \| "lockup" \| "mark"/);
+  assert.match(homepage, /Brand variant="lockup" light/);
+  assert.match(header, /<Brand \/>/);
+  assert.match(profile, /AxisLogoMark className="profile-cover-mark"/);
+  assert.match(admin, /<Brand admin light \/>/);
+  assert.match(styles, /--blue:#007BFF/);
+  assert.match(styles, /--teal:#00C4CC/);
+  assert.doesNotMatch(homepage + header + profile + admin, /<img[^>]+axis-logo\.png/);
+});
 await check("secrets stay out of git", async () => {
   const gitignore = await read(".gitignore");
   assert.match(gitignore, /\.env\.\*/);

@@ -73,3 +73,12 @@
 1. نفّذ ملف الترحيل في Neon SQL Editor، أو شغّل `npm run db:migrate` من بيئة آمنة مع `DATABASE_URL_UNPOOLED` لدور مالك قاعدة البيانات.
 2. ادفع الملفات إلى الفرع `main` المتصل بـ Vercel.
 3. راجع `npm run build` في سجلات Vercel، ثم اختبر: مشاركة رابط منشور محدد، إضافة تعليق ورد، الإعجاب بالتعليق/الرد وإلغاء الإعجاب، وحذف تعليق مع ردوده من حساب مسموح.
+
+## Brand rollout — 2026-10-25
+- `node scripts/smoke-check.mjs`: **20 passed**.
+- `node scripts/pwa-check.mjs`: **11 passed**.
+- TypeScript syntax transpile: **63 files, 0 syntax diagnostics**.
+- PostCSS parsing: `src/app/globals.css` passed.
+- SVG rendering: primary light lockup, dark lockup and app icon passed; all app PNGs are correctly sized and opaque.
+- Full typecheck/build: not verified because dependencies are absent in this sandbox.
+- Deployment: not performed.
