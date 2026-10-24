@@ -10,5 +10,9 @@ export async function GET(_request: Request, context: Ctx) {
   const result = await query<{ content: Buffer; content_type: string; original_name: string }>("SELECT content,content_type,original_name FROM verification_documents WHERE id=$1", [documentId]);
   const document = result.rows[0]; if (!document) return jsonError("المستند غير موجود.", 404);
   const filename = document.original_name.replace(/[\r\n"\\]/g, "_");
-  return new NextResponse(document.content, { headers: { "Content-Type": document.content_type, "Content-Disposition": `inline; filename="${filename}"`, "Cache-Control": "no-store, private", "X-Content-Type-Options": "nosniff" } });
+  // Copy the Node Buffer into a fresh Uint8Array backed by an ArrayBuffer.
+  // This satisfies the Web BodyInit types used by NextResponse across Node typings.
+  const body = new Uint8Array(document.content.byteLength);
+  body.set(document.content);
+  return new NextResponse(body.buffer, { headers: { "Content-Type": document.content_type, "Content-Disposition": `inline; filename="${filename}"`, "Cache-Control": "no-store, private", "X-Content-Type-Options": "nosniff" } });
 }

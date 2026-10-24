@@ -31,3 +31,11 @@
 5. تنفيذ اختبارات فعلية على التسجيل، إرسال طلب التوثيق، مشاهدة المستندات بصلاحيات الإدارة فقط، الموافقة، ثم التأكد أن الحساب الموثّق وحده يصل إلى الموجز.
 
 هذه نسخة MVP قابلة للتطوير، وليست شهادة مراجعة أمنية أو تأكيدًا بأن النشر الإنتاجي قد اكتمل.
+
+
+## متابعة إصلاح سجل Vercel — 2026-10-24
+
+- ظهر فشل TypeScript في `src/app/api/admin/documents/[documentId]/route.ts` لأن `Buffer<ArrayBufferLike>` لا يطابق نوع `BodyInit` في `NextResponse`.
+- تم إصلاح الاستجابة بنسخ المحتوى إلى `Uint8Array` جديدة ثم تمرير `body.buffer` (من نوع `ArrayBuffer`) إلى `NextResponse`، مع الإبقاء على `Cache-Control: no-store, private` و`X-Content-Type-Options: nosniff`.
+- أُعيد تشغيل `node scripts/smoke-check.mjs`: نجحت الفحوصات الثمانية.
+- لم أتمكن من تشغيل `npm run build` محليًا لأن `npm install` انتهى بمهلة اتصال أثناء تنزيل الحزم. يلزم دفع التعديل إلى GitHub ثم التأكد من نتيجة بناء Vercel.
