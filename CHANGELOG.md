@@ -39,3 +39,12 @@
 - Updated the existing `/profile` screen to follow the reference hierarchy: top bar, profile cover card, inline verified badge, real profile posts, biography, and approved credentials.
 - Aligned the existing `/admin` review tab with the reference wording and its responsive two-column request/review workspace; audit history stays inside the same admin page and uses a role-protected API endpoint.
 - No new user-facing page routes were added for the profile/admin redesign.
+
+
+## 2026-10-25 — feed social interactions and build fix
+- Fixed the `ProfileClient.tsx` TypeScript error from calling `Map.has` with a general string by typing the badge-label lookup as `Map<string, string>`.
+- Added database-backed reply threading with `parent_comment_id`, and a `comment_likes` table with a unique (comment, user) key. Existing comments are preserved by idempotent schema upgrades.
+- Added API support for threaded comments and toggle-like actions on comments/replies.
+- Added post sharing through Web Share on supported devices, clipboard fallback elsewhere, and a direct `?post=...#post-...` link that retrieves the requested post instead of assuming it is among the newest 50.
+- Added a per-comment reply composer, like count and state, child replies, and deletion of a comment with its descendants for permitted users. Corrected a duplicate comment-count increment.
+- Expanded desktop feed layout and comment-action styling while preserving mobile feed layout.

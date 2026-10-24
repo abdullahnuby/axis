@@ -28,7 +28,7 @@ const levelLabels: Record<string, string> = {
   SNR: "مهندس أقدم",
   EXP: "خبير هندسي",
 };
-const badgeLabels = new Map(BADGE_OPTIONS.map((badge) => [badge.code, badge.label]));
+const badgeLabels = new Map<string, string>(BADGE_OPTIONS.map((badge) => [badge.code, badge.label] as const));
 const levelDescriptions = new Map(GLOSSARY.map((item) => [item.code, item.description]));
 
 function formatDate(value: string) {

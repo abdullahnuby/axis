@@ -7,7 +7,11 @@ export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const { user, response } = await getApiUser({ verified: true }); if (response) return response;
-  const url = new URL(request.url); const specialty = cleanText(url.searchParams.get("specialty"), 80); const q = cleanText(url.searchParams.get("q"), 140);
+  const url = new URL(request.url);
+  const specialty = cleanText(url.searchParams.get("specialty"), 80);
+  const q = cleanText(url.searchParams.get("q"), 140);
+  const sharedPostId = cleanText(url.searchParams.get("post"), 36);
+  if (sharedPostId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sharedPostId)) return jsonError("رابط المنشور غير صالح.", 400);
   try {
     const result = await query(`SELECT p.id,p.author_id,u.username,u.display_name,u.role AS author_role,u.seniority_code,u.job_title,u.specialty AS profile_specialty,
       u.verified_badges,u.avatar_color,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,
@@ -18,7 +22,8 @@ export async function GET(request: Request) {
       WHERE u.verification_status='verified' AND u.account_status='active'
         AND ($2 = '' OR p.specialty=$2 OR (p.specialty IS NULL AND u.specialty=$2))
         AND ($3 = '' OR p.body ILIKE '%'||$3||'%' OR u.display_name ILIKE '%'||$3||'%' OR u.username ILIKE '%'||$3||'%')
-      ORDER BY p.created_at DESC LIMIT 50`, [user!.id, specialty, q]);
+        AND ($4::uuid IS NULL OR p.id=$4::uuid)
+      ORDER BY p.created_at DESC LIMIT 50`, [user!.id, specialty, q, sharedPostId || null]);
     const posts = result.rows.map((row: Record<string, unknown>) => ({ ...row, specialty: row.specialty || row.profile_specialty, profile_specialty: undefined }));
     return NextResponse.json({ posts });
   } catch (error) { console.error("AXIS feed error", (error as { code?: string })?.code || "database_error"); return jsonError("تعذر تحميل الموجز.", 500); }

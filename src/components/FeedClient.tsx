@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
   BadgeCheck,
   Camera,
@@ -8,6 +8,9 @@ import {
   CheckCircle2,
   Flag,
   ImagePlus,
+  Heart,
+  CornerDownLeft,
+  Share2,
   MessageCircle,
   MoreHorizontal,
   RefreshCw,
@@ -67,10 +70,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [commentBusy, setCommentBusy] = useState(false);
   const [busyLikePostId, setBusyLikePostId] = useState<string | null>(null);
+  const [busyLikeCommentId, setBusyLikeCommentId] = useState<string | null>(null);
+  const [replyTargets, setReplyTargets] = useState<Record<string, FeedComment | null>>({});
   const [openMenuPost, setOpenMenuPost] = useState<string | null>(null);
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
   const q = searchParams.get("q") || "";
+  const sharedPostId = searchParams.get("post") || "";
   const [filter, setFilter] = useState(searchParams.get("specialty") || "");
 
   useEffect(() => {
@@ -87,6 +93,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (filter) params.set("specialty", filter);
+    if (sharedPostId) params.set("post", sharedPostId);
     try {
       const [feedResponse, eventResponse] = await Promise.all([
         fetch(`/api/feed?${params.toString()}`, { cache: "no-store" }),
@@ -106,9 +113,15 @@ export function FeedClient({ user }: { user: SessionUser }) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [q, filter]);
+  }, [q, filter, sharedPostId]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    if (!isLoading && sharedPostId) {
+      document.getElementById(`post-${sharedPostId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isLoading, posts, sharedPostId]);
 
   async function createPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -169,17 +182,84 @@ export function FeedClient({ user }: { user: SessionUser }) {
   async function addComment(postId: string, event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     const draft = commentDrafts[postId]?.trim();
+    const replyTarget = replyTargets[postId] || null;
     if (!draft || commentBusy) return;
     setCommentBusy(true); setError("");
     try {
-      const response = await fetch(`/api/posts/${postId}/comments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: draft }) });
+      const response = await fetch(`/api/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: draft, parentCommentId: replyTarget?.id || null }),
+      });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "تعذر إضافة التعليق.");
       setComments(old => ({ ...old, [postId]: [...(old[postId] || []), payload.comment] }));
       setCommentDrafts(old => ({ ...old, [postId]: "" }));
+      setReplyTargets(old => ({ ...old, [postId]: null }));
       setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: post.comment_count + 1 } : post));
     } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر إضافة التعليق."); }
     finally { setCommentBusy(false); }
+  }
+
+  async function toggleLikeComment(postId: string, comment: FeedComment) {
+    if (busyLikeCommentId) return;
+    setBusyLikeCommentId(comment.id);
+    try {
+      const response = await fetch(`/api/comments/${comment.id}/like`, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر تسجيل الإعجاب بالتعليق.");
+      setComments(old => ({
+        ...old,
+        [postId]: (old[postId] || []).map(item => item.id === comment.id
+          ? { ...item, has_liked: Boolean(payload.hasLiked ?? payload.liked), like_count: Number(payload.likeCount) || 0 }
+          : item),
+      }));
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر تسجيل الإعجاب بالتعليق."); }
+    finally { setBusyLikeCommentId(null); }
+  }
+
+  async function sharePost(post: FeedPost) {
+    const shareUrl = new URL(`/feed?post=${encodeURIComponent(post.id)}#post-${post.id}`, window.location.origin).toString();
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: `AXIS · ${post.display_name}`, text: post.body.slice(0, 180) || "منشور هندسي على AXIS", url: shareUrl });
+        setSuccess("تم فتح خيارات المشاركة.");
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        setSuccess("تم نسخ رابط المنشور. شاركه مع زملائك.");
+        return;
+      }
+      window.prompt("انسخ رابط المنشور لمشاركته:", shareUrl);
+    } catch (caught) {
+      if (caught instanceof Error && caught.name === "AbortError") return;
+      window.prompt("انسخ رابط المنشور لمشاركته:", shareUrl);
+    }
+  }
+
+  async function deleteComment(postId: string, comment: FeedComment, thread: FeedComment[]) {
+    if (comment.author_id !== user.id && user.role !== "admin") return;
+    if (!window.confirm("حذف التعليق وكل الردود التابعة له؟")) return;
+    try {
+      const response = await fetch(`/api/comments/${comment.id}`, { method: "DELETE" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر حذف التعليق.");
+      const removedIds = new Set<string>([comment.id]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const item of thread) {
+          if (item.parent_comment_id && removedIds.has(item.parent_comment_id) && !removedIds.has(item.id)) {
+            removedIds.add(item.id);
+            changed = true;
+          }
+        }
+      }
+      setComments(old => ({ ...old, [postId]: (old[postId] || []).filter(item => !removedIds.has(item.id)) }));
+      setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: Math.max(0, post.comment_count - removedIds.size) } : post));
+      setSuccess("تم حذف التعليق والردود التابعة له.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر حذف التعليق."); }
   }
 
   async function reportPost(postId: string) {
@@ -204,6 +284,37 @@ export function FeedClient({ user }: { user: SessionUser }) {
       setOpenMenuPost(null);
       setSuccess("تم حذف المنشور.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر حذف المنشور."); }
+  }
+
+  function renderComment(postId: string, comment: FeedComment, thread: FeedComment[], depth = 0): ReactNode {
+    const replies = thread.filter(item => item.parent_comment_id === comment.id);
+    return (
+      <div className={`comment-thread ${depth > 0 ? "comment-thread-reply" : ""}`} key={comment.id}>
+        <div className="comment comment-professional">
+          <div className="avatar sm comment-avatar" style={{ background: comment.avatar_color || "var(--blue)" }}>{comment.display_name.slice(0, 1)}</div>
+          <div className="comment-content">
+            <div className="comment-body comment-bubble">
+              <div className="comment-author-line">
+                <strong>{comment.display_name}</strong>
+                {comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}
+                <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG")}>{formatPostTime(comment.created_at)}</time>
+              </div>
+              <p>{comment.body}</p>
+            </div>
+            <div className="comment-action-row">
+              <button type="button" className={`comment-action ${comment.has_liked ? "liked" : ""}`} onClick={() => void toggleLikeComment(postId, comment)} disabled={busyLikeCommentId === comment.id} aria-pressed={comment.has_liked}>
+                <Heart size={13} fill={comment.has_liked ? "currentColor" : "none"}/><span>{comment.has_liked ? "أعجبك" : "إعجاب"}</span>{comment.like_count > 0 ? <b>{comment.like_count.toLocaleString("ar-EG")}</b> : null}
+              </button>
+              <button type="button" className="comment-action" onClick={() => setReplyTargets(old => ({ ...old, [postId]: comment }))}>
+                <CornerDownLeft size={13}/><span>رد</span>
+              </button>
+              {(comment.author_id === user.id || user.role === "admin") && <button type="button" className="comment-action comment-delete-action" onClick={() => void deleteComment(postId, comment, thread)}><Trash2 size={13}/><span>حذف</span></button>}
+            </div>
+          </div>
+        </div>
+        {replies.length > 0 && <div className="comment-replies">{replies.map(reply => renderComment(postId, reply, thread, depth + 1))}</div>}
+      </div>
+    );
   }
 
   return (
@@ -299,7 +410,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
             {(q || filter) && <button className="btn btn-primary" type="button" onClick={() => { setFilter(""); if (q) window.location.href = "/feed"; }}>عرض جميع المنشورات</button>}
           </div>
         ) : posts.map(post => (
-          <article className="card post post-professional" key={post.id}>
+          <article className="card post post-professional" id={`post-${post.id}`} key={post.id} tabIndex={-1}>
             <header className="post-header">
               <div className="user-line post-author-line">
                 <div className="avatar post-avatar" style={{ background: post.avatar_color || "var(--blue)" }}>{post.display_name.slice(0, 1)}</div>
@@ -330,12 +441,20 @@ export function FeedClient({ user }: { user: SessionUser }) {
             {post.body && <p className="post-body post-professional-body">{post.body}</p>}
             {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt={`صورة مرفقة بمنشور ${post.display_name}`} loading="lazy"/></a>}
 
+            {(post.like_count > 0 || post.comment_count > 0) && <div className="post-engagement-summary">
+              <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={11}/></span>{post.like_count.toLocaleString("ar-EG")} إعجاب</span>
+              <button type="button" className="post-comment-summary" onClick={() => void toggleComments(post)}>{post.comment_count.toLocaleString("ar-EG")} تعليق ورد</button>
+            </div>}
+
             <div className="post-action-bar post-action-bar-compact">
               <button type="button" className={`post-action post-action-professional ${post.has_liked ? "liked" : ""}`} onClick={() => void toggleLike(post)} disabled={busyLikePostId === post.id} aria-pressed={post.has_liked}>
                 <ThumbsUp size={15}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span><b>{post.like_count.toLocaleString("ar-EG")}</b>
               </button>
               <button type="button" className={`post-action post-action-professional ${openComments === post.id ? "selected" : ""}`} onClick={() => void toggleComments(post)} aria-expanded={openComments === post.id}>
                 <MessageCircle size={15}/><span>تعليق</span><b>{post.comment_count.toLocaleString("ar-EG")}</b>
+              </button>
+              <button type="button" className="post-action post-action-professional post-share-action" onClick={() => void sharePost(post)}>
+                <Share2 size={15}/><span>مشاركة</span>
               </button>
             </div>
 
@@ -347,18 +466,14 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </div>}
 
             {openComments === post.id && <section className="comments comments-professional" aria-label="تعليقات المنشور">
-              <div className="comments-heading"><div><h3>النقاش</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG")} تعليق</span></div></div>
-              {!comments[post.id] ? <div className="comments-loading">جارٍ تحميل التعليقات…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لا توجد تعليقات بعد. ابدأ نقاشًا مهنيًا باحترام.</p> : comments[post.id].map(comment => (
-                <div className="comment comment-professional" key={comment.id}>
-                  <div className="avatar sm comment-avatar">{comment.display_name.slice(0, 1)}</div>
-                  <div className="comment-body comment-bubble"><div className="comment-author-line"><strong>{comment.display_name}</strong>{comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}<time title={new Date(comment.created_at).toLocaleString("ar-EG")}>{formatPostTime(comment.created_at)}</time></div><p>{comment.body}</p></div>
-                </div>
-              ))}
+              <div className="comments-heading"><div><h3>النقاش</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG")} تعليق ورد</span></div></div>
+              {!comments[post.id] ? <div className="comments-loading">جارٍ تحميل النقاش…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لا توجد تعليقات بعد. ابدأ نقاشًا مهنيًا باحترام.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
+              {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء الرد <X size={13}/></button></div>}
               <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>
                 <div className="avatar sm comment-current-avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
-                <label className="sr-only" htmlFor={`comment-${post.id}`}>اكتب تعليقًا</label>
-                <input id={`comment-${post.id}`} className="field" value={commentDrafts[post.id] || ""} onChange={event => setCommentDrafts(old => ({ ...old, [post.id]: event.target.value }))} maxLength={1200} placeholder="أضف تعليقًا مفيدًا…"/>
-                <button type="submit" className="comment-send" disabled={commentBusy || !(commentDrafts[post.id] || "").trim()} aria-label="إرسال التعليق"><Send size={17}/></button>
+                <label className="sr-only" htmlFor={`comment-${post.id}`}>{replyTargets[post.id] ? "اكتب ردًا" : "اكتب تعليقًا"}</label>
+                <input id={`comment-${post.id}`} className="field" value={commentDrafts[post.id] || ""} onChange={event => setCommentDrafts(old => ({ ...old, [post.id]: event.target.value }))} maxLength={1200} placeholder={replyTargets[post.id] ? `الرد على ${replyTargets[post.id]!.display_name}…` : "أضف تعليقًا مفيدًا…"}/>
+                <button type="submit" className="comment-send" disabled={commentBusy || !(commentDrafts[post.id] || "").trim()} aria-label={replyTargets[post.id] ? "إرسال الرد" : "إرسال التعليق"}><Send size={17}/></button>
               </form>
             </section>}
           </article>

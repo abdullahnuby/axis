@@ -83,6 +83,48 @@ await check("mobile feed matches compact reference layout", async () => {
   assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
   assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
 });
+await check("feed sharing opens a selected post through a stable shared link", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  const api = await read("src/app/api/feed/route.ts");
+  assert.match(feed, /navigator\.share/);
+  assert.match(feed, /clipboard\.writeText/);
+  assert.match(feed, /feed\?post=/);
+  assert.match(feed, /id=\{`post-\$\{post\.id\}`\}/);
+  assert.match(api, /sharedPostId/);
+  assert.match(api, /p\.id=\$4::uuid/);
+});
+await check("comment replies and comment likes are database-backed", async () => {
+  const schema = await read("db/schema.sql");
+  const commentsApi = await read("src/app/api/posts/[postId]/comments/route.ts");
+  const likeApi = await read("src/app/api/comments/[commentId]/like/route.ts");
+  const feed = await read("src/components/FeedClient.tsx");
+  const types = await read("src/lib/types.ts");
+  assert.match(schema, /parent_comment_id uuid REFERENCES comments\(id\) ON DELETE CASCADE/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS comment_likes/);
+  assert.match(commentsApi, /parentCommentId/);
+  assert.match(commentsApi, /COUNT\(cl\.user_id\)::int AS like_count/);
+  assert.match(likeApi, /INSERT INTO comment_likes/);
+  assert.match(feed, /toggleLikeComment/);
+  assert.match(feed, /setReplyTargets/);
+  assert.match(feed, /comment-replies/);
+  assert.match(types, /parent_comment_id: string \| null/);
+  assert.match(types, /has_liked: boolean/);
+});
+await check("feed is improved for wide desktop while retaining mobile actions", async () => {
+  const styles = await read("src/app/globals.css");
+  const feed = await read("src/components/FeedClient.tsx");
+  assert.match(styles, /@media\(min-width:1160px\)/);
+  assert.match(styles, /grid-template-columns:220px minmax\(540px,760px\) 280px/);
+  assert.match(styles, /\.comment-replies/);
+  assert.match(styles, /\.post-share-action/);
+  assert.match(feed, /<Share2 size=\{15\}/);
+  assert.match(feed, /post-engagement-summary/);
+});
+await check("profile persisted badge values no longer fail the Map type check", async () => {
+  const profile = await read("src/components/ProfileClient.tsx");
+  assert.match(profile, /new Map<string, string>\(BADGE_OPTIONS\.map/);
+});
+
 await check("membership is encrypted and duplicate checked", async () => {
   const crypto = await read("src/lib/crypto.ts");
   const verify = await read("src/app/api/verification/route.ts");

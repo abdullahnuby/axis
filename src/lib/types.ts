@@ -46,13 +46,17 @@ export interface FeedComment {
   id: string;
   post_id: string;
   author_id: string;
+  parent_comment_id: string | null;
   display_name: string;
   username: string;
   author_role?: UserRole;
+  avatar_color?: string;
   seniority_code: SeniorityCode;
   verified_badges: string[];
   body: string;
   created_at: string;
+  like_count: number;
+  has_liked: boolean;
 }
 
 export interface EngineeringEvent {

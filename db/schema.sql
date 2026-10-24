@@ -97,10 +97,22 @@ CREATE TABLE IF NOT EXISTS comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   post_id uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   author_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  parent_comment_id uuid REFERENCES comments(id) ON DELETE CASCADE,
   body text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 1200),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- Upgrade existing Neon databases without deleting comments.
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_comment_id uuid REFERENCES comments(id) ON DELETE CASCADE;
 CREATE INDEX IF NOT EXISTS comments_post_idx ON comments (post_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS comments_parent_idx ON comments (parent_comment_id, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS comment_likes (
+  comment_id uuid NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (comment_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS comment_likes_user_idx ON comment_likes (user_id);
 
 CREATE TABLE IF NOT EXISTS events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
