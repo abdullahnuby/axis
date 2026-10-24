@@ -1,0 +1,35 @@
+{
+  "name": "axis-engineering-community",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AXIS — private engineering professionals community",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:migrate": "node scripts/migrate.mjs",
+    "admin:create": "node scripts/create-admin.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/smoke-check.mjs",
+    "secrets:generate": "node scripts/generate-secrets.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "next": "15.5.28",
+    "pg": "^8.16.3",
+    "dotenv": "^16.6.1",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.7",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

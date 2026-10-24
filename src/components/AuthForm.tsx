@@ -1,0 +1,43 @@
+"use client";
+import Link from "next/link";
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { LockKeyhole, Mail, UserRound } from "lucide-react";
+import { Brand } from "@/components/Brand";
+import { Toast } from "@/components/Toast";
+
+export function AuthForm({ mode }: { mode: "login" | "register" | "admin" }) {
+  const router = useRouter();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ displayName: "", username: "", email: "", password: "" });
+  const isRegister = mode === "register";
+  const isAdmin = mode === "admin";
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError(""); setLoading(true);
+    try {
+      const endpoint = isAdmin ? "/api/admin/login" : isRegister ? "/api/auth/register" : "/api/auth/login";
+      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذّر إكمال الطلب.");
+      router.push(payload.redirect || (isAdmin ? "/admin" : isRegister ? "/verification" : "/feed"));
+      router.refresh();
+    } catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع."); }
+    finally { setLoading(false); }
+  }
+  return <div className="auth-bg"><div className="narrow"><div className="card auth-card">
+    <div className="between" style={{ marginBottom: 25 }}><Brand/><span className="pill navy">{isAdmin ? "ADMIN" : "ENGINEERS ONLY"}</span></div>
+    <h1 className="auth-title">{isAdmin ? "دخول الإدارة" : isRegister ? "إنشاء حساب AXIS" : "تسجيل الدخول"}</h1>
+    <p className="muted" style={{ marginTop: 0, marginBottom: 22 }}>{isAdmin ? "مسار مستقل للمسؤولين المصرّح لهم فقط." : isRegister ? "أنشئ حسابك ثم أرسل طلب التوثيق اليدوي لفتح المجتمع." : "أهلًا بعودتك إلى مجتمع المهندسين."}</p>
+    <Toast message={error} error />
+    <form className="form-stack" onSubmit={submit}>
+      {isRegister && <><div className="form-row"><label className="label" htmlFor="displayName">اسم الظهور</label><input className="field" id="displayName" value={form.displayName} onChange={e => setForm({...form, displayName:e.target.value})} maxLength={80} required autoComplete="name" placeholder="الاسم الذي سيظهر للمهندسين"/></div><div className="form-row"><label className="label" htmlFor="username">اسم المستخدم</label><input className="field" id="username" value={form.username} onChange={e => setForm({...form, username:e.target.value})} minLength={3} maxLength={24} pattern="[A-Za-z0-9_.-]+" required autoComplete="username" placeholder="مثال: ahmed_civil"/><span className="tiny muted">إنجليزي أو أرقام و . _ - فقط</span></div></>}
+      <div className="form-row"><label className="label" htmlFor="email">البريد الإلكتروني</label><div style={{ position: "relative" }}><Mail className="muted" size={17} style={{ position: "absolute", top: 14, right: 13 }}/><input className="field" style={{ paddingRight: 40 }} id="email" type="email" value={form.email} onChange={e => setForm({...form,email:e.target.value})} required autoComplete="email" placeholder="you@example.com"/></div></div>
+      <div className="form-row"><label className="label" htmlFor="password">كلمة المرور</label><div style={{ position: "relative" }}><LockKeyhole className="muted" size={17} style={{ position: "absolute", top: 14, right: 13 }}/><input className="field" style={{ paddingRight: 40 }} id="password" type="password" value={form.password} onChange={e => setForm({...form,password:e.target.value})} required minLength={10} autoComplete={isRegister ? "new-password" : "current-password"} placeholder="10 أحرف على الأقل"/></div></div>
+      <button className="btn btn-primary" disabled={loading} type="submit" style={{ width: "100%", marginTop: 5 }}>{loading ? "جارٍ التنفيذ…" : isAdmin ? "دخول لوحة الإدارة" : isRegister ? "إنشاء الحساب" : "دخول المجتمع"}</button>
+    </form>
+    {!isAdmin && <div className="small muted" style={{ textAlign: "center", marginTop: 20 }}>{isRegister ? <>عندك حساب بالفعل؟ <Link href="/login" style={{ color: "var(--blue)", fontWeight: 700 }}>سجّل الدخول</Link></> : <>ليس لديك حساب؟ <Link href="/register" style={{ color: "var(--blue)", fontWeight: 700 }}>أنشئ حسابًا</Link></>}</div>}
+    {isAdmin && <div className="small muted" style={{ textAlign: "center", marginTop: 20 }}><Link href="/" style={{ color: "var(--blue)" }}>العودة إلى صفحة AXIS</Link></div>}
+    {isRegister && <div className="alert" style={{ marginTop: 18 }}>إنشاء الحساب لا يفتح المحتوى. ستحتاج إلى إرسال طلب توثيق العضوية وموافقة الإدارة يدويًا.</div>}
+  </div></div></div>;
+}
