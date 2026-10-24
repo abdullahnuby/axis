@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — professional feed refresh
+
+- Rebuilt the feed header, verified-community cue, post composer, specialty filter strip, post cards, comment threads, and empty/loading states for a more deliberate professional-network experience.
+- Added image previews and size validation before upload; removed browser prompt reporting in favor of an inline, accessible report form.
+- Replaced the previously inert post overflow control with a real menu for reporting or deleting the current user's post.
+- Added relative post/comment timestamps, specialty topic labels, verified-member indicators, tap-sized actions, and improved mobile layout rules.
+- Extended static smoke tests to cover feed structure, responsive styles, and real API wiring.
+
 ## Unreleased — mobile-first and PWA foundation
 
 - Added an Arabic RTL web app manifest, theme/viewport metadata, Apple web-app metadata, and purpose-made install icons for Android/iOS.

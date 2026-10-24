@@ -3,6 +3,13 @@
 ## Scope
 This handoff describes changes made to the user-provided AXIS archive. It does not indicate that the modified archive has been deployed to Vercel or that the live site has changed.
 
+## Professional feed refresh
+- Redesigned the feed introduction and composer hierarchy, including compact profile identity, verified-community context, character counter, specialty selection, attachment preview, and upload size validation.
+- Redesigned post cards around author identity, verified status, professional specialty, relative timestamps, media display, engagement counts, and primary like/comment actions.
+- Made the overflow menu functional, replaced `window.prompt` reporting with an inline report form, and added accessible pressed/expanded states.
+- Added loading skeletons, a helpful empty state, network-error messages, and robust error handling around feed, like, comment, reporting, and delete requests.
+- Added feed-specific responsive CSS and static test coverage.
+
 ## Changes
 - PWA manifest at `public/manifest.webmanifest`, including RTL Arabic metadata, standalone display, shortcuts, and theme/background colors.
 - PNG icons for general 192px/512px install purposes, a maskable 512px icon, and an Apple touch icon.
@@ -16,9 +23,9 @@ This handoff describes changes made to the user-provided AXIS archive. It does n
 
 ## Validation performed
 - `npm run pwa:check`: passed (8 checks).
-- `npm test`: passed (8 existing smoke checks) after restoring `.env.example`.
+- `npm test`: passed — 10 static smoke checks, including feed layout and API action wiring.
 - `node --check public/sw.js`, `node --check scripts/pwa-check.mjs`, and `node --check scripts/smoke-check.mjs`: passed.
-- TypeScript/TSX syntax transpilation via the installed global TypeScript compiler: 60/60 files parsed without syntax diagnostics.
+- TypeScript/TSX/JavaScript syntax parsing via the installed global TypeScript parser: 64/64 files passed without syntax diagnostics; `FeedClient.tsx` also passed `transpileModule` syntax validation.
 - `npm install --no-audit --no-fund`: timed out in this environment; no `node_modules` directory was created.
 - `tsc --noEmit`: could not be validated fully because Next.js, React, lucide-react, pg and type packages were unavailable after dependency installation timed out. The compiler output is dominated by missing dependency/type declarations. This is not a successful typecheck.
 - Production `npm run build`: not run successfully because dependencies could not be installed in this environment.
@@ -36,7 +43,7 @@ This handoff describes changes made to the user-provided AXIS archive. It does n
 
 ## Changed and added files
 
-Changed: `package.json`, `README.md`, `src/app/page.tsx`, `src/app/layout.tsx`, `src/app/globals.css`, `src/components/FeedClient.tsx`, `src/components/AdminClient.tsx`, `src/components/SettingsClient.tsx`, `src/components/ProfileClient.tsx`, `src/components/AppHeader.tsx`, `src/lib/types.ts`, `src/app/api/feed/route.ts`, `src/app/api/auth/login/route.ts`, `src/app/api/posts/[postId]/comments/route.ts`.
+Changed: `package.json`, `README.md`, `src/app/page.tsx`, `src/app/layout.tsx`, `src/app/globals.css`, `src/components/FeedClient.tsx`, `src/components/AdminClient.tsx`, `src/components/SettingsClient.tsx`, `src/components/ProfileClient.tsx`, `src/components/AppHeader.tsx`, `src/lib/types.ts`, `src/app/api/feed/route.ts`, `src/app/api/auth/login/route.ts`, `src/app/api/posts/[postId]/comments/route.ts`, `scripts/smoke-check.mjs`.
 
 Added: `.env.example`, `MOBILE_FIRST_HANDOFF.md`, `CHANGELOG.md`, `public/sw.js`, `public/manifest.webmanifest`, `public/offline.html`, `public/icons/icon-192.png`, `public/icons/icon-512.png`, `public/icons/icon-maskable-512.png`, `public/icons/apple-touch-icon.png`, `scripts/pwa-check.mjs`, `src/components/PWAInstallButton.tsx`, `src/components/PWAProvider.tsx`.
 
@@ -44,7 +51,7 @@ Added: `.env.example`, `MOBILE_FIRST_HANDOFF.md`, `CHANGELOG.md`, `public/sw.js`
 
 ```text
 1d590301aeb8a2b7e76c1713fbb93e3233ee64edec38e7a38dd3df1c4adf3973  src/app/layout.tsx
-617af98a81c6a0e7c613d4227b0c2ab1e591b32c06578368dd080fbc5ad2f2f0  src/app/globals.css
+b5c9827e63c04dc26ad7bce29ddbe7d80454fad85d96e2e4a7e90242c0a0a437  src/app/globals.css
 93fee6c69e51f979e28cc5885a4227f65199c443bb9e8be50551688e4b0b3f75  src/components/PWAProvider.tsx
 f8f1ec18096c0db6ab1af9a85f701cc1608d9f3daaf7306dfb4c591c8e732ab2  src/components/PWAInstallButton.tsx
 62fe42077e1d0c983c4bf739f72d55c7bfb9b8e0671127f21521687a8d1b5e58  public/manifest.webmanifest
@@ -54,4 +61,7 @@ a98c2c84047bad1a82e2ee596d10067a6ba47f395b822dde724ac0b87bbde310  public/icons/i
 c16e8b2e24e6114dae7a02b59dcd321732f9177dd1e85e0a3f8cc92272a08a2d  public/icons/icon-maskable-512.png
 aa84ab36e787661f05130dc211e8ff998e36024bdc0e6b92f0e5e00ebbbf3ac5  public/icons/apple-touch-icon.png
 76eadf2df78dc5ef0f94aed6a53d05b396e5468d5a9acb8551f38d07ad327fe4  scripts/pwa-check.mjs
+3d322156ca44540bf374b369ebb777e7d8062ea5341db37d3c54df9d42cd80fb  src/components/FeedClient.tsx
+e6d3fcccb9204404d34f229c21159dbf890d835e74a6b9ee7f39246b257e4d2d  src/lib/types.ts
+3c5a216aff1e7630ebfa65ea5274a4ec968727454c5e93d68e617f31be6c8821  scripts/smoke-check.mjs
 ```

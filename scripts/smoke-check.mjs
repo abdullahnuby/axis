@@ -25,6 +25,25 @@ await check("profile does not repeat a universal verification badge", async () =
 await check("feed API rejects unverified members", async () => {
   assert.match(await read("src/app/api/feed/route.ts"), /getApiUser\(\{ verified: true \}\)/);
 });
+await check("feed has professional post, composer, and mobile filter patterns", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  const styles = await read("src/app/globals.css");
+  assert.match(feed, /compose-professional/);
+  assert.match(feed, /post-professional/);
+  assert.match(feed, /feed-filters/);
+  assert.match(feed, /PostSkeleton/);
+  assert.match(feed, /post-report-panel/);
+  assert.match(styles, /\.feed-page-intro/);
+  assert.match(styles, /\.post-action-professional/);
+  assert.match(styles, /@media\(max-width:760px\)/);
+});
+await check("feed post controls use real API actions and accessible states", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  assert.match(feed, /api\/posts\/\$\{post\.id\}\/like/);
+  assert.match(feed, /api\/posts\/\$\{post\.id\}\/comments/);
+  assert.match(feed, /aria-pressed=\{post\.has_liked\}/);
+  assert.match(feed, /aria-expanded=\{openComments === post\.id\}/);
+});
 await check("membership is encrypted and duplicate checked", async () => {
   const crypto = await read("src/lib/crypto.ts");
   const verify = await read("src/app/api/verification/route.ts");

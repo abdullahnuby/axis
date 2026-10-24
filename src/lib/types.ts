@@ -27,6 +27,7 @@ export interface FeedPost {
   username: string;
   display_name: string;
   author_role?: UserRole;
+  avatar_color?: string;
   seniority_code: SeniorityCode;
   job_title: string | null;
   specialty: string | null;

@@ -1,6 +1,23 @@
 "use client";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { MessageCircle, ThumbsUp, ImagePlus, Send, MoreHorizontal, Flag, Trash2, Search, SlidersHorizontal } from "lucide-react";
+
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  BadgeCheck,
+  Camera,
+  CheckCircle2,
+  Flag,
+  ImagePlus,
+  MessageCircle,
+  MoreHorizontal,
+  RefreshCw,
+  Search,
+  Send,
+  SlidersHorizontal,
+  Sparkles,
+  ThumbsUp,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
@@ -8,87 +25,324 @@ import { Toast } from "@/components/Toast";
 import { SPECIALTIES } from "@/lib/constants";
 import type { EngineeringEvent, FeedComment, FeedPost, SessionUser } from "@/lib/types";
 
+function formatPostTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const elapsed = Math.max(0, Date.now() - date.getTime());
+  if (elapsed < 60_000) return "الآن";
+  if (elapsed < 3_600_000) return `منذ ${Math.floor(elapsed / 60_000)} د`;
+  if (elapsed < 86_400_000) return `منذ ${Math.floor(elapsed / 3_600_000)} س`;
+  if (elapsed < 7 * 86_400_000) return `منذ ${Math.floor(elapsed / 86_400_000)} يوم`;
+  return date.toLocaleDateString("ar-EG", { day: "numeric", month: "short", year: elapsed > 365 * 86_400_000 ? "numeric" : undefined });
+}
+
+function PostSkeleton() {
+  return (
+    <article className="card post-skeleton" aria-label="جارٍ تحميل المنشورات">
+      <div className="skeleton-author"><span className="skeleton-block skeleton-avatar"/><span className="skeleton-author-lines"><i className="skeleton-block"/><i className="skeleton-block"/></span></div>
+      <i className="skeleton-block skeleton-line"/><i className="skeleton-block skeleton-line short"/>
+      <div className="skeleton-actions"><i className="skeleton-block"/><i className="skeleton-block"/></div>
+    </article>
+  );
+}
+
 export function FeedClient({ user }: { user: SessionUser }) {
   const searchParams = useSearchParams();
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const didLoadRef = useRef(false);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [events, setEvents] = useState<EngineeringEvent[]>([]);
   const [body, setBody] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [openComments, setOpenComments] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, FeedComment[]>>({});
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [commentBusy, setCommentBusy] = useState(false);
+  const [busyLikePostId, setBusyLikePostId] = useState<string | null>(null);
+  const [openMenuPost, setOpenMenuPost] = useState<string | null>(null);
+  const [reportingPostId, setReportingPostId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
   const q = searchParams.get("q") || "";
   const [filter, setFilter] = useState(searchParams.get("specialty") || "");
 
+  useEffect(() => {
+    if (!image) { setImagePreview(null); return; }
+    const previewUrl = URL.createObjectURL(image);
+    setImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [image]);
+
   const load = useCallback(async () => {
-    const params = new URLSearchParams(); if (q) params.set("q", q); if (filter) params.set("specialty", filter);
-    const [feedResponse, eventResponse] = await Promise.all([fetch(`/api/feed?${params.toString()}`, { cache: "no-store" }), fetch("/api/events", { cache: "no-store" })]);
-    if (feedResponse.status === 401 || feedResponse.status === 403) { window.location.href = "/verification"; return; }
-    const feedData = await feedResponse.json(); const eventData = await eventResponse.json();
-    if (feedResponse.ok) setPosts(feedData.posts || []); else setError(feedData.error || "تعذر تحميل المنشورات.");
-    if (eventResponse.ok) setEvents(eventData.events || []);
+    if (didLoadRef.current) setIsRefreshing(true);
+    else setIsLoading(true);
+    setError("");
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (filter) params.set("specialty", filter);
+    try {
+      const [feedResponse, eventResponse] = await Promise.all([
+        fetch(`/api/feed?${params.toString()}`, { cache: "no-store" }),
+        fetch("/api/events", { cache: "no-store" }),
+      ]);
+      if (feedResponse.status === 401) { window.location.href = "/login"; return; }
+      if (feedResponse.status === 403) { window.location.href = "/verification"; return; }
+      const feedData = await feedResponse.json();
+      const eventData = eventResponse.ok ? await eventResponse.json() : { events: [] };
+      if (!feedResponse.ok) throw new Error(feedData.error || "تعذر تحميل المنشورات.");
+      setPosts(Array.isArray(feedData.posts) ? feedData.posts : []);
+      setEvents(Array.isArray(eventData.events) ? eventData.events : []);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "تعذر الاتصال بالموجز. حاول مرة أخرى.");
+    } finally {
+      didLoadRef.current = true;
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
   }, [q, filter]);
+
   useEffect(() => { void load(); }, [load]);
 
   async function createPost(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setError(""); setSuccess(""); setBusy(true);
-    const data = new FormData(); data.set("body", body); data.set("specialty", specialty || user.specialty || ""); if (image) data.set("image", image);
-    try { const res = await fetch("/api/feed", { method: "POST", body: data }); const json = await res.json(); if (!res.ok) throw new Error(json.error || "تعذر نشر المنشور."); setBody(""); setImage(null); setSpecialty(""); const input = document.getElementById("post-image") as HTMLInputElement | null; if (input) input.value = ""; setSuccess("تم نشر منشورك."); await load(); }
-    catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ."); } finally { setBusy(false); }
+    event.preventDefault();
+    setError(""); setSuccess(""); setBusy(true);
+    const data = new FormData();
+    data.set("body", body);
+    data.set("specialty", specialty || user.specialty || "");
+    if (image) data.set("image", image);
+    try {
+      const response = await fetch("/api/feed", { method: "POST", body: data });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر نشر المنشور.");
+      setBody(""); setImage(null); setSpecialty("");
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      setSuccess("تم نشر منشورك بنجاح.");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "تعذر نشر المنشور. تحقق من اتصالك وحاول مجددًا.");
+    } finally { setBusy(false); }
+  }
+
+  function chooseImage(event: ChangeEvent<HTMLInputElement>) {
+    const chosen = event.target.files?.[0] || null;
+    if (chosen && chosen.size > 2_000_000) {
+      setError("حجم الصورة كبير. الحد الأقصى للصورة 2 ميجابايت.");
+      event.target.value = "";
+      return;
+    }
+    setError("");
+    setImage(chosen);
   }
 
   async function toggleLike(post: FeedPost) {
-    const response = await fetch(`/api/posts/${post.id}/like`, { method: "POST" }); const data = await response.json();
-    if (response.ok) setPosts(old => old.map(item => item.id === post.id ? { ...item, has_liked: data.liked, like_count: data.likeCount } : item)); else setError(data.error || "تعذر تسجيل الإعجاب.");
+    if (busyLikePostId) return;
+    setBusyLikePostId(post.id);
+    try {
+      const response = await fetch(`/api/posts/${post.id}/like`, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر تسجيل الإعجاب.");
+      setPosts(old => old.map(item => item.id === post.id ? { ...item, has_liked: payload.liked, like_count: payload.likeCount } : item));
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر تسجيل الإعجاب."); }
+    finally { setBusyLikePostId(null); }
   }
 
   async function toggleComments(post: FeedPost) {
+    setError("");
     if (openComments === post.id) { setOpenComments(null); return; }
     setOpenComments(post.id);
-    const response = await fetch(`/api/posts/${post.id}/comments`, { cache: "no-store" }); const data = await response.json();
-    if (response.ok) setComments(old => ({ ...old, [post.id]: data.comments || [] })); else setError(data.error || "تعذر تحميل التعليقات.");
+    if (comments[post.id]) return;
+    try {
+      const response = await fetch(`/api/posts/${post.id}/comments`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر تحميل التعليقات.");
+      setComments(old => ({ ...old, [post.id]: Array.isArray(payload.comments) ? payload.comments : [] }));
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر تحميل التعليقات."); }
   }
 
-  async function addComment(postId: string) {
-    const draft = commentDrafts[postId]?.trim(); if (!draft) return; setCommentBusy(true); setError("");
-    try { const res = await fetch(`/api/posts/${postId}/comments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: draft }) }); const data = await res.json(); if (!res.ok) throw new Error(data.error || "تعذر إضافة التعليق."); setComments(old => ({ ...old, [postId]: [...(old[postId] || []), data.comment] })); setCommentDrafts(old => ({ ...old, [postId]: "" })); setPosts(old => old.map(p => p.id === postId ? { ...p, comment_count: p.comment_count + 1 } : p)); }
-    catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ."); } finally { setCommentBusy(false); }
+  async function addComment(postId: string, event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    const draft = commentDrafts[postId]?.trim();
+    if (!draft || commentBusy) return;
+    setCommentBusy(true); setError("");
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: draft }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر إضافة التعليق.");
+      setComments(old => ({ ...old, [postId]: [...(old[postId] || []), payload.comment] }));
+      setCommentDrafts(old => ({ ...old, [postId]: "" }));
+      setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: post.comment_count + 1 } : post));
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر إضافة التعليق."); }
+    finally { setCommentBusy(false); }
   }
 
   async function reportPost(postId: string) {
-    const reason = window.prompt("سبب الإبلاغ عن المنشور؟"); if (!reason) return;
-    const res = await fetch(`/api/posts/${postId}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) }); const data = await res.json();
-    if (res.ok) setSuccess("تم إرسال البلاغ إلى الإدارة."); else setError(data.error || "تعذر إرسال البلاغ.");
+    const reason = reportReason.trim();
+    if (reason.length < 3) { setError("اكتب سببًا واضحًا للإبلاغ."); return; }
+    setError("");
+    try {
+      const response = await fetch(`/api/posts/${postId}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر إرسال البلاغ.");
+      setReportingPostId(null); setReportReason(""); setSuccess("تم إرسال البلاغ إلى الإدارة للمراجعة.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر إرسال البلاغ."); }
   }
+
   async function deletePost(post: FeedPost) {
     if (post.author_id !== user.id || !window.confirm("حذف هذا المنشور نهائيًا؟")) return;
-    const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" }); const data = await res.json();
-    if (res.ok) setPosts(old => old.filter(p => p.id !== post.id)); else setError(data.error || "تعذر حذف المنشور.");
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "تعذر حذف المنشور.");
+      setPosts(old => old.filter(item => item.id !== post.id));
+      setOpenMenuPost(null);
+      setSuccess("تم حذف المنشور.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر حذف المنشور."); }
   }
 
-  return <AppShell user={user} events={events} active="/feed">
-    <div className="between"><div><h1 className="page-title">الموجز</h1><p className="small muted" style={{ margin: 0 }}>مساحة واحدة تجمع المهندسين وتبادل الخبرات.</p></div><span className="pill navy">ENGINEERS ONLY</span></div>
-    <Toast message={error} error/><Toast message={success}/>
-    <form className="card compose" onSubmit={createPost}>
-      <div className="user-line"><div className="avatar">{user.display_name.slice(0,1)}</div><div className="user-meta"><div className="user-name">{user.display_name}{user.role === "member" ? <ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact/> : <span className="pill navy">إدارة AXIS</span>}</div><div className="user-sub">منشورك سيظهر للمهندسين الموثقين</div></div></div>
-      <textarea className="field" style={{ minHeight: 94, border: 0, background: "#FBFCFD" }} value={body} onChange={e => setBody(e.target.value)} maxLength={5000} placeholder="شارك فكرة هندسية أو تجربة من موقع العمل…" aria-label="نص المنشور"/>
-      {image && <div className="alert">الصورة جاهزة: {image.name} <button type="button" className="btn btn-small" onClick={() => setImage(null)}>إزالة</button></div>}
-      <div className="between"><div className="row" style={{ flexWrap: "wrap" }}><label className="btn btn-ghost btn-small" htmlFor="post-image"><ImagePlus size={16}/> صورة</label><input className="hidden" type="file" id="post-image" accept="image/jpeg,image/png,image/webp" onChange={e => setImage(e.target.files?.[0] || null)}/><select className="field" style={{ minHeight: 34, padding: "5px 8px", width: "auto", fontSize: 12 }} value={specialty} onChange={e => setSpecialty(e.target.value)} aria-label="تخصص المنشور"><option value="">تخصص المنشور</option>{SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}</select></div><button type="submit" className="btn btn-primary btn-small" disabled={busy || (!body.trim() && !image)}>{busy ? "جارٍ النشر…" : "نشر"}</button></div>
-    </form>
+  return (
+    <AppShell user={user} events={events} active="/feed">
+      <section className="feed-page-intro" aria-labelledby="feed-title">
+        <div className="feed-intro-copy">
+          <span className="feed-eyebrow"><span className="feed-eyebrow-dot"/> مجتمع مهني موثّق</span>
+          <h1 id="feed-title" className="feed-main-title">الموجز الهندسي</h1>
+          <p>خبرات من مواقع العمل، أسئلة مهنية، وأفكار تستحق النقاش.</p>
+        </div>
+        <div className="feed-intro-mark" aria-hidden="true"><Sparkles size={21}/><span>AXIS</span></div>
+      </section>
 
-    <div className="card" style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><SlidersHorizontal size={17} className="muted"/><strong className="small">الفلاتر</strong><button className={`btn btn-small ${!filter ? "btn-primary" : ""}`} onClick={() => setFilter("")}>الكل</button>{SPECIALTIES.slice(0, 6).map(s => <button className={`btn btn-small ${filter === s ? "btn-primary" : ""}`} key={s} onClick={() => setFilter(filter === s ? "" : s)}>{s}</button>)}{q && <span className="pill">بحث: {q}</span>}</div>
+      <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
-    {posts.length === 0 ? <div className="empty-state"><Search size={25} style={{ marginBottom: 8 }}/><h2 className="section-title">لسه مفيش منشورات هنا</h2><p className="small">كن أول من يشارك موضوعًا هندسيًا مع المجتمع.</p></div> : posts.map(post => <article className="card post" key={post.id}>
-      <div className="between"><div className="user-line"><div className="avatar">{post.display_name.slice(0,1)}</div><div className="user-meta"><div className="user-name"><span>{post.display_name}</span>{post.author_role === "member" ? <ProfessionalBadges level={post.seniority_code} badges={post.verified_badges} compact/> : <span className="pill navy">إدارة AXIS</span>}</div><div className="user-sub">{post.job_title || `مهندس ${post.specialty || ""}`} · {new Date(post.created_at).toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" })}</div></div></div><div className="row"><button className="icon-btn" title="إبلاغ عن المنشور" onClick={() => reportPost(post.id)}><Flag size={16}/></button>{post.author_id === user.id && <button className="icon-btn" title="حذف المنشور" onClick={() => deletePost(post)}><Trash2 size={16}/></button>}<MoreHorizontal size={18} className="muted"/></div></div>
-      {post.body && <div className="post-body">{post.body}</div>}{post.has_image && <img className="post-image" src={`/api/posts/${post.id}/image`} alt="صورة مرفقة بالمنشور" loading="lazy"/>}
-      <div className="between small muted"><span>{post.like_count} إعجاب</span><span>{post.comment_count} تعليق</span></div><hr className="divider"/><div className="post-actions"><button className={`post-action ${post.has_liked ? "liked" : ""}`} onClick={() => toggleLike(post)}><ThumbsUp size={17}/>{post.has_liked ? "أعجبك" : "إعجاب"}</button><button className="post-action" onClick={() => toggleComments(post)}><MessageCircle size={17}/>تعليق ({post.comment_count})</button></div>
-      {openComments === post.id && <div className="comments">{(comments[post.id] || []).map(comment => <div className="comment" key={comment.id}><div className="avatar sm">{comment.display_name.slice(0,1)}</div><div className="comment-body"><div className="user-name">{comment.display_name}{comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="pill navy">إدارة AXIS</span>}</div><div className="small">{comment.body}</div><div className="tiny muted">{new Date(comment.created_at).toLocaleString("ar-EG")}</div></div></div>)}<div className="row"><input className="field" style={{ minHeight: 40 }} value={commentDrafts[post.id] || ""} onChange={e => setCommentDrafts(old => ({ ...old, [post.id]: e.target.value }))} maxLength={1200} placeholder="اكتب تعليقًا…"/><button className="btn btn-primary btn-small" disabled={commentBusy || !(commentDrafts[post.id] || "").trim()} onClick={() => addComment(post.id)} aria-label="إرسال التعليق"><Send size={16}/></button></div></div>}
-    </article>)}
-    <div className="footer-note">AXIS · مجتمع مهني مغلق للمهندسين</div>
-  </AppShell>;
+      <form className="card compose compose-professional" onSubmit={createPost}>
+        <div className="compose-heading">
+          <div className="user-line compose-user-line">
+            <div className="avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
+            <div className="user-meta">
+              <div className="user-name compose-display-name">{user.display_name}{user.role === "member" ? <ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact/> : <span className="pill navy">فريق AXIS</span>}</div>
+              <div className="user-sub">شارك معرفة تفيد مهندسًا آخر</div>
+            </div>
+          </div>
+          <span className="compose-private"><BadgeCheck size={15}/> للمجتمع الموثّق</span>
+        </div>
+        <label className="sr-only" htmlFor="feed-post-body">محتوى المنشور</label>
+        <textarea id="feed-post-body" className="field compose-textarea" value={body} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="ما الخبرة أو الفكرة الهندسية التي تريد مشاركتها؟" aria-label="محتوى المنشور" />
+
+        {image && <div className="compose-attachment">
+          {imagePreview ? <img src={imagePreview} alt="معاينة الصورة المرفقة"/> : <ImagePlus size={20}/>} 
+          <div className="compose-attachment-meta"><strong>{image.name}</strong><span>{(image.size / 1024 / 1024).toFixed(2)} MB</span></div>
+          <button type="button" className="icon-btn" onClick={() => { setImage(null); if (imageInputRef.current) imageInputRef.current.value = ""; }} aria-label="إزالة الصورة"><X size={17}/></button>
+        </div>}
+
+        <div className="compose-bottom">
+          <div className="compose-attachments-row">
+            <input ref={imageInputRef} className="hidden" type="file" id="post-image" accept="image/jpeg,image/png,image/webp" onChange={chooseImage}/>
+            <label className="compose-attach-btn" htmlFor="post-image"><Camera size={18}/><span>إضافة صورة</span></label>
+            <span className="compose-divider" aria-hidden="true"/>
+            <label className="sr-only" htmlFor="post-specialty">تخصص المنشور</label>
+            <select id="post-specialty" className="compose-specialty" value={specialty} onChange={event => setSpecialty(event.target.value)} aria-label="تخصص المنشور">
+              <option value="">{user.specialty ? `تخصصي: ${user.specialty}` : "اختر التخصص"}</option>
+              {SPECIALTIES.map(item => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </div>
+          <div className="compose-submit-row">
+            <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("ar-EG")} / ٥٠٠٠</span>
+            <button type="submit" className="btn btn-primary compose-publish" disabled={busy || (!body.trim() && !image)}><Send size={16}/>{busy ? "جارٍ النشر…" : "نشر المنشور"}</button>
+          </div>
+        </div>
+      </form>
+
+      <section className="feed-stream" aria-label="منشورات المهندسين">
+        <div className="feed-stream-header">
+          <div className="feed-stream-heading">
+            <div><h2>منشورات المجتمع</h2><p>{q ? `نتائج البحث عن «${q}»` : filter ? `تصفّح منشورات تخصص ${filter}` : "أحدث ما يشاركه المهندسون"}</p></div>
+            <span className="feed-stream-icon"><SlidersHorizontal size={18}/></span>
+          </div>
+          <div className="feed-filters" role="group" aria-label="تصفية المنشورات حسب التخصص">
+            <button type="button" className={`feed-filter-chip ${!filter ? "active" : ""}`} aria-pressed={!filter} onClick={() => setFilter("")}>الكل</button>
+            {SPECIALTIES.map(item => <button type="button" key={item} className={`feed-filter-chip ${filter === item ? "active" : ""}`} aria-pressed={filter === item} onClick={() => setFilter(filter === item ? "" : item)}>{item}</button>)}
+          </div>
+        </div>
+
+        {isRefreshing && <div className="feed-refresh-line"><RefreshCw size={14} className="spin-icon"/> جارٍ تحديث المنشورات</div>}
+        {isLoading ? <div className="feed-loading"><PostSkeleton/><PostSkeleton/></div> : posts.length === 0 ? (
+          <div className="empty-state feed-empty-state">
+            <div className="feed-empty-icon"><Search size={26}/></div>
+            <h2>{q || filter ? "لا توجد نتائج مطابقة" : "ابدأ الحوار الهندسي"}</h2>
+            <p>{q || filter ? "جرّب تغيير كلمة البحث أو اختيار تخصص آخر." : "لا توجد منشورات حتى الآن. شارك تجربة من موقع العمل أو سؤالًا يستفيد منه زملاؤك."}</p>
+            {(q || filter) && <button className="btn btn-primary" type="button" onClick={() => { setFilter(""); if (q) window.location.href = "/feed"; }}>عرض جميع المنشورات</button>}
+          </div>
+        ) : posts.map(post => (
+          <article className="card post post-professional" key={post.id}>
+            <header className="post-header">
+              <div className="user-line post-author-line">
+                <div className="avatar post-avatar" style={{ background: post.avatar_color || "var(--blue)" }}>{post.display_name.slice(0, 1)}</div>
+                <div className="user-meta post-author-meta">
+                  <div className="post-author-name-row">
+                    <span className="post-author-name">{post.display_name}</span>
+                    {post.author_role === "member" ? <CheckCircle2 size={15} className="post-verified-icon" aria-label="عضو موثّق"/> : <span className="post-team-label">فريق AXIS</span>}
+                    {post.author_role === "member" && <ProfessionalBadges level={post.seniority_code} badges={post.verified_badges} compact/>}
+                  </div>
+                  <div className="post-meta-line">
+                    {post.job_title && <span>{post.job_title}</span>}
+                    {!post.job_title && post.specialty && <span>تخصص {post.specialty}</span>}
+                    {(post.job_title || post.specialty) && <span className="meta-dot"/>}
+                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG")}>{formatPostTime(post.created_at)}</time>
+                  </div>
+                </div>
+              </div>
+              <div className="post-menu-anchor">
+                <button type="button" className="icon-btn post-menu-trigger" aria-label="خيارات المنشور" aria-expanded={openMenuPost === post.id} onClick={() => setOpenMenuPost(openMenuPost === post.id ? null : post.id)}><MoreHorizontal size={20}/></button>
+                {openMenuPost === post.id && <div className="post-menu" role="menu">
+                  {post.author_id === user.id ? <button type="button" role="menuitem" onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> حذف المنشور</button> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
+                  <button type="button" role="menuitem" onClick={() => setOpenMenuPost(null)}><X size={15}/> إغلاق</button>
+                </div>}
+              </div>
+            </header>
+
+            {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">مشاركة هندسية</span></div>}
+            {post.body && <p className="post-body post-professional-body">{post.body}</p>}
+            {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt={`صورة مرفقة بمنشور ${post.display_name}`} loading="lazy"/></a>}
+
+            <div className="post-engagement-summary">
+              <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={12}/></span>{post.like_count.toLocaleString("ar-EG")} إعجاب</span>
+              <button type="button" onClick={() => void toggleComments(post)} className="post-comment-summary">{post.comment_count.toLocaleString("ar-EG")} تعليق</button>
+            </div>
+            <div className="post-action-bar">
+              <button type="button" className={`post-action post-action-professional ${post.has_liked ? "liked" : ""}`} onClick={() => void toggleLike(post)} disabled={busyLikePostId === post.id} aria-pressed={post.has_liked}><ThumbsUp size={18}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span></button>
+              <button type="button" className={`post-action post-action-professional ${openComments === post.id ? "selected" : ""}`} onClick={() => void toggleComments(post)} aria-expanded={openComments === post.id}><MessageCircle size={18}/><span>التعليقات</span></button>
+            </div>
+
+            {reportingPostId === post.id && <div className="post-report-panel">
+              <div className="between"><strong>الإبلاغ عن محتوى</strong><button type="button" className="icon-btn" aria-label="إغلاق الإبلاغ" onClick={() => setReportingPostId(null)}><X size={16}/></button></div>
+              <p>وضّح سبب البلاغ حتى تتمكن الإدارة من مراجعته.</p>
+              <textarea className="field" rows={3} maxLength={1000} value={reportReason} onChange={event => setReportReason(event.target.value)} placeholder="اكتب سبب الإبلاغ…"/>
+              <div className="row"><button type="button" className="btn btn-small" onClick={() => setReportingPostId(null)}>إلغاء</button><button type="button" className="btn btn-danger btn-small" disabled={reportReason.trim().length < 3} onClick={() => void reportPost(post.id)}><Flag size={14}/> إرسال البلاغ</button></div>
+            </div>}
+
+            {openComments === post.id && <section className="comments comments-professional" aria-label="تعليقات المنشور">
+              <div className="comments-heading"><div><h3>النقاش</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG")} تعليق</span></div></div>
+              {!comments[post.id] ? <div className="comments-loading">جارٍ تحميل التعليقات…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لا توجد تعليقات بعد. ابدأ نقاشًا مهنيًا باحترام.</p> : comments[post.id].map(comment => (
+                <div className="comment comment-professional" key={comment.id}>
+                  <div className="avatar sm comment-avatar">{comment.display_name.slice(0, 1)}</div>
+                  <div className="comment-body comment-bubble"><div className="comment-author-line"><strong>{comment.display_name}</strong>{comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}<time title={new Date(comment.created_at).toLocaleString("ar-EG")}>{formatPostTime(comment.created_at)}</time></div><p>{comment.body}</p></div>
+                </div>
+              ))}
+              <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>
+                <div className="avatar sm comment-current-avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
+                <label className="sr-only" htmlFor={`comment-${post.id}`}>اكتب تعليقًا</label>
+                <input id={`comment-${post.id}`} className="field" value={commentDrafts[post.id] || ""} onChange={event => setCommentDrafts(old => ({ ...old, [post.id]: event.target.value }))} maxLength={1200} placeholder="أضف تعليقًا مفيدًا…"/>
+                <button type="submit" className="comment-send" disabled={commentBusy || !(commentDrafts[post.id] || "").trim()} aria-label="إرسال التعليق"><Send size={17}/></button>
+              </form>
+            </section>}
+          </article>
+        ))}
+      </section>
+      <div className="feed-footer-note"><BadgeCheck size={15}/> مجتمع AXIS مخصص للمهندسين ذوي العضوية المعتمدة.</div>
+    </AppShell>
+  );
 }
