@@ -7,6 +7,7 @@ import {
   ThumbsUp, UserRound, X,
 } from "lucide-react";
 import { Brand } from "@/components/Brand";
+import { AxisLogoMark } from "@/components/AxisLogoMark";
 import type { SessionUser } from "@/lib/types";
 import { BADGE_OPTIONS, GLOSSARY, SPECIALTIES } from "@/lib/constants";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
@@ -80,7 +81,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
       <Toast message={success} />
 
       <section className="card profile-hero-card">
-        <div className="profile-cover" aria-hidden="true"><span className="profile-cover-wordmark">AXIS</span></div>
+        <div className="profile-cover" aria-hidden="true"><AxisLogoMark className="profile-cover-mark" title=""/></div>
         <div className="profile-hero-details">
           <div className="profile-identity">
             <div className="avatar profile-avatar" style={{ background: user.avatar_color }}>{user.display_name.slice(0, 1)}</div>

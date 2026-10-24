@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(password);
     const result = await query<{ id: string }>(
       `INSERT INTO users (email, username, display_name, password_hash, avatar_color)
-       VALUES ($1,$2,$3,$4, (ARRAY['#1B4F8F','#236B6B','#6650A4','#9B5D27'])[floor(random()*4+1)::int])
+       VALUES ($1,$2,$3,$4, (ARRAY['#007BFF','#236B6B','#6650A4','#9B5D27'])[floor(random()*4+1)::int])
        RETURNING id`, [email, username, displayName, passwordHash]);
     await createSession(result.rows[0].id);
     return NextResponse.json({ ok: true, redirect: "/verification" }, { status: 201 });

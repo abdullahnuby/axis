@@ -28,7 +28,7 @@ export function VerificationClient({ initialStatus, reviewNote, legalName, submi
   }
   return <div className="status-layout">
     <section className="card status-card">
-      <div className="row"><div className="avatar" style={{ background: "var(--gold-soft)", color: "#735000" }}><ShieldCheck size={23}/></div><div><h1 className="section-title">تفعيل العضوية الهندسية</h1><div className="small muted">المراجعة يدوية بالكامل في النسخة الحالية.</div></div></div>
+      <div className="row"><div className="avatar" style={{ background: "var(--gold-soft)", color: "#075E64" }}><ShieldCheck size={23}/></div><div><h1 className="section-title">تفعيل العضوية الهندسية</h1><div className="small muted">المراجعة يدوية بالكامل في النسخة الحالية.</div></div></div>
       <div className="alert">لا يمكنك رؤية المنشورات أو ملفات الأعضاء قبل الموافقة على التوثيق.</div>
       <Toast message={error} error/><Toast message={success}/>
       {status === "verified" ? <div className="alert success"><FileCheck2 size={18} style={{ verticalAlign: "middle", marginLeft: 7 }}/> تم توثيق عضويتك. يمكنك الآن دخول المجتمع.</div> : status === "pending" ? <div className="stack"><span className="status-pill"><Clock3 size={15}/> الطلب قيد المراجعة</span><p style={{ margin: 0 }}>تم إرسال طلب التوثيق {submittedAt ? `في ${new Date(submittedAt).toLocaleDateString("ar-EG")}` : ""}. ستتغير حالة الحساب بعد قرار الإدارة.</p><p className="small muted" style={{ margin: 0 }}>لتصحيح أي بيانات، انتظر طلب استكمال من الإدارة أو تواصل مع مسؤول المنصة.</p></div> : <form className="form-stack" onSubmit={submit}>

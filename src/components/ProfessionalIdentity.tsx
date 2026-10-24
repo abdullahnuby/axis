@@ -17,7 +17,7 @@ export function UserIdentity({ user, small = false }: { user: Pick<SessionUser, 
   const initial = (user.display_name || user.username || "م").trim().slice(0, 1);
   return (
     <div className="user-line">
-      <div className={`avatar ${small ? "sm" : ""}`} style={{ background: user.avatar_color || "#1B4F8F" }}>{initial}</div>
+      <div className={`avatar ${small ? "sm" : ""}`} style={{ background: user.avatar_color || "#007BFF" }}>{initial}</div>
       <div className="user-meta">
         <div className="user-name"><span>{user.display_name}</span><ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact /></div>
         {!small && <div className="user-sub">{user.job_title || `مهندس ${user.specialty || ""}`}{user.specialty && user.job_title ? ` · ${user.specialty}` : ""}</div>}

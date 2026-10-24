@@ -17,13 +17,13 @@ import {
   Search,
   Send,
   SlidersHorizontal,
-  Sparkles,
   ThumbsUp,
   Trash2,
   X,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { AxisLogoMark } from "@/components/AxisLogoMark";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
 import { Toast } from "@/components/Toast";
 import { SPECIALTIES } from "@/lib/constants";
@@ -325,7 +325,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
           <h1 id="feed-title" className="feed-main-title">الموجز الهندسي</h1>
           <p>خبرات من مواقع العمل، أسئلة مهنية، وأفكار تستحق النقاش.</p>
         </div>
-        <div className="feed-intro-mark" aria-hidden="true"><Sparkles size={21}/><span>AXIS</span></div>
+        <div className="feed-intro-mark" aria-hidden="true"><AxisLogoMark className="feed-intro-logo"/><span>AXIS</span></div>
       </section>
 
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
