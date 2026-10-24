@@ -22,6 +22,32 @@ await check("private community pages have server guards", async () => {
 await check("profile does not repeat a universal verification badge", async () => {
   assert.doesNotMatch(await read("src/components/ProfileClient.tsx"), /عضوية معتمدة/);
 });
+await check("professional profile shows real member posts and verified credentials", async () => {
+  const profile = await read("src/components/ProfileClient.tsx");
+  const page = await read("src/app/profile/page.tsx");
+  assert.match(profile, /profile-content-grid/);
+  assert.match(profile, /profile-credential-list/);
+  assert.match(profile, /profile-empty-posts/);
+  assert.match(page, /WHERE p\.author_id=\$1/);
+  assert.match(page, /initialPosts=\{posts\.rows\.map/);
+});
+await check("admin verification workspace has selectable request table and separate review panel", async () => {
+  const admin = await read("src/components/AdminClient.tsx");
+  const styles = await read("src/app/globals.css");
+  assert.match(admin, /admin-verification-table/);
+  assert.match(admin, /admin-review-panel/);
+  assert.match(admin, /admin-verification-mobile-list/);
+  assert.match(styles, /\.admin-review-workspace/);
+  assert.match(styles, /\.admin-verification-mobile-card/);
+});
+await check("admin action history is admin-only", async () => {
+  const route = await read("src/app/api/admin/audit/route.ts");
+  const admin = await read("src/components/AdminClient.tsx");
+  assert.match(route, /user!\.role !== "admin"/);
+  assert.match(route, /FROM audit_logs/);
+  assert.match(admin, /api\/admin\/audit/);
+  assert.match(admin, /سجل قرارات الإدارة/);
+});
 await check("feed API rejects unverified members", async () => {
   assert.match(await read("src/app/api/feed/route.ts"), /getApiUser\(\{ verified: true \}\)/);
 });

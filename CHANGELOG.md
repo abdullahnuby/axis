@@ -1,3 +1,11 @@
+## Unreleased — professional profile and verification administration
+
+- Rebuilt the profile page around a verified professional identity, real approved credentials, editable public details, actual authored posts, and a clear privacy note. No placeholder posts or unverified badges are invented.
+- Expanded the admin verification screen into a request table + selected-applicant review panel on desktop, with selectable mobile cards, document links, decision inputs, and clear approve / request-more-info / reject actions.
+- Split the admin overview into pending, needs-more-information, verified-member, and open-report counters.
+- Added an admin-only API and UI for reviewing recent actions from `audit_logs`.
+- Added responsive CSS and static smoke coverage for profile data and admin review workflows.
+
 # Changelog
 
 ## Unreleased — reference-matched mobile feed
@@ -26,3 +34,8 @@
 - Replaced the admin account's misleading public JNR badge with an AXIS administration label in profile, feed composer, posts, and comments.
 - Restored the missing `.env.example` template expected by the repository's own smoke test, without adding credentials.
 - Added `npm run pwa:check` and documented PWA setup and limits.
+
+## 2026-10-25 — image-guided existing profile/admin screens
+- Updated the existing `/profile` screen to follow the reference hierarchy: top bar, profile cover card, inline verified badge, real profile posts, biography, and approved credentials.
+- Aligned the existing `/admin` review tab with the reference wording and its responsive two-column request/review workspace; audit history stays inside the same admin page and uses a role-protected API endpoint.
+- No new user-facing page routes were added for the profile/admin redesign.

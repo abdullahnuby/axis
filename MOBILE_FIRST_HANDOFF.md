@@ -90,3 +90,25 @@ Match the user's supplied mobile feed reference instead of applying a generic la
 
 ### Next step
 Install dependencies in a connected environment, run `npm run typecheck`, `npm run build`, then deploy and visually test the feed at 320–430 CSS-pixel widths and in PWA standalone display mode.
+
+## Existing profile and administration pages — image-guided update (2026-10-25)
+
+This work modifies the existing routes and their current client components; it does not create new user-facing page routes.
+
+### Existing profile route
+- Route remains `src/app/profile/page.tsx` (`/profile`); its existing server component loads the signed-in member's recent posts and engagement counts.
+- `src/components/ProfileClient.tsx` renders the profile cover/header, display name and username, the verified-member pill, approved professional badges, the profile-edit action, the biography, real member posts, and approved credentials/qualifications.
+- Removed the extra heading block above the profile hero so the page follows the supplied reference's top-bar → cover/profile card → two-column content hierarchy. The existing `/profile` UI is the one being redesigned.
+
+### Existing administration route
+- Route remains `src/app/admin/page.tsx` (`/admin`) and uses the existing `src/components/AdminClient.tsx` component.
+- The existing admin dashboard uses the supplied layout direction: right-side verification-request table and left-side selected-request review panel on desktop; on narrow screens it becomes a request-card list followed by the selected review panel.
+- The existing review panel displays applicant facts, submitted documents, and the decision form; the existing overview cards and sidebar remain part of the same admin dashboard component.
+- The `audit` view is a tab inside `/admin`, not a separate UI page. `src/app/api/admin/audit/route.ts` is a supporting JSON endpoint protected for admin-role accounts; it is not a page route.
+- Updated the selected request tab label to `طلبات التوثيق` to match the supplied administration reference.
+
+### Validation for these edits
+- `node scripts/smoke-check.mjs`: passed (14 static checks).
+- `node scripts/pwa-check.mjs`: passed (8 checks).
+- Full `npm run typecheck` and production `npm run build` remain unverified in this runtime because dependency installation previously timed out. Do not treat static checks as a substitute for a full build.
+- No deployment was performed; these changes are in the packaged source only.
