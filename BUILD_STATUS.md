@@ -39,3 +39,11 @@
 - تم إصلاح الاستجابة بنسخ المحتوى إلى `Uint8Array` جديدة ثم تمرير `body.buffer` (من نوع `ArrayBuffer`) إلى `NextResponse`، مع الإبقاء على `Cache-Control: no-store, private` و`X-Content-Type-Options: nosniff`.
 - أُعيد تشغيل `node scripts/smoke-check.mjs`: نجحت الفحوصات الثمانية.
 - لم أتمكن من تشغيل `npm run build` محليًا لأن `npm install` انتهى بمهلة اتصال أثناء تنزيل الحزم. يلزم دفع التعديل إلى GitHub ثم التأكد من نتيجة بناء Vercel.
+
+
+## متابعة إصلاح سجل Vercel الثاني — 2026-10-24
+
+- بعد إصلاح مسار عرض مستندات التوثيق، كشف بناء Vercel خطأ مماثلًا في `src/app/api/posts/[postId]/image/route.ts` عند تمرير `image.image_data` من نوع `Buffer` مباشرة إلى `NextResponse`.
+- تم تطبيق الإصلاح نفسه على مسار الصور: نسخ البيانات إلى `Uint8Array` جديدة وتمرير `body.buffer`، مع الحفاظ على Content-Type والطول ورؤوس التخزين الخاصة.
+- بحث الملفات لم يكشف عن استجابات `NextResponse` أخرى تمرر `Buffer` مباشرة في مسارات الملفات المعروفة.
+- لم يُشغّل بناء إنتاجي ناجح بعد هذا التعديل؛ يلزم دفعه إلى GitHub ثم التحقق من بناء Vercel التالي.
