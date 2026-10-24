@@ -1,11 +1,14 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, Home, Settings, UserRound, Bell, SlidersHorizontal, ShieldCheck, BriefcaseBusiness, Plus } from "lucide-react";
+import { CalendarDays, Home, Settings, UserRound, Bell, SlidersHorizontal, BriefcaseBusiness, Plus, Users, MessageCircle } from "lucide-react";
 import type { SessionUser, EngineeringEvent } from "@/lib/types";
 import { AppHeader } from "@/components/AppHeader";
 
 const navItems = [
   { href: "/feed", text: "الرئيسية", icon: Home },
+  { href: "/people", text: "دليل المهندسين", icon: Users },
+  { href: "/groups", text: "المجموعات", icon: BriefcaseBusiness },
+  { href: "/messages", text: "الرسائل", icon: MessageCircle },
   { href: "/profile", text: "ملفي المهني", icon: UserRound },
   { href: "/notifications", text: "الإشعارات", icon: Bell },
   { href: "/settings", text: "الإعدادات", icon: Settings },
@@ -27,6 +30,6 @@ export function AppShell({ user, children, events = [], active = "" }: { user: S
       <div className="card event-card"><div className="between"><h2 className="section-title">اختار اللي يهمّك</h2><SlidersHorizontal size={17} className="muted"/></div><p className="small muted" style={{ margin: 0 }}>اختار تخصصك من الفلاتر علشان تتابع المشاركات الأقرب لشغلك.</p><div className="row"><BriefcaseBusiness size={16}/><span className="small">{user.specialty || "ضيف تخصصك في حسابك"}</span></div></div>
     </aside>
   </div>
-  <nav className="mobile-bottom" aria-label="التنقل الرئيسي"><Link href="/feed" className={active === "/feed" ? "active" : ""}><Home size={19}/><span>الرئيسية</span></Link><Link href="/feed#compose" className="mobile-compose-link"><Plus size={20}/><span>منشور</span></Link><Link href="/notifications" className={active === "/notifications" ? "active" : ""}><Bell size={19}/><span>إشعارات</span></Link><Link href="/profile" className={active === "/profile" ? "active" : ""}><UserRound size={19}/><span>حسابي</span></Link></nav>
+  <nav className="mobile-bottom" aria-label="التنقل الرئيسي"><Link href="/feed" className={active === "/feed" ? "active" : ""}><Home size={19}/><span>الرئيسية</span></Link><Link href="/people" className={active === "/people" ? "active" : ""}><Users size={19}/><span>المهندسين</span></Link><Link href="/feed#compose" className="mobile-compose-link" aria-label="إنشاء مشاركة جديدة"><span className="mobile-compose-icon"><Plus size={21}/></span><span>مشاركة</span></Link><Link href="/messages" className={active === "/messages" ? "active" : ""}><MessageCircle size={19}/><span>الرسائل</span></Link><Link href="/profile" className={active === "/profile" ? "active" : ""}><UserRound size={19}/><span>حسابي</span></Link></nav>
   </div>;
 }

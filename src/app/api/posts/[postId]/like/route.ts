@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { query, withTransaction } from "@/lib/db";
 import { getApiUser, jsonError, sameOrigin } from "@/lib/http";
+import { consumeRateLimit, requestIpKey } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 type Ctx = { params: Promise<{ postId: string }> };
 export async function POST(request: Request, context: Ctx) {
   if (!sameOrigin(request)) return jsonError("طلب غير صالح.", 403);
   const { user, response } = await getApiUser({ verified: true }); if (response) return response;
   const { postId } = await context.params;
+  if (await consumeRateLimit("like-post", `${requestIpKey(request)}:${user!.id}`, { limit: 160, windowMinutes: 10, blockMinutes: 5 })) return jsonError("التفاعل سريع جدًا. استنى شوية.", 429);
   try {
     const liked = await withTransaction(async client => {
-      const post = await client.query<{ author_id: string }>("SELECT p.author_id FROM posts p JOIN users u ON u.id=p.author_id WHERE p.id=$1 AND u.verification_status='verified' AND u.account_status='active'", [postId]);
+      const post = await client.query<{ author_id: string }>(`SELECT p.author_id FROM posts p JOIN users u ON u.id=p.author_id LEFT JOIN engineering_groups g ON g.id=p.group_id
+        WHERE p.id=$1 AND u.verification_status='verified' AND u.account_status='active'
+          AND (p.group_id IS NULL OR g.visibility='public' OR EXISTS(SELECT 1 FROM group_members gm WHERE gm.group_id=p.group_id AND gm.user_id=$2 AND gm.status='active'))`, [postId,user!.id]);
       if (!post.rows[0]) throw Object.assign(new Error("المنشور غير موجود."), { statusCode: 404 });
       const insert = await client.query("INSERT INTO post_likes(post_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING post_id", [postId, user!.id]);
       if (insert.rows.length) {

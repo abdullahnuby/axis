@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getApiUser, cleanText, jsonError, sameOrigin } from "@/lib/http";
 import { parseSafeUpload } from "@/lib/upload";
+import { consumeRateLimit, requestIpKey } from "@/lib/rate-limit";
 import { SPECIALTIES } from "@/lib/constants";
 export const runtime = "nodejs";
 
@@ -11,6 +12,9 @@ export async function GET(request: Request) {
   const specialty = cleanText(url.searchParams.get("specialty"), 80);
   const q = cleanText(url.searchParams.get("q"), 140);
   const sharedPostId = cleanText(url.searchParams.get("post"), 36);
+  const followingOnly = url.searchParams.get("following") === "1";
+  const beforeRaw = url.searchParams.get("before");
+  const before = beforeRaw && !Number.isNaN(Date.parse(beforeRaw)) ? new Date(beforeRaw).toISOString() : null;
   if (sharedPostId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sharedPostId)) return jsonError("رابط المنشور غير صالح.", 400);
   try {
     const result = await query(`SELECT p.id,p.author_id,u.username,u.display_name,u.role AS author_role,u.seniority_code,u.job_title,u.specialty AS profile_specialty,
@@ -27,20 +31,26 @@ export async function GET(request: Request) {
       LEFT JOIN posts sp ON sp.id=p.shared_post_id
       LEFT JOIN users su ON su.id=sp.author_id
       WHERE u.verification_status='verified' AND u.account_status='active'
-        AND (p.shared_post_id IS NULL OR (su.verification_status='verified' AND su.account_status='active'))
+        AND (p.group_id IS NULL OR ($4::uuid IS NOT NULL AND EXISTS(SELECT 1 FROM engineering_groups pg WHERE pg.id=p.group_id AND (pg.visibility='public' OR EXISTS(SELECT 1 FROM group_members gm WHERE gm.group_id=pg.id AND gm.user_id=$1 AND gm.status='active')))))
+        AND (p.shared_post_id IS NULL OR (su.verification_status='verified' AND su.account_status='active' AND sp.group_id IS NULL))
         AND ($2 = '' OR p.specialty=$2 OR (p.specialty IS NULL AND u.specialty=$2))
         AND ($3 = '' OR p.body ILIKE '%'||$3||'%' OR u.display_name ILIKE '%'||$3||'%' OR u.username ILIKE '%'||$3||'%'
              OR sp.body ILIKE '%'||$3||'%' OR su.display_name ILIKE '%'||$3||'%' OR su.username ILIKE '%'||$3||'%')
         AND ($4::uuid IS NULL OR p.id=$4::uuid)
-      ORDER BY p.created_at DESC LIMIT 50`, [user!.id, specialty, q, sharedPostId || null]);
-    const posts = result.rows.map((row: Record<string, unknown>) => ({
+        AND (NOT $5::boolean OR EXISTS(SELECT 1 FROM user_follows f WHERE f.follower_id=$1 AND f.following_id=p.author_id))
+        AND ($6::timestamptz IS NULL OR p.created_at < $6::timestamptz)
+      ORDER BY p.created_at DESC LIMIT 31`, [user!.id, specialty, q, sharedPostId || null, followingOnly, before]);
+    const hasMore = result.rows.length > 30;
+    const pageRows = hasMore ? result.rows.slice(0,30) : result.rows;
+    const nextCursor = hasMore && pageRows.length ? new Date(pageRows[pageRows.length-1].created_at as string).toISOString() : null;
+    const posts = pageRows.map((row: Record<string, unknown>) => ({
       ...row,
       specialty: row.specialty || row.profile_specialty,
       shared_specialty: row.shared_specialty || row.shared_profile_specialty,
       profile_specialty: undefined,
       shared_profile_specialty: undefined,
     }));
-    return NextResponse.json({ posts });
+    return NextResponse.json({ posts, hasMore, nextCursor });
   } catch (error) { console.error("AXIS feed error", (error as { code?: string })?.code || "database_error"); return jsonError("مش قادرين نحمّل المشاركات دلوقتي. جرّب تاني بعد شوية.", 500); }
 }
 
@@ -49,6 +59,7 @@ export async function POST(request: Request) {
   const { user, response } = await getApiUser({ verified: true }); if (response) return response;
   let form: FormData; try { form = await request.formData(); } catch { return jsonError("بيانات المنشور غير صالحة."); }
   const body = cleanText(form.get("body"), 5000); const specialty = cleanText(form.get("specialty"), 80);
+  if (await consumeRateLimit("create-post", `${requestIpKey(request)}:${user!.id}`, { limit: 20, windowMinutes: 10, blockMinutes: 10 })) return jsonError("نشرت مشاركات كتير في وقت قصير. استنى شوية قبل ما تنشر تاني.", 429);
   const fileRaw = form.get("image");
   if (specialty && !(SPECIALTIES as readonly string[]).includes(specialty)) return jsonError("التخصص المحدد غير صالح.");
   let image: Awaited<ReturnType<typeof parseSafeUpload>> = null;

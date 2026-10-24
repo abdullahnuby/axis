@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, Search, LogOut, X } from "lucide-react";
+import { Bell, Search, LogOut, X, ShieldCheck } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import type { SessionUser } from "@/lib/types";
 
 export function AppHeader({ user }: { user: SessionUser }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const isStaff = ["admin", "reviewer", "moderator"].includes(user.role);
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/";
@@ -20,6 +21,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
         <input aria-label="بحث" name="q" placeholder="دوّر على منشور أو مهندس" defaultValue="" />
       </form>
       <div className="topbar-actions">
+        {isStaff && <Link className="icon-btn staff-admin-shortcut" aria-label="لوحة الإدارة" href="/admin"><ShieldCheck size={18}/></Link>}
         <button type="button" className="icon-btn mobile-search-toggle" aria-label={searchOpen ? "إغلاق البحث" : "فتح البحث"} onClick={() => setSearchOpen(open => !open)}>
           {searchOpen ? <X size={18}/> : <Search size={18}/>}
         </button>

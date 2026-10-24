@@ -9,6 +9,7 @@ import {
   Flag,
   ImagePlus,
   Heart,
+  Edit3,
   CornerDownLeft,
   Share2,
   MessageCircle,
@@ -23,6 +24,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
@@ -80,6 +82,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [sharingPost, setSharingPost] = useState<FeedPost | null>(null);
   const [shareCaption, setShareCaption] = useState("");
   const [shareBusy, setShareBusy] = useState(false);
+  const [editingPost, setEditingPost] = useState<FeedPost | null>(null);
+  const [editBody, setEditBody] = useState("");
+  const [editSpecialty, setEditSpecialty] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+  const [followingOnly, setFollowingOnly] = useState(searchParams.get("following") === "1");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const q = searchParams.get("q") || "";
   const sharedPostId = searchParams.get("post") || "";
   const [filter, setFilter] = useState(searchParams.get("specialty") || "");
@@ -99,6 +108,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     if (q) params.set("q", q);
     if (filter) params.set("specialty", filter);
     if (sharedPostId) params.set("post", sharedPostId);
+    if (followingOnly) params.set("following", "1");
     try {
       const [feedResponse, eventResponse] = await Promise.all([
         fetch(`/api/feed?${params.toString()}`, { cache: "no-store" }),
@@ -110,6 +120,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       const eventData = eventResponse.ok ? await eventResponse.json() : { events: [] };
       if (!feedResponse.ok) throw new Error(feedData.error || "مش قادرين نحمّل المشاركات دلوقتي. جرّب تحدّث الصفحة.");
       setPosts(Array.isArray(feedData.posts) ? feedData.posts : []);
+      setNextCursor(typeof feedData.nextCursor === "string" ? feedData.nextCursor : null);
       setEvents(Array.isArray(eventData.events) ? eventData.events : []);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "الاتصال فصل لحظة. جرّب تاني، ومشاركاتك هتفضل زي ما هي.");
@@ -118,7 +129,25 @@ export function FeedClient({ user }: { user: SessionUser }) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [q, filter, sharedPostId]);
+  }, [q, filter, sharedPostId, followingOnly]);
+
+  async function loadMore() {
+    if (!nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const params = new URLSearchParams({ before: nextCursor });
+      if (q) params.set("q", q);
+      if (filter) params.set("specialty", filter);
+      if (sharedPostId) params.set("post", sharedPostId);
+      if (followingOnly) params.set("following", "1");
+      const response = await fetch(`/api/feed?${params.toString()}`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "مش قادرين نحمّل مشاركات أكتر.");
+      setPosts(old => [...old, ...(Array.isArray(payload.posts) ? payload.posts.filter((item: FeedPost) => !old.some(existing => existing.id === item.id)) : [])]);
+      setNextCursor(typeof payload.nextCursor === "string" ? payload.nextCursor : null);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "مش قادرين نحمّل مشاركات أكتر."); }
+    finally { setIsLoadingMore(false); }
+  }
 
   useEffect(() => { void load(); }, [load]);
 
@@ -289,6 +318,23 @@ export function FeedClient({ user }: { user: SessionUser }) {
     } catch (caught) { setError(caught instanceof Error ? caught.message : "البلاغ ما اتبعتش. جرّب تاني."); }
   }
 
+  function beginPostEdit(post: FeedPost) {
+    setEditingPost(post); setEditBody(post.body || ""); setEditSpecialty(post.specialty || ""); setOpenMenuPost(null); setError("");
+  }
+
+  async function savePostEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!editingPost || editBusy) return;
+    setEditBusy(true); setError("");
+    try {
+      const response = await fetch(`/api/posts/${editingPost.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: editBody, specialty: editSpecialty }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نحفظ التعديل.");
+      setPosts(old => old.map(post => post.id === editingPost.id ? { ...post, body: payload.post.body, specialty: payload.post.specialty } : post));
+      setEditingPost(null); setSuccess("اتحفظ تعديل المنشور.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحفظ التعديل."); }
+    finally { setEditBusy(false); }
+  }
+
   async function deletePost(post: FeedPost) {
     if (post.author_id !== user.id || !window.confirm("متأكد إنك عايز تحذف المنشور نهائيًا؟")) return;
     try {
@@ -304,13 +350,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
   function renderComment(postId: string, comment: FeedComment, thread: FeedComment[], depth = 0): ReactNode {
     const replies = thread.filter(item => item.parent_comment_id === comment.id);
     return (
-      <div className={`comment-thread ${depth > 0 ? "comment-thread-reply" : ""}`} key={comment.id}>
+      <div className={`comment-thread ${depth > 0 ? "comment-thread-reply" : ""}`} id={`comment-${comment.id}`} key={comment.id}>
         <div className="comment comment-professional">
           <div className="avatar sm comment-avatar" style={{ background: comment.avatar_color || "var(--blue)" }}>{comment.display_name.slice(0, 1)}</div>
           <div className="comment-content">
             <div className="comment-body comment-bubble">
               <div className="comment-author-line">
-                <strong>{comment.display_name}</strong>
+                <Link href={`/people/${encodeURIComponent(comment.username)}`}><strong>{comment.display_name}</strong></Link>
                 {comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}
                 <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG")}>{formatPostTime(comment.created_at)}</time>
               </div>
@@ -400,7 +446,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       <section className="feed-stream" aria-label="منشورات المهندسين">
         <div className="feed-stream-header feed-stream-header-filterable">
           <div className="feed-stream-heading">
-            <div><h2>آخر المشاركات</h2><p>{q ? `نتائج البحث عن «${q}»` : filter ? `مشاركات زملائك في تخصص ${filter}` : "شوف جديد زملائك وأسئلتهم وتجاربهم"}</p></div>
+            <div><h2>آخر المشاركات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "مشاركات المهندسين اللي بتتابعهم" : filter ? `مشاركات زملائك في تخصص ${filter}` : "شوف جديد زملائك وأسئلتهم وتجاربهم"}</p><div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div></div>
           </div>
           <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
             <SlidersHorizontal size={16} aria-hidden="true"/>
@@ -427,7 +473,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                 <div className="avatar post-avatar" style={{ background: post.avatar_color || "var(--blue)" }}>{post.display_name.slice(0, 1)}</div>
                 <div className="user-meta post-author-meta">
                   <div className="post-author-name-row">
-                    <span className="post-author-name">{post.display_name}</span>
+                    <Link className="post-author-name" href={`/people/${encodeURIComponent(post.username)}`}>{post.display_name}</Link>
                     {post.author_role === "member" ? <CheckCircle2 size={15} className="post-verified-icon" aria-label="عضو موثّق"/> : <span className="post-team-label">فريق AXIS</span>}
                     {post.author_role === "member" && <ProfessionalBadges level={post.seniority_code} badges={post.verified_badges} compact/>}
                   </div>
@@ -442,20 +488,20 @@ export function FeedClient({ user }: { user: SessionUser }) {
               <div className="post-menu-anchor">
                 <button type="button" className="icon-btn post-menu-trigger" aria-label="خيارات المنشور" aria-expanded={openMenuPost === post.id} onClick={() => setOpenMenuPost(openMenuPost === post.id ? null : post.id)}><MoreHorizontal size={20}/></button>
                 {openMenuPost === post.id && <div className="post-menu" role="menu">
-                  {post.author_id === user.id ? <button type="button" role="menuitem" onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> حذف المنشور</button> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
+                  {post.author_id === user.id ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل المنشور</button><button type="button" role="menuitem" onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> حذف المنشور</button></> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
                   <button type="button" role="menuitem" onClick={() => setOpenMenuPost(null)}><X size={15}/> إغلاق</button>
                 </div>}
               </div>
             </header>
 
             {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">من الشغل</span></div>}
-            {post.body && <p className="post-body post-professional-body">{post.body}</p>}
+            {editingPost?.id === post.id ? <form className="post-edit-form" onSubmit={savePostEdit}><label className="sr-only" htmlFor={`edit-post-${post.id}`}>تعديل نص المنشور</label><textarea id={`edit-post-${post.id}`} className="field" maxLength={5000} rows={4} value={editBody} onChange={event=>setEditBody(event.target.value)} placeholder="اكتب تحديثك…"/><label className="post-edit-specialty"><span>التخصص</span><select className="field" value={editSpecialty} onChange={event=>setEditSpecialty(event.target.value)}><option value="">بدون تخصص</option>{SPECIALTIES.map(item=><option key={item}>{item}</option>)}</select></label><div className="row"><button className="btn btn-primary btn-small" disabled={editBusy||!editBody.trim()&&!post.has_image&&!post.shared_post_id}>{editBusy?"جارٍ الحفظ…":"حفظ التعديل"}</button><button className="btn btn-small" type="button" disabled={editBusy} onClick={()=>setEditingPost(null)}>إلغاء</button></div></form> : post.body && <p className="post-body post-professional-body">{post.body}</p>}
             {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell">
               <div className="shared-post-attribution"><Share2 size={14}/><span>{post.display_name} شارك المنشور ده</span></div>
               <article className="shared-post-original">
                 <header className="shared-post-original-header">
                   <div className="avatar sm" style={{ background: post.shared_avatar_color || "var(--blue)" }}>{post.shared_display_name.slice(0, 1)}</div>
-                  <div className="user-meta"><strong>{post.shared_display_name}</strong><span className="small muted">{post.shared_job_title || (post.shared_specialty ? `تخصص ${post.shared_specialty}` : "من مجتمع AXIS")}</span></div>
+                  <div className="user-meta"><Link href={`/people/${encodeURIComponent(post.shared_username || "")}`}><strong>{post.shared_display_name}</strong></Link><span className="small muted">{post.shared_job_title || (post.shared_specialty ? `تخصص ${post.shared_specialty}` : "من مجتمع AXIS")}</span></div>
                   {post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatPostTime(post.shared_created_at)}</time>}
                 </header>
                 {post.shared_body && <p className="shared-post-original-body">{post.shared_body}</p>}
@@ -501,6 +547,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </section>}
           </article>
         ))}
+        {nextCursor && !isLoading && <div className="feed-load-more-wrap"><button type="button" className="btn feed-load-more" onClick={()=>void loadMore()} disabled={isLoadingMore}>{isLoadingMore?<RefreshCw size={15} className="spin-icon"/>:null}{isLoadingMore?"بنحمّل كمان…":"عرض مشاركات أقدم"}</button></div>}
       </section>
       <div className="feed-footer-note"><BadgeCheck size={15}/> AXIS مساحة للمهندسين أصحاب العضوية المعتمدة — شارك خبرتك واحترم خبرات غيرك.</div>
       {sharingPost && <div className="feed-share-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !shareBusy) setSharingPost(null); }}>

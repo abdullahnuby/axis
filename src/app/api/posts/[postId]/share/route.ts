@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { cleanText, getApiUser, jsonError, sameOrigin } from "@/lib/http";
+import { consumeRateLimit, requestIpKey } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 type Ctx = { params: Promise<{ postId: string }> };
@@ -15,6 +16,7 @@ export async function POST(request: Request, context: Ctx) {
   if (!UUID.test(postId)) return jsonError("المنشور غير صالح.", 400);
   let input: Record<string, unknown>;
   try { input = await request.json(); } catch { return jsonError("بيانات المشاركة غير صالحة."); }
+  if (await consumeRateLimit("share-post", `${requestIpKey(request)}:${user!.id}`, { limit: 20, windowMinutes: 60, blockMinutes: 30 })) return jsonError("مشاركات كتير في وقت قصير. جرّب بعد شوية.", 429);
   const caption = cleanText(input.caption, 5000);
   if (caption.length > 5000) return jsonError("التعليق على المشاركة أطول من الحد المسموح.");
 
@@ -27,7 +29,8 @@ export async function POST(request: Request, context: Ctx) {
          JOIN users p_author ON p_author.id = p.author_id
          JOIN posts original ON original.id = COALESCE(p.shared_post_id, p.id)
          JOIN users source_author ON source_author.id = original.author_id
-        WHERE p.id = $1
+        WHERE p.id = $1 AND p.group_id IS NULL
+          AND original.group_id IS NULL
           AND p_author.account_status = 'active' AND p_author.verification_status = 'verified'
           AND source_author.account_status = 'active' AND source_author.verification_status = 'verified'
         LIMIT 1`,
@@ -41,6 +44,10 @@ export async function POST(request: Request, context: Ctx) {
        RETURNING id, created_at`,
       [user!.id, caption, source.rows[0].specialty || user!.specialty || null, source.rows[0].source_id],
     );
+    const originalAuthor = await query<{author_id:string}>("SELECT author_id FROM posts WHERE id=$1",[source.rows[0].source_id]);
+    if (originalAuthor.rows[0]?.author_id && originalAuthor.rows[0].author_id !== user!.id) {
+      await query("INSERT INTO notifications(user_id,actor_id,kind,message,target_post_id) VALUES($1,$2,'share',$3,$4)", [originalAuthor.rows[0].author_id,user!.id,`${user!.display_name} أعاد مشاركة منشورك.`,source.rows[0].source_id]);
+    }
     return NextResponse.json({ ok: true, postId: created.rows[0].id, redirect: "/feed", destination: "profile-and-feed" }, { status: 201 });
   } catch (error) {
     console.error("AXIS internal share error", (error as { code?: string })?.code || "database_error");
