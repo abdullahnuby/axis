@@ -96,15 +96,32 @@ await check("feed removes the decorative hero, uses natural social copy, and kee
   assert.match(styles, /\.post-professional-body \{[^}]*font-size: 15\.5px !important/s);
   assert.match(styles, /\.mobile-bottom a \{[^}]*font-size: 11\.5px !important/s);
 });
-await check("feed sharing opens a selected post through a stable shared link", async () => {
+await check("post sharing is an in-platform repost to profile and feed, not an external share sheet", async () => {
   const feed = await read("src/components/FeedClient.tsx");
-  const api = await read("src/app/api/feed/route.ts");
-  assert.match(feed, /navigator\.share/);
-  assert.match(feed, /clipboard\.writeText/);
-  assert.match(feed, /feed\?post=/);
-  assert.match(feed, /id=\{`post-\$\{post\.id\}`\}/);
-  assert.match(api, /sharedPostId/);
-  assert.match(api, /p\.id=\$4::uuid/);
+  const api = await read("src/app/api/posts/[postId]/share/route.ts");
+  const schema = await read("db/schema.sql");
+  const migration = await read("db/migrations/20261025_internal_post_sharing.sql");
+  const profilePage = await read("src/app/profile/page.tsx");
+  const profileClient = await read("src/components/ProfileClient.tsx");
+  assert.doesNotMatch(feed, /navigator\.share|clipboard\.writeText/);
+  assert.match(feed, /مشاركة داخل AXIS/);
+  assert.match(feed, /confirmInternalShare/);
+  assert.match(feed, /api\/posts\/\$\{sharingPost\.id\}\/share/);
+  assert.match(feed, /shared-post-original/);
+  assert.match(api, /getApiUser\(\{ verified: true \}\)/);
+  assert.match(api, /INSERT INTO posts \(author_id, body, specialty, shared_post_id\)/);
+  assert.match(schema, /shared_post_id uuid REFERENCES posts\(id\) ON DELETE CASCADE/);
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS shared_post_id/);
+  assert.match(profilePage, /LEFT JOIN posts sp ON sp\.id=p\.shared_post_id/);
+  assert.match(profileClient, /profile-shared-post-shell/);
+});
+await check("mobile zoom is disabled and form controls stay at 16px", async () => {
+  const layout = await read("src/app/layout.tsx");
+  const styles = await read("src/app/globals.css");
+  assert.match(layout, /maximumScale: 1/);
+  assert.match(layout, /userScalable: false/);
+  assert.match(styles, /touch-action: manipulation/);
+  assert.match(styles, /font-size: 16px !important/);
 });
 await check("comment replies and comment likes are database-backed", async () => {
   const schema = await read("db/schema.sql");

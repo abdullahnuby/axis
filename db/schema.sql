@@ -72,18 +72,26 @@ CREATE INDEX IF NOT EXISTS verification_documents_request_idx ON verification_do
 CREATE TABLE IF NOT EXISTS posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   author_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  body text NOT NULL CHECK (char_length(body) <= 5000),
+  body text NOT NULL DEFAULT '' CHECK (char_length(body) <= 5000),
   specialty text,
   image_data bytea,
   image_mime text CHECK (image_mime IS NULL OR image_mime IN ('image/jpeg','image/png','image/webp')),
   image_name text,
+  shared_post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (char_length(body) > 0 OR image_data IS NOT NULL)
+  CONSTRAINT posts_content_check CHECK (char_length(body) > 0 OR image_data IS NOT NULL OR shared_post_id IS NOT NULL)
 );
+-- Upgrade existing Neon databases without deleting posts: a repost may contain no caption or image of its own.
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS shared_post_id uuid REFERENCES posts(id) ON DELETE CASCADE;
+ALTER TABLE posts ALTER COLUMN body SET DEFAULT '';
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_check;
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_content_check;
+ALTER TABLE posts ADD CONSTRAINT posts_content_check CHECK (char_length(body) > 0 OR image_data IS NOT NULL OR shared_post_id IS NOT NULL);
 CREATE INDEX IF NOT EXISTS posts_feed_idx ON posts (created_at DESC);
 CREATE INDEX IF NOT EXISTS posts_author_idx ON posts (author_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS posts_specialty_idx ON posts (specialty, created_at DESC);
+CREATE INDEX IF NOT EXISTS posts_shared_post_idx ON posts (shared_post_id) WHERE shared_post_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS post_likes (
   post_id uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
