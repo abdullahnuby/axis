@@ -29,6 +29,6 @@ export async function POST(request: Request) {
     const code = (error as { code?: string })?.code;
     if (code === "23505") return jsonError("البريد الإلكتروني أو اسم المستخدم مستخدم بالفعل.", 409);
     console.error("AXIS registration error", code || "database_error");
-    return jsonError("تعذر إنشاء الحساب حاليًا. تأكد من إعداد قاعدة البيانات وحاول مرة أخرى.", 500);
+    return jsonError("ما قدرناش ننشئ الحساب دلوقتي. جرّب تاني بعد شوية.", 500);
   }
 }

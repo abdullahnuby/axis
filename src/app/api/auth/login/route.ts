@@ -35,6 +35,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, redirect });
   } catch (error) {
     console.error("AXIS login error", (error as { code?: string })?.code || "database_error");
-    return jsonError("تعذر تسجيل الدخول حاليًا.", 500);
+    return jsonError("مش قادرين نسجّلك دخول دلوقتي. جرّب تاني بعد شوية.", 500);
   }
 }

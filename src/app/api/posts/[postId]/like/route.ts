@@ -21,5 +21,5 @@ export async function POST(request: Request, context: Ctx) {
     });
     const count = await query<{ count: number }>("SELECT count(*)::int AS count FROM post_likes WHERE post_id=$1", [postId]);
     return NextResponse.json({ liked, likeCount: count.rows[0]?.count || 0 });
-  } catch (error) { const status = (error as { statusCode?: number })?.statusCode; return jsonError(error instanceof Error ? error.message : "تعذر تحديث الإعجاب.", status || 500); }
+  } catch (error) { const status = (error as { statusCode?: number })?.statusCode; return jsonError(error instanceof Error ? error.message : "ما قدرناش نحدّث الإعجاب. جرّب تاني.", status || 500); }
 }

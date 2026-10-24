@@ -103,11 +103,11 @@ export function FeedClient({ user }: { user: SessionUser }) {
       if (feedResponse.status === 403) { window.location.href = "/verification"; return; }
       const feedData = await feedResponse.json();
       const eventData = eventResponse.ok ? await eventResponse.json() : { events: [] };
-      if (!feedResponse.ok) throw new Error(feedData.error || "تعذر تحميل المنشورات.");
+      if (!feedResponse.ok) throw new Error(feedData.error || "مش قادرين نحمّل المشاركات دلوقتي. جرّب تحدّث الصفحة.");
       setPosts(Array.isArray(feedData.posts) ? feedData.posts : []);
       setEvents(Array.isArray(eventData.events) ? eventData.events : []);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "تعذر الاتصال بالموجز. حاول مرة أخرى.");
+      setError(caught instanceof Error ? caught.message : "الاتصال فصل لحظة. جرّب تاني، ومشاركاتك هتفضل زي ما هي.");
     } finally {
       didLoadRef.current = true;
       setIsLoading(false);
@@ -133,20 +133,20 @@ export function FeedClient({ user }: { user: SessionUser }) {
     try {
       const response = await fetch("/api/feed", { method: "POST", body: data });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر نشر المنشور.");
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش ننشر المشاركة. جرّب تاني.");
       setBody(""); setImage(null); setSpecialty("");
       if (imageInputRef.current) imageInputRef.current.value = "";
-      setSuccess("تم نشر منشورك بنجاح.");
+      setSuccess("اتنشرت مشاركتك بنجاح 🙌");
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "تعذر نشر المنشور. تحقق من اتصالك وحاول مجددًا.");
+      setError(caught instanceof Error ? caught.message : "ما قدرناش ننشر المشاركة. اتأكد من اتصالك وجرّب تاني.");
     } finally { setBusy(false); }
   }
 
   function chooseImage(event: ChangeEvent<HTMLInputElement>) {
     const chosen = event.target.files?.[0] || null;
     if (chosen && chosen.size > 2_000_000) {
-      setError("حجم الصورة كبير. الحد الأقصى للصورة 2 ميجابايت.");
+      setError("الصورة كبيرة شوية؛ اختار صورة أصغر من 2 ميجابايت.");
       event.target.value = "";
       return;
     }
@@ -160,9 +160,9 @@ export function FeedClient({ user }: { user: SessionUser }) {
     try {
       const response = await fetch(`/api/posts/${post.id}/like`, { method: "POST" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر تسجيل الإعجاب.");
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نسجل إعجابك دلوقتي. جرّب تاني.");
       setPosts(old => old.map(item => item.id === post.id ? { ...item, has_liked: payload.liked, like_count: payload.likeCount } : item));
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر تسجيل الإعجاب."); }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نسجل إعجابك دلوقتي. جرّب تاني."); }
     finally { setBusyLikePostId(null); }
   }
 
@@ -174,9 +174,9 @@ export function FeedClient({ user }: { user: SessionUser }) {
     try {
       const response = await fetch(`/api/posts/${post.id}/comments`, { cache: "no-store" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر تحميل التعليقات.");
+      if (!response.ok) throw new Error(payload.error || "التعليقات مش ظاهرة دلوقتي. جرّب تفتحها تاني.");
       setComments(old => ({ ...old, [post.id]: Array.isArray(payload.comments) ? payload.comments : [] }));
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر تحميل التعليقات."); }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "التعليقات مش ظاهرة دلوقتي. جرّب تفتحها تاني."); }
   }
 
   async function addComment(postId: string, event?: FormEvent<HTMLFormElement>) {
@@ -192,12 +192,12 @@ export function FeedClient({ user }: { user: SessionUser }) {
         body: JSON.stringify({ body: draft, parentCommentId: replyTarget?.id || null }),
       });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر إضافة التعليق.");
+      if (!response.ok) throw new Error(payload.error || "التعليق ما اتبعتش. جرّب تاني.");
       setComments(old => ({ ...old, [postId]: [...(old[postId] || []), payload.comment] }));
       setCommentDrafts(old => ({ ...old, [postId]: "" }));
       setReplyTargets(old => ({ ...old, [postId]: null }));
       setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: post.comment_count + 1 } : post));
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر إضافة التعليق."); }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "التعليق ما اتبعتش. جرّب تاني."); }
     finally { setCommentBusy(false); }
   }
 
@@ -207,14 +207,14 @@ export function FeedClient({ user }: { user: SessionUser }) {
     try {
       const response = await fetch(`/api/comments/${comment.id}/like`, { method: "POST" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر تسجيل الإعجاب بالتعليق.");
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نسجل إعجابك بالتعليق. جرّب تاني.");
       setComments(old => ({
         ...old,
         [postId]: (old[postId] || []).map(item => item.id === comment.id
           ? { ...item, has_liked: Boolean(payload.hasLiked ?? payload.liked), like_count: Number(payload.likeCount) || 0 }
           : item),
       }));
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر تسجيل الإعجاب بالتعليق."); }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نسجل إعجابك بالتعليق. جرّب تاني."); }
     finally { setBusyLikeCommentId(null); }
   }
 
@@ -223,28 +223,28 @@ export function FeedClient({ user }: { user: SessionUser }) {
     try {
       if (typeof navigator.share === "function") {
         await navigator.share({ title: `AXIS · ${post.display_name}`, text: post.body.slice(0, 180) || "منشور هندسي على AXIS", url: shareUrl });
-        setSuccess("تم فتح خيارات المشاركة.");
+        setSuccess("اختار التطبيق اللي تحب تشارك منه.");
         return;
       }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
-        setSuccess("تم نسخ رابط المنشور. شاركه مع زملائك.");
+        setSuccess("نسخنا رابط المشاركة. ابعته لزميلك أو شاركه في أي مكان.");
         return;
       }
-      window.prompt("انسخ رابط المنشور لمشاركته:", shareUrl);
+      window.prompt("انسخ الرابط وابعته لزملائك:", shareUrl);
     } catch (caught) {
       if (caught instanceof Error && caught.name === "AbortError") return;
-      window.prompt("انسخ رابط المنشور لمشاركته:", shareUrl);
+      window.prompt("انسخ الرابط وابعته لزملائك:", shareUrl);
     }
   }
 
   async function deleteComment(postId: string, comment: FeedComment, thread: FeedComment[]) {
     if (comment.author_id !== user.id && user.role !== "admin") return;
-    if (!window.confirm("حذف التعليق وكل الردود التابعة له؟")) return;
+    if (!window.confirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
     try {
       const response = await fetch(`/api/comments/${comment.id}`, { method: "DELETE" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر حذف التعليق.");
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نحذف التعليق دلوقتي. جرّب تاني.");
       const removedIds = new Set<string>([comment.id]);
       let changed = true;
       while (changed) {
@@ -258,32 +258,32 @@ export function FeedClient({ user }: { user: SessionUser }) {
       }
       setComments(old => ({ ...old, [postId]: (old[postId] || []).filter(item => !removedIds.has(item.id)) }));
       setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: Math.max(0, post.comment_count - removedIds.size) } : post));
-      setSuccess("تم حذف التعليق والردود التابعة له.");
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر حذف التعليق."); }
+      setSuccess("اتحذف التعليق والردود التابعة له.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف التعليق دلوقتي. جرّب تاني."); }
   }
 
   async function reportPost(postId: string) {
     const reason = reportReason.trim();
-    if (reason.length < 3) { setError("اكتب سببًا واضحًا للإبلاغ."); return; }
+    if (reason.length < 3) { setError("قول لنا إيه المشكلة في المنشور."); return; }
     setError("");
     try {
       const response = await fetch(`/api/posts/${postId}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر إرسال البلاغ.");
-      setReportingPostId(null); setReportReason(""); setSuccess("تم إرسال البلاغ إلى الإدارة للمراجعة.");
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر إرسال البلاغ."); }
+      if (!response.ok) throw new Error(payload.error || "البلاغ ما اتبعتش. جرّب تاني.");
+      setReportingPostId(null); setReportReason(""); setSuccess("وصل بلاغك لفريق AXIS، وهيتراجع.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "البلاغ ما اتبعتش. جرّب تاني."); }
   }
 
   async function deletePost(post: FeedPost) {
-    if (post.author_id !== user.id || !window.confirm("حذف هذا المنشور نهائيًا؟")) return;
+    if (post.author_id !== user.id || !window.confirm("متأكد إنك عايز تحذف المنشور نهائيًا؟")) return;
     try {
       const response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "تعذر حذف المنشور.");
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نحذف المنشور دلوقتي. جرّب تاني.");
       setPosts(old => old.filter(item => item.id !== post.id));
       setOpenMenuPost(null);
-      setSuccess("تم حذف المنشور.");
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "تعذر حذف المنشور."); }
+      setSuccess("اتحذف المنشور.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف المنشور دلوقتي. جرّب تاني."); }
   }
 
   function renderComment(postId: string, comment: FeedComment, thread: FeedComment[], depth = 0): ReactNode {
@@ -319,18 +319,9 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
   return (
     <AppShell user={user} events={events} active="/feed">
-      <section className="feed-page-intro" aria-labelledby="feed-title">
-        <div className="feed-intro-copy">
-          <span className="feed-eyebrow"><span className="feed-eyebrow-dot"/> مجتمع مهني موثّق</span>
-          <h1 id="feed-title" className="feed-main-title">الموجز الهندسي</h1>
-          <p>خبرات من مواقع العمل، أسئلة مهنية، وأفكار تستحق النقاش.</p>
-        </div>
-        <div className="feed-intro-mark" aria-hidden="true"><AxisLogoMark className="feed-intro-logo"/><span>AXIS</span></div>
-      </section>
-
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
-      <section className="feed-mobile-filterbar" aria-label="تصفية الموجز حسب التخصص">
+      <section className="feed-mobile-filterbar" aria-label="اختار تخصصك علشان تشوف المشاركات الأقرب لاهتماماتك">
         <div className="feed-mobile-filter-label"><SlidersHorizontal size={14}/><span>التخصص</span></div>
         <div className="feed-filters feed-filters-mobile" role="group" aria-label="تصفية المنشورات حسب التخصص">
           <button type="button" className={`feed-filter-chip ${!filter ? "active" : ""}`} aria-pressed={!filter} onClick={() => setFilter("")}>الكل</button>
@@ -344,15 +335,15 @@ export function FeedClient({ user }: { user: SessionUser }) {
             <div className="avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
             <div className="user-meta">
               <div className="user-name compose-display-name">{user.display_name}{user.role === "member" ? <ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact/> : <span className="pill navy">فريق AXIS</span>}</div>
-              <div className="user-sub">شارك معرفة تفيد مهندسًا آخر</div>
+              <div className="user-sub">خبرتك ممكن تفيد زميلك — شاركها معانا</div>
             </div>
           </div>
-          <span className="compose-private"><BadgeCheck size={15}/> للمجتمع الموثّق</span>
+          <span className="compose-private"><BadgeCheck size={15}/> مساحة للمهندسين المعتمدين</span>
         </div>
         <div className="compose-input-row">
           <div className="avatar compose-mobile-avatar" style={{ background: user.avatar_color || "var(--blue)" }} aria-hidden="true">{user.display_name.slice(0, 1)}</div>
-          <label className="sr-only" htmlFor="feed-post-body">محتوى المنشور</label>
-          <textarea id="feed-post-body" className="field compose-textarea" value={body} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="شارك سؤالًا أو فكرة هندسية…" aria-label="محتوى المنشور" />
+          <label className="sr-only" htmlFor="feed-post-body">نص المشاركة</label>
+          <textarea id="feed-post-body" className="field compose-textarea" value={body} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="إيه اللي حابب تشاركه مع زملائك؟" aria-label="نص المشاركة" />
           <label className="compose-quick-image" htmlFor="post-image" aria-label="إضافة صورة للمنشور" title="إضافة صورة"><ImagePlus size={19}/></label>
         </div>
 
@@ -380,19 +371,19 @@ export function FeedClient({ user }: { user: SessionUser }) {
         </div>
       </form>
 
-      <div className="feed-event-strip" aria-label="أهم الأحداث الهندسية">
-        <span className="feed-event-strip-label"><CalendarDays size={13}/> أهم الأحداث</span>
+      <div className="feed-event-strip" aria-label="فعاليات وأخبار هندسية">
+        <span className="feed-event-strip-label"><CalendarDays size={13}/> فعاليات وأخبار</span>
         <span className="feed-event-strip-divider" aria-hidden="true"/>
         {events[0]?.event_url
           ? <a href={events[0].event_url} target="_blank" rel="noreferrer">{events[0].title}</a>
-          : <span className="feed-event-strip-title">{events[0]?.title || "تابع الفعاليات والملتقيات الهندسية"}</span>}
+          : <span className="feed-event-strip-title">{events[0]?.title || "أي فعالية جديدة تهمّك هتلاقي تفاصيلها هنا."}</span>}
         {events[0]?.starts_at && <time dateTime={events[0].starts_at}>{new Date(events[0].starts_at).toLocaleDateString("ar-EG", { day: "numeric", month: "short" })}</time>}
       </div>
 
       <section className="feed-stream" aria-label="منشورات المهندسين">
         <div className="feed-stream-header">
           <div className="feed-stream-heading">
-            <div><h2>منشورات المجتمع</h2><p>{q ? `نتائج البحث عن «${q}»` : filter ? `تصفّح منشورات تخصص ${filter}` : "أحدث ما يشاركه المهندسون"}</p></div>
+            <div><h2>آخر المشاركات</h2><p>{q ? `نتائج البحث عن «${q}»` : filter ? `مشاركات زملائك في تخصص ${filter}` : "شوف أحدث الأسئلة والتجارب من زملائك"}</p></div>
             <span className="feed-stream-icon"><SlidersHorizontal size={18}/></span>
           </div>
           <div className="feed-filters" role="group" aria-label="تصفية المنشورات حسب التخصص">
@@ -401,13 +392,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
           </div>
         </div>
 
-        {isRefreshing && <div className="feed-refresh-line"><RefreshCw size={14} className="spin-icon"/> جارٍ تحديث المنشورات</div>}
+        {isRefreshing && <div className="feed-refresh-line"><RefreshCw size={14} className="spin-icon"/> بنحدّث المشاركات…</div>}
         {isLoading ? <div className="feed-loading"><PostSkeleton/><PostSkeleton/></div> : posts.length === 0 ? (
           <div className="empty-state feed-empty-state">
             <div className="feed-empty-icon"><Search size={26}/></div>
-            <h2>{q || filter ? "لا توجد نتائج مطابقة" : "ابدأ الحوار الهندسي"}</h2>
-            <p>{q || filter ? "جرّب تغيير كلمة البحث أو اختيار تخصص آخر." : "لا توجد منشورات حتى الآن. شارك تجربة من موقع العمل أو سؤالًا يستفيد منه زملاؤك."}</p>
-            {(q || filter) && <button className="btn btn-primary" type="button" onClick={() => { setFilter(""); if (q) window.location.href = "/feed"; }}>عرض جميع المنشورات</button>}
+            <h2>{q || filter ? "ملقيناش مشاركات مناسبة" : "ابدأها بمشاركة منك"}</h2>
+            <p>{q || filter ? "جرّب كلمة بحث تانية أو اختار تخصص مختلف." : "لسه مفيش مشاركات هنا. احكيلنا عن موقف من الشغل، أو اسأل سؤال ممكن يفيد زملاءك."}</p>
+            {(q || filter) && <button className="btn btn-primary" type="button" onClick={() => { setFilter(""); if (q) window.location.href = "/feed"; }}>عرض كل المشاركات</button>}
           </div>
         ) : posts.map(post => (
           <article className="card post post-professional" id={`post-${post.id}`} key={post.id} tabIndex={-1}>
@@ -437,13 +428,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
               </div>
             </header>
 
-            {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">مشاركة هندسية</span></div>}
+            {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">من الشغل</span></div>}
             {post.body && <p className="post-body post-professional-body">{post.body}</p>}
             {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt={`صورة مرفقة بمنشور ${post.display_name}`} loading="lazy"/></a>}
 
             {(post.like_count > 0 || post.comment_count > 0) && <div className="post-engagement-summary">
               <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={11}/></span>{post.like_count.toLocaleString("ar-EG")} إعجاب</span>
-              <button type="button" className="post-comment-summary" onClick={() => void toggleComments(post)}>{post.comment_count.toLocaleString("ar-EG")} تعليق ورد</button>
+              <button type="button" className="post-comment-summary" onClick={() => void toggleComments(post)}>{post.comment_count.toLocaleString("ar-EG")} تعليقات وردود</button>
             </div>}
 
             <div className="post-action-bar post-action-bar-compact">
@@ -459,27 +450,27 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </div>
 
             {reportingPostId === post.id && <div className="post-report-panel">
-              <div className="between"><strong>الإبلاغ عن محتوى</strong><button type="button" className="icon-btn" aria-label="إغلاق الإبلاغ" onClick={() => setReportingPostId(null)}><X size={16}/></button></div>
-              <p>وضّح سبب البلاغ حتى تتمكن الإدارة من مراجعته.</p>
-              <textarea className="field" rows={3} maxLength={1000} value={reportReason} onChange={event => setReportReason(event.target.value)} placeholder="اكتب سبب الإبلاغ…"/>
+              <div className="between"><strong>إبلاغ عن المنشور</strong><button type="button" className="icon-btn" aria-label="إغلاق الإبلاغ" onClick={() => setReportingPostId(null)}><X size={16}/></button></div>
+              <p>قول لنا إيه اللي محتاج مراجعة، وفريق AXIS هيتابع البلاغ.</p>
+              <textarea className="field" rows={3} maxLength={1000} value={reportReason} onChange={event => setReportReason(event.target.value)} placeholder="احكي لنا إيه المشكلة…"/>
               <div className="row"><button type="button" className="btn btn-small" onClick={() => setReportingPostId(null)}>إلغاء</button><button type="button" className="btn btn-danger btn-small" disabled={reportReason.trim().length < 3} onClick={() => void reportPost(post.id)}><Flag size={14}/> إرسال البلاغ</button></div>
             </div>}
 
             {openComments === post.id && <section className="comments comments-professional" aria-label="تعليقات المنشور">
-              <div className="comments-heading"><div><h3>النقاش</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG")} تعليق ورد</span></div></div>
-              {!comments[post.id] ? <div className="comments-loading">جارٍ تحميل النقاش…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لا توجد تعليقات بعد. ابدأ نقاشًا مهنيًا باحترام.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
-              {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء الرد <X size={13}/></button></div>}
+              <div className="comments-heading"><div><h3>التعليقات</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG")} تعليقات وردود</span></div></div>
+              {!comments[post.id] ? <div className="comments-loading">بنحمّل التعليقات…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
+              {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء <X size={13}/></button></div>}
               <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>
                 <div className="avatar sm comment-current-avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
-                <label className="sr-only" htmlFor={`comment-${post.id}`}>{replyTargets[post.id] ? "اكتب ردًا" : "اكتب تعليقًا"}</label>
-                <input id={`comment-${post.id}`} className="field" value={commentDrafts[post.id] || ""} onChange={event => setCommentDrafts(old => ({ ...old, [post.id]: event.target.value }))} maxLength={1200} placeholder={replyTargets[post.id] ? `الرد على ${replyTargets[post.id]!.display_name}…` : "أضف تعليقًا مفيدًا…"}/>
+                <label className="sr-only" htmlFor={`comment-${post.id}`}>{replyTargets[post.id] ? "اكتب ردك" : "اكتب تعليقك"}</label>
+                <input id={`comment-${post.id}`} className="field" value={commentDrafts[post.id] || ""} onChange={event => setCommentDrafts(old => ({ ...old, [post.id]: event.target.value }))} maxLength={1200} placeholder={replyTargets[post.id] ? `الرد على ${replyTargets[post.id]!.display_name}…` : "اكتب تعليقك…"}/>
                 <button type="submit" className="comment-send" disabled={commentBusy || !(commentDrafts[post.id] || "").trim()} aria-label={replyTargets[post.id] ? "إرسال الرد" : "إرسال التعليق"}><Send size={17}/></button>
               </form>
             </section>}
           </article>
         ))}
       </section>
-      <div className="feed-footer-note"><BadgeCheck size={15}/> مجتمع AXIS مخصص للمهندسين ذوي العضوية المعتمدة.</div>
+      <div className="feed-footer-note"><BadgeCheck size={15}/> AXIS مساحة للمهندسين أصحاب العضوية المعتمدة — شارك خبرتك واحترم خبرات غيرك.</div>
     </AppShell>
   );
 }

@@ -37,6 +37,6 @@ export async function POST(request: Request, context: Ctx) {
   } catch (error) {
     const status = (error as { statusCode?: number })?.statusCode;
     console.error("AXIS comment like error", (error as { code?: string })?.code || "request_error");
-    return jsonError(error instanceof Error ? error.message : "تعذر تحديث الإعجاب.", status || 500);
+    return jsonError(error instanceof Error ? error.message : "ما قدرناش نحدّث الإعجاب. جرّب تاني.", status || 500);
   }
 }

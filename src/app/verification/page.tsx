@@ -6,7 +6,7 @@ import { Brand } from "@/components/Brand";
 import { LogoutButton } from "@/components/LogoutButton";
 import { VerificationClient } from "@/components/VerificationClient";
 
-export const metadata: Metadata = { title: "تفعيل العضوية" };
+export const metadata: Metadata = { title: "توثيق العضوية" };
 export const dynamic = "force-dynamic";
 type RequestStatus = { status: string; legal_name: string; review_note: string | null; created_at: string };
 export default async function VerificationPage() {

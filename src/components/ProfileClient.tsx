@@ -61,17 +61,17 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
         body: JSON.stringify({ displayName, specialty, bio }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "تعذّر حفظ الملف.");
-      setUser(data.user); setSuccess("تم تحديث ملفك المهني."); setEditing(false);
+      if (!response.ok) throw new Error(data.error || "ما قدرناش نحفظ التعديلات. جرّب تاني.");
+      setUser(data.user); setSuccess("اتحدّث حسابك بنجاح."); setEditing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "حدث خطأ أثناء حفظ الملف.");
+      setError(e instanceof Error ? e.message : "حصلت مشكلة وإحنا بنحفظ التعديلات.");
     } finally { setBusy(false); }
   }
 
   return <div className="profile-app">
     <header className="topbar profile-topbar">
       <div className="topbar-inner">
-        <Link href="/feed" className="btn btn-small profile-back-link"><ArrowRight size={15}/> العودة للموجز</Link>
+        <Link href="/feed" className="btn btn-small profile-back-link"><ArrowRight size={15}/> العودة للرئيسية</Link>
         <Brand />
       </div>
     </header>
@@ -109,33 +109,33 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
       </section>
 
       {editing && <section id="profile-edit-panel" className="card profile-edit-panel">
-        <div className="profile-section-heading"><div><h2 className="section-title">تعديل البيانات الظاهرة</h2><p className="small muted">حدّث بيانات التعريف التي تظهر للمهندسين.</p></div><PencilLine size={19} className="muted"/></div>
+        <div className="profile-section-heading"><div><h2 className="section-title">عدّل بياناتك</h2><p className="small muted">غيّر اسمك أو تخصصك أو النبذة اللي زملاؤك بيشوفوها.</p></div><PencilLine size={19} className="muted"/></div>
         <form className="form-stack" onSubmit={save}>
           <div className="form-grid">
             <div className="form-row"><label className="label" htmlFor="profile-name">اسم الظهور</label><input className="field" id="profile-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required minLength={2} maxLength={80}/></div>
-            <div className="form-row"><label className="label" htmlFor="profile-specialty">التخصص</label><select className="field" id="profile-specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)}><option value="">اختر تخصصًا</option>{SPECIALTIES.map((value) => <option key={value}>{value}</option>)}</select></div>
+            <div className="form-row"><label className="label" htmlFor="profile-specialty">التخصص</label><select className="field" id="profile-specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)}><option value="">اختار تخصصك</option>{SPECIALTIES.map((value) => <option key={value}>{value}</option>)}</select></div>
           </div>
-          <div className="form-row"><label className="label" htmlFor="profile-bio">نبذة مهنية قصيرة</label><textarea className="field" id="profile-bio" value={bio} onChange={(e) => setBio(e.target.value)} maxLength={600} placeholder="خبرتك واهتماماتك المهنية…"/><span className="tiny muted">{bio.length}/600 حرفًا</span></div>
+          <div className="form-row"><label className="label" htmlFor="profile-bio">نبذة مهنية قصيرة</label><textarea className="field" id="profile-bio" value={bio} onChange={(e) => setBio(e.target.value)} maxLength={600} placeholder="احكيلنا عن خبرتك والحاجات اللي بتهتم بيها…"/><span className="tiny muted">{bio.length}/600 حرفًا</span></div>
           <div className="row profile-edit-actions"><button className="btn btn-primary" disabled={busy} type="submit"><Save size={16}/>{busy ? "جارٍ الحفظ…" : "حفظ التغييرات"}</button><button className="btn" type="button" disabled={busy} onClick={() => { setDisplayName(user.display_name); setSpecialty(user.specialty || ""); setBio(user.bio || ""); setEditing(false); }}>إلغاء</button></div>
         </form>
-        <p className="profile-security-note"><LockKeyhole size={15}/> لا يمكنك تعديل سنوات الخبرة أو الشارات المهنية المعتمدة؛ تراجع الإدارة مستنداتها قبل عرضها.</p>
+        <p className="profile-security-note"><LockKeyhole size={15}/> سنوات الخبرة والشارات المهنية بيأكدها فريق AXIS بعد مراجعة المستندات، علشان المعلومات تفضل موثوقة.</p>
       </section>}
 
       <div className="profile-content-grid">
         <div className="profile-main-column">
           <section className="card profile-info-card">
             <div className="profile-section-heading"><div><h2 className="section-title">نبذة</h2><p className="small muted">تعريف مختصر عنك ومجالات اهتمامك.</p></div><UserRound size={19} className="muted"/></div>
-            {user.bio ? <p className="profile-bio-text">{user.bio}</p> : <div className="profile-empty-bio"><p>لم تضف نبذة مهنية بعد.</p><button className="btn btn-small" onClick={() => setEditing(true)}><PencilLine size={14}/> أضف نبذة</button></div>}
+            {user.bio ? <p className="profile-bio-text">{user.bio}</p> : <div className="profile-empty-bio"><p>لسه ما كتبتش نبذة عنك.</p><button className="btn btn-small" onClick={() => setEditing(true)}><PencilLine size={14}/> اكتب نبذة عنك</button></div>}
           </section>
 
           <section className="profile-posts-section">
-            <div className="profile-section-heading profile-posts-heading"><div><h2 className="section-title">منشورات العضو</h2><p className="small muted">أحدث ما شاركته مع مجتمع المهندسين.</p></div><span className="pill navy">{formatCount(posts.length)} منشور</span></div>
+            <div className="profile-section-heading profile-posts-heading"><div><h2 className="section-title">مشاركاتي</h2><p className="small muted">كل اللي شاركته مع زملائك هتلاقيه هنا.</p></div><span className="pill navy">{formatCount(posts.length)} منشور</span></div>
             {posts.length ? <div className="profile-post-list">{posts.map((post) => <article key={post.id} className="card profile-post-card">
               <div className="profile-post-meta"><span>{post.specialty || user.specialty || "هندسة"}</span><span>·</span><time dateTime={post.created_at}>{formatDate(post.created_at)}</time></div>
               {post.body ? <p className="profile-post-body">{post.body}</p> : null}
               {post.has_image ? <a className="profile-post-image-link" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور"><img className="profile-post-image" src={`/api/posts/${post.id}/image`} alt="صورة مرفقة بالمنشور" loading="lazy"/></a> : null}
               <div className="profile-post-stats"><span><ThumbsUp size={14}/>{formatCount(post.like_count)} إعجاب</span><span><MessageCircle size={14}/>{formatCount(post.comment_count)} تعليق</span></div>
-            </article>)}</div> : <div className="card profile-empty-posts"><div className="profile-empty-icon"><MessageCircle size={22}/></div><h3>لسه ما نشرتش أي محتوى</h3><p className="small muted">شارك سؤالًا أو تجربة من شغلك علشان تبدأ الحوار مع زملائك.</p><Link href="/feed#compose" className="btn btn-primary btn-small">إنشاء أول منشور</Link></div>}
+            </article>)}</div> : <div className="card profile-empty-posts"><div className="profile-empty-icon"><MessageCircle size={22}/></div><h3>لسه ما شاركتش حاجة</h3><p className="small muted">ابدأ بسؤال من الشغل أو احكيلنا عن تجربة ممكن تفيد زملاءك.</p><Link href="/feed#compose" className="btn btn-primary btn-small">أول مشاركة ليك</Link></div>}
           </section>
         </div>
 
@@ -146,14 +146,14 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
               <div className="profile-credential-row"><span className="profile-credential-label">المستوى المهني</span><span className="profile-credential-value"><span className="pill navy">{user.seniority_code}</span>{levelLabels[user.seniority_code] || "مستوى مهني"}</span>{levelDescriptions.has(user.seniority_code) ? <p>{levelDescriptions.get(user.seniority_code)}</p> : null}</div>
               {user.job_title ? <div className="profile-credential-row"><span className="profile-credential-label">المسمى الوظيفي</span><span className="profile-credential-value"><span className="pill gold">{user.verified_badges.includes("PM") ? "PM" : "موثّق"}</span>{user.job_title}</span></div> : null}
               {user.approved_years != null ? <div className="profile-credential-row"><span className="profile-credential-label">الخبرة المعتمدة</span><strong>{Number(user.approved_years).toLocaleString("ar-EG")} سنوات</strong></div> : null}
-              <div className="profile-credential-row"><span className="profile-credential-label">المؤهلات والشهادات</span>{approvedBadges.length ? <div className="profile-verified-qualifications">{approvedBadges.map((code) => <div className="profile-qualification" key={code}><span className="pill navy">{code}</span><span>{badgeLabels.get(code)}</span></div>)}</div> : <p className="profile-no-qualifications">لا توجد مؤهلات إضافية معتمدة للعرض حاليًا.</p>}</div>
+              <div className="profile-credential-row"><span className="profile-credential-label">المؤهلات والشهادات</span>{approvedBadges.length ? <div className="profile-verified-qualifications">{approvedBadges.map((code) => <div className="profile-qualification" key={code}><span className="pill navy">{code}</span><span>{badgeLabels.get(code)}</span></div>)}</div> : <p className="profile-no-qualifications">مفيش مؤهلات إضافية تم اعتمادها لعرضها دلوقتي.</p>}</div>
             </div> : <div className="profile-admin-note"><ShieldCheck size={22}/><div><strong>حساب إداري</strong><p>هذا الحساب مخصص لإدارة المجتمع ولا يعرض اعتمادات هندسية شخصية.</p></div></div>}
           </section>
-          <div className="profile-privacy-note"><LockKeyhole size={18}/><div><strong>بياناتك تحت سيطرتك</strong><p>الشارات المهنية يعتمدها فريق الإدارة. رقم العضوية الحقيقي وملفات التوثيق لا تظهر للأعضاء.</p></div></div>
+          <div className="profile-privacy-note"><LockKeyhole size={18}/><div><strong>بياناتك تحت سيطرتك</strong><p>فريق AXIS بيراجع الشارات المهنية، وبيانات عضويتك ومستنداتك الخاصة مش ظاهرة لباقي الأعضاء.</p></div></div>
         </aside>
       </div>
     </main>
 
-    <nav className="mobile-bottom profile-mobile-nav" aria-label="التنقل"><Link href="/feed"><UserRound size={17}/><span>الموجز</span></Link><Link href="/feed#compose" className="mobile-compose-link"><span className="profile-mobile-plus">+</span><span>منشور</span></Link><Link href="/notifications"><Bell size={17}/><span>الإشعارات</span></Link><Link href="/profile" className="active" aria-current="page"><UserRound size={17}/><span>حسابي</span></Link></nav>
+    <nav className="mobile-bottom profile-mobile-nav" aria-label="التنقل"><Link href="/feed"><UserRound size={17}/><span>الرئيسية</span></Link><Link href="/feed#compose" className="mobile-compose-link"><span className="profile-mobile-plus">+</span><span>منشور</span></Link><Link href="/notifications"><Bell size={17}/><span>الإشعارات</span></Link><Link href="/profile" className="active" aria-current="page"><UserRound size={17}/><span>حسابي</span></Link></nav>
   </div>;
 }

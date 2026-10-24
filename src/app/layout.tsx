@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "AXIS — مجتمع المهندسين", template: "%s | AXIS" },
-  description: "مجتمع مهني مغلق للمهندسين، يفتح بعد مراجعة العضوية يدويًا.",
+  description: "مساحة للمهندسين لتبادل الخبرات والأسئلة وتجارب مواقع العمل داخل مجتمع بعضوية موثّقة.",
   applicationName: "AXIS",
   manifest: "/manifest.webmanifest",
   appleWebApp: {

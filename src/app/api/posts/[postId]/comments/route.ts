@@ -33,7 +33,7 @@ export async function GET(_request: Request, context: Ctx) {
     return NextResponse.json({ comments: result.rows });
   } catch (error) {
     console.error("AXIS comments load error", (error as { code?: string })?.code || "database_error");
-    return jsonError("تعذر تحميل التعليقات. تأكد من تطبيق تحديث قاعدة البيانات.", 500);
+    return jsonError("التعليقات مش متاحة دلوقتي. جرّب تاني بعد شوية.", 500);
   }
 }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request, context: Ctx) {
   try { body = await request.json(); } catch { return jsonError("التعليق غير صالح."); }
   const text = cleanText(body.body, 1200);
   const parentCommentId = typeof body.parentCommentId === "string" ? body.parentCommentId.trim() : "";
-  if (!text) return jsonError("اكتب تعليقًا قبل الإرسال.");
+  if (!text) return jsonError("اكتب تعليقك الأول.");
   if (parentCommentId && !UUID.test(parentCommentId)) return jsonError("التعليق المراد الرد عليه غير صالح.");
   try {
     const comment = await withTransaction(async client => {
@@ -93,6 +93,6 @@ export async function POST(request: Request, context: Ctx) {
   } catch (error) {
     const status = (error as { statusCode?: number })?.statusCode;
     console.error("AXIS comment create error", (error as { code?: string })?.code || "request_error");
-    return jsonError(error instanceof Error ? error.message : "تعذر إضافة التعليق.", status || 500);
+    return jsonError(error instanceof Error ? error.message : "ما قدرناش نبعت تعليقك. جرّب تاني.", status || 500);
   }
 }

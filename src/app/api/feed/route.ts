@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       ORDER BY p.created_at DESC LIMIT 50`, [user!.id, specialty, q, sharedPostId || null]);
     const posts = result.rows.map((row: Record<string, unknown>) => ({ ...row, specialty: row.specialty || row.profile_specialty, profile_specialty: undefined }));
     return NextResponse.json({ posts });
-  } catch (error) { console.error("AXIS feed error", (error as { code?: string })?.code || "database_error"); return jsonError("تعذر تحميل الموجز.", 500); }
+  } catch (error) { console.error("AXIS feed error", (error as { code?: string })?.code || "database_error"); return jsonError("مش قادرين نحمّل المشاركات دلوقتي. جرّب تاني بعد شوية.", 500); }
 }
 
 export async function POST(request: Request) {
@@ -39,11 +39,11 @@ export async function POST(request: Request) {
   let image: Awaited<ReturnType<typeof parseSafeUpload>> = null;
   try { image = await parseSafeUpload(fileRaw, { allowPdf: false, maxBytes: 2_000_000 }); }
   catch (error) { return jsonError(error instanceof Error ? error.message : "الصورة غير صالحة."); }
-  if (!body && !image) return jsonError("اكتب محتوى المنشور أو أرفق صورة.");
+  if (!body && !image) return jsonError("اكتب حاجة تحب تشاركها، أو أرفق صورة.");
   if (body.length > 5000) return jsonError("المنشور أطول من الحد المسموح.");
   try {
     const result = await query<{ id: string }>(`INSERT INTO posts(author_id,body,specialty,image_data,image_mime,image_name)
       VALUES($1,$2,$3,$4,$5,$6) RETURNING id`, [user!.id, body, specialty || user!.specialty || null, image?.buffer || null, image?.mime || null, image?.name || null]);
     return NextResponse.json({ ok: true, postId: result.rows[0].id }, { status: 201 });
-  } catch (error) { console.error("AXIS post create error", (error as { code?: string })?.code || "database_error"); return jsonError("تعذر نشر المنشور.", 500); }
+  } catch (error) { console.error("AXIS post create error", (error as { code?: string })?.code || "database_error"); return jsonError("ما قدرناش ننشر المشاركة دلوقتي. جرّب تاني.", 500); }
 }

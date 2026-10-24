@@ -17,14 +17,14 @@ export function AppHeader({ user }: { user: SessionUser }) {
       <Brand />
       <form action="/feed" className="search-box header-search" role="search">
         <Search size={18} className="muted" aria-hidden="true" />
-        <input aria-label="بحث" name="q" placeholder="ابحث عن منشور أو مهندس" defaultValue="" />
+        <input aria-label="بحث" name="q" placeholder="دوّر على منشور أو مهندس" defaultValue="" />
       </form>
       <div className="topbar-actions">
         <button type="button" className="icon-btn mobile-search-toggle" aria-label={searchOpen ? "إغلاق البحث" : "فتح البحث"} onClick={() => setSearchOpen(open => !open)}>
           {searchOpen ? <X size={18}/> : <Search size={18}/>}
         </button>
         <Link className="icon-btn header-notification" aria-label="الإشعارات" href="/notifications"><Bell size={18}/></Link>
-        <Link href="/profile" className="user-name header-profile" style={{ paddingInline: 4 }} aria-label="ملفي المهني">
+        <Link href="/profile" className="user-name header-profile" style={{ paddingInline: 4 }} aria-label="حسابي">
           <span className="avatar sm">{user.display_name.slice(0,1)}</span><span className="desktop-only">{user.display_name}</span>
         </Link>
         <button className="icon-btn" aria-label="تسجيل الخروج" onClick={logout}><LogOut size={17}/></button>
