@@ -39,6 +39,19 @@ export interface FeedPost {
   like_count: number;
   comment_count: number;
   has_liked: boolean;
+  shared_post_id: string | null;
+  shared_body?: string | null;
+  shared_created_at?: string | null;
+  shared_has_image?: boolean | null;
+  shared_image_mime?: string | null;
+  shared_username?: string | null;
+  shared_display_name?: string | null;
+  shared_author_role?: UserRole;
+  shared_avatar_color?: string | null;
+  shared_seniority_code?: SeniorityCode;
+  shared_job_title?: string | null;
+  shared_specialty?: string | null;
+  shared_verified_badges?: string[];
   comments?: FeedComment[];
 }
 

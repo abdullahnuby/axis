@@ -6,10 +6,17 @@ export const metadata: Metadata = { title: "ملفي المهني" };
 export const dynamic = "force-dynamic";
 export default async function ProfilePage() {
   const user = await requireVerifiedPage();
-  const posts = await query<ProfilePostPreview>(`SELECT p.id, p.body, p.specialty, p.created_at,
+  const posts = await query<ProfilePostPreview>(`SELECT p.id, p.body, p.specialty, p.created_at, p.shared_post_id,
       (p.image_data IS NOT NULL) AS has_image,
+      sp.body AS shared_body, sp.created_at AS shared_created_at,
+      (sp.image_data IS NOT NULL) AS shared_has_image,
+      su.display_name AS shared_display_name, su.avatar_color AS shared_avatar_color,
+      su.specialty AS shared_profile_specialty, sp.specialty AS shared_specialty,
       (SELECT count(*)::int FROM post_likes l WHERE l.post_id=p.id) AS like_count,
       (SELECT count(*)::int FROM comments c WHERE c.post_id=p.id) AS comment_count
-    FROM posts p WHERE p.author_id=$1 ORDER BY p.created_at DESC LIMIT 12`, [user.id]);
+    FROM posts p
+    LEFT JOIN posts sp ON sp.id=p.shared_post_id
+    LEFT JOIN users su ON su.id=sp.author_id
+    WHERE p.author_id=$1 ORDER BY p.created_at DESC LIMIT 12`, [user.id]);
   return <ProfileClient initialUser={user} initialPosts={posts.rows.map(post => ({ ...post, created_at: String(post.created_at) }))}/>;
 }

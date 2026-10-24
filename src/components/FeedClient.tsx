@@ -20,6 +20,7 @@ import {
   ThumbsUp,
   Trash2,
   X,
+  UserRound,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -57,6 +58,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [events, setEvents] = useState<EngineeringEvent[]>([]);
   const [body, setBody] = useState("");
+  const [composerExpanded, setComposerExpanded] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState("");
@@ -75,6 +77,9 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [openMenuPost, setOpenMenuPost] = useState<string | null>(null);
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
+  const [sharingPost, setSharingPost] = useState<FeedPost | null>(null);
+  const [shareCaption, setShareCaption] = useState("");
+  const [shareBusy, setShareBusy] = useState(false);
   const q = searchParams.get("q") || "";
   const sharedPostId = searchParams.get("post") || "";
   const [filter, setFilter] = useState(searchParams.get("specialty") || "");
@@ -134,7 +139,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       const response = await fetch("/api/feed", { method: "POST", body: data });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "ما قدرناش ننشر المشاركة. جرّب تاني.");
-      setBody(""); setImage(null); setSpecialty("");
+      setBody(""); setImage(null); setSpecialty(""); setComposerExpanded(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
       setSuccess("اتنشرت مشاركتك بنجاح 🙌");
       await load();
@@ -152,6 +157,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     }
     setError("");
     setImage(chosen);
+    if (chosen) setComposerExpanded(true);
   }
 
   async function toggleLike(post: FeedPost) {
@@ -218,23 +224,32 @@ export function FeedClient({ user }: { user: SessionUser }) {
     finally { setBusyLikeCommentId(null); }
   }
 
-  async function sharePost(post: FeedPost) {
-    const shareUrl = new URL(`/feed?post=${encodeURIComponent(post.id)}#post-${post.id}`, window.location.origin).toString();
+  function sharePost(post: FeedPost) {
+    setError("");
+    setShareCaption("");
+    setSharingPost(post);
+  }
+
+  async function confirmInternalShare() {
+    if (!sharingPost || shareBusy) return;
+    setShareBusy(true);
+    setError("");
     try {
-      if (typeof navigator.share === "function") {
-        await navigator.share({ title: `AXIS · ${post.display_name}`, text: post.body.slice(0, 180) || "منشور هندسي على AXIS", url: shareUrl });
-        setSuccess("اختار التطبيق اللي تحب تشارك منه.");
-        return;
-      }
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-        setSuccess("نسخنا رابط المشاركة. ابعته لزميلك أو شاركه في أي مكان.");
-        return;
-      }
-      window.prompt("انسخ الرابط وابعته لزملائك:", shareUrl);
+      const response = await fetch(`/api/posts/${sharingPost.id}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caption: shareCaption.trim() }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نشارك المنشور على حسابك. جرّب تاني.");
+      setSharingPost(null);
+      setShareCaption("");
+      setSuccess("اتشارك المنشور على ملفك الشخصي، وبقى ظاهر لزملائك في الرئيسية.");
+      await load();
     } catch (caught) {
-      if (caught instanceof Error && caught.name === "AbortError") return;
-      window.prompt("انسخ الرابط وابعته لزملائك:", shareUrl);
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نشارك المنشور دلوقتي. جرّب تاني.");
+    } finally {
+      setShareBusy(false);
     }
   }
 
@@ -321,52 +336,54 @@ export function FeedClient({ user }: { user: SessionUser }) {
     <AppShell user={user} events={events} active="/feed">
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
-      <section className="feed-mobile-filterbar" aria-label="اختار تخصصك علشان تشوف المشاركات الأقرب لاهتماماتك">
-        <div className="feed-mobile-filter-label"><SlidersHorizontal size={14}/><span>التخصص</span></div>
-        <div className="feed-filters feed-filters-mobile" role="group" aria-label="تصفية المنشورات حسب التخصص">
-          <button type="button" className={`feed-filter-chip ${!filter ? "active" : ""}`} aria-pressed={!filter} onClick={() => setFilter("")}>الكل</button>
-          {SPECIALTIES.map(item => <button type="button" key={item} className={`feed-filter-chip ${filter === item ? "active" : ""}`} aria-pressed={filter === item} onClick={() => setFilter(filter === item ? "" : item)}>{item}</button>)}
+      <form id="compose" className={`card compose compose-professional ${composerExpanded ? "compose-is-expanded" : ""}`} onSubmit={createPost}>
+        <input ref={imageInputRef} className="hidden" type="file" id="post-image" accept="image/jpeg,image/png,image/webp" onChange={chooseImage}/>
+        <div className="compose-compact-bar">
+          <div className="avatar compose-compact-avatar" style={{ background: user.avatar_color || "var(--blue)" }} aria-hidden="true">{user.display_name.slice(0, 1)}</div>
+          <button type="button" className="compose-compact-trigger" onClick={() => setComposerExpanded(true)} aria-label="فتح كتابة مشاركة جديدة">
+            {body.trim() ? body.trim().slice(0, 74) : "إيه اللي حابب تشاركه مع زملائك؟"}
+          </button>
+          <label className="compose-compact-photo" htmlFor="post-image" aria-label="إضافة صورة للمنشور" title="إضافة صورة"><ImagePlus size={20}/></label>
         </div>
-      </section>
 
-      <form id="compose" className="card compose compose-professional" onSubmit={createPost}>
-        <div className="compose-heading">
-          <div className="user-line compose-user-line">
-            <div className="avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
-            <div className="user-meta">
-              <div className="user-name compose-display-name">{user.display_name}{user.role === "member" ? <ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact/> : <span className="pill navy">فريق AXIS</span>}</div>
-              <div className="user-sub">خبرتك ممكن تفيد زميلك — شاركها معانا</div>
+        <div className={`compose-expanded-content ${composerExpanded ? "is-open" : ""}`}>
+          <div className="compose-mobile-expanded-heading"><strong>مشاركة جديدة</strong><button type="button" className="compose-collapse-button" onClick={() => setComposerExpanded(false)} aria-label="تصغير مربع المشاركة"><X size={16}/><span>تصغير</span></button></div>
+          <div className="compose-heading">
+            <div className="user-line compose-user-line">
+              <div className="avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
+              <div className="user-meta">
+                <div className="user-name compose-display-name">{user.display_name}{user.role === "member" ? <ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact/> : <span className="pill navy">فريق AXIS</span>}</div>
+                <div className="user-sub">خبرتك ممكن تفيد زميلك — شاركها معانا</div>
+              </div>
             </div>
+            <span className="compose-private"><BadgeCheck size={15}/> مساحة للمهندسين المعتمدين</span>
           </div>
-          <span className="compose-private"><BadgeCheck size={15}/> مساحة للمهندسين المعتمدين</span>
-        </div>
-        <div className="compose-input-row">
-          <div className="avatar compose-mobile-avatar" style={{ background: user.avatar_color || "var(--blue)" }} aria-hidden="true">{user.display_name.slice(0, 1)}</div>
-          <label className="sr-only" htmlFor="feed-post-body">نص المشاركة</label>
-          <textarea id="feed-post-body" className="field compose-textarea" value={body} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="إيه اللي حابب تشاركه مع زملائك؟" aria-label="نص المشاركة" />
-          <label className="compose-quick-image" htmlFor="post-image" aria-label="إضافة صورة للمنشور" title="إضافة صورة"><ImagePlus size={19}/></label>
-        </div>
-
-        {image && <div className="compose-attachment">
-          {imagePreview ? <img src={imagePreview} alt="معاينة الصورة المرفقة"/> : <ImagePlus size={20}/>} 
-          <div className="compose-attachment-meta"><strong>{image.name}</strong><span>{(image.size / 1024 / 1024).toFixed(2)} MB</span></div>
-          <button type="button" className="icon-btn" onClick={() => { setImage(null); if (imageInputRef.current) imageInputRef.current.value = ""; }} aria-label="إزالة الصورة"><X size={17}/></button>
-        </div>}
-
-        <div className="compose-bottom">
-          <div className="compose-attachments-row">
-            <input ref={imageInputRef} className="hidden" type="file" id="post-image" accept="image/jpeg,image/png,image/webp" onChange={chooseImage}/>
-            <label className="compose-attach-btn" htmlFor="post-image"><Camera size={18}/><span>إضافة صورة</span></label>
-            <span className="compose-divider" aria-hidden="true"/>
-            <label className="sr-only" htmlFor="post-specialty">تخصص المنشور</label>
-            <select id="post-specialty" className="compose-specialty" value={specialty} onChange={event => setSpecialty(event.target.value)} aria-label="تخصص المنشور">
-              <option value="">{user.specialty ? `تخصصي: ${user.specialty}` : "اختر التخصص"}</option>
-              {SPECIALTIES.map(item => <option key={item} value={item}>{item}</option>)}
-            </select>
+          <div className="compose-input-row">
+            <div className="avatar compose-mobile-avatar" style={{ background: user.avatar_color || "var(--blue)" }} aria-hidden="true">{user.display_name.slice(0, 1)}</div>
+            <label className="sr-only" htmlFor="feed-post-body">نص المشاركة</label>
+            <textarea id="feed-post-body" className="field compose-textarea" value={body} onFocus={() => setComposerExpanded(true)} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="إيه اللي حابب تشاركه مع زملائك؟" aria-label="نص المشاركة" />
           </div>
-          <div className="compose-submit-row">
-            <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("ar-EG")} / ٥٠٠٠</span>
-            <button type="submit" className="btn btn-primary compose-publish" disabled={busy || (!body.trim() && !image)}><Send size={15}/><span>{busy ? "جارٍ النشر…" : "نشر"}</span></button>
+
+          {image && <div className="compose-attachment">
+            {imagePreview ? <img src={imagePreview} alt="معاينة الصورة المرفقة"/> : <ImagePlus size={20}/>} 
+            <div className="compose-attachment-meta"><strong>{image.name}</strong><span>{(image.size / 1024 / 1024).toFixed(2)} MB</span></div>
+            <button type="button" className="icon-btn" onClick={() => { setImage(null); if (imageInputRef.current) imageInputRef.current.value = ""; }} aria-label="إزالة الصورة"><X size={17}/></button>
+          </div>}
+
+          <div className="compose-bottom">
+            <div className="compose-attachments-row">
+              <label className="compose-attach-btn" htmlFor="post-image"><Camera size={18}/><span>إضافة صورة</span></label>
+              <span className="compose-divider" aria-hidden="true"/>
+              <label className="sr-only" htmlFor="post-specialty">تخصص المنشور</label>
+              <select id="post-specialty" className="compose-specialty" value={specialty} onChange={event => setSpecialty(event.target.value)} aria-label="تخصص المنشور">
+                <option value="">{user.specialty ? `تخصصي: ${user.specialty}` : "اختر التخصص"}</option>
+                {SPECIALTIES.map(item => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </div>
+            <div className="compose-submit-row">
+              <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("ar-EG")} / ٥٠٠٠</span>
+              <button type="submit" className="btn btn-primary compose-publish" disabled={busy || (!body.trim() && !image)}><Send size={15}/><span>{busy ? "جارٍ النشر…" : "نشر"}</span></button>
+            </div>
           </div>
         </div>
       </form>
@@ -381,15 +398,18 @@ export function FeedClient({ user }: { user: SessionUser }) {
       </div>
 
       <section className="feed-stream" aria-label="منشورات المهندسين">
-        <div className="feed-stream-header">
+        <div className="feed-stream-header feed-stream-header-filterable">
           <div className="feed-stream-heading">
-            <div><h2>آخر المشاركات</h2><p>{q ? `نتائج البحث عن «${q}»` : filter ? `مشاركات زملائك في تخصص ${filter}` : "شوف أحدث الأسئلة والتجارب من زملائك"}</p></div>
-            <span className="feed-stream-icon"><SlidersHorizontal size={18}/></span>
+            <div><h2>آخر المشاركات</h2><p>{q ? `نتائج البحث عن «${q}»` : filter ? `مشاركات زملائك في تخصص ${filter}` : "شوف جديد زملائك وأسئلتهم وتجاربهم"}</p></div>
           </div>
-          <div className="feed-filters" role="group" aria-label="تصفية المنشورات حسب التخصص">
-            <button type="button" className={`feed-filter-chip ${!filter ? "active" : ""}`} aria-pressed={!filter} onClick={() => setFilter("")}>الكل</button>
-            {SPECIALTIES.map(item => <button type="button" key={item} className={`feed-filter-chip ${filter === item ? "active" : ""}`} aria-pressed={filter === item} onClick={() => setFilter(filter === item ? "" : item)}>{item}</button>)}
-          </div>
+          <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
+            <SlidersHorizontal size={16} aria-hidden="true"/>
+            <span className="sr-only">فلترة المشاركات حسب التخصص</span>
+            <select id="feed-specialty-filter" value={filter} onChange={event => setFilter(event.target.value)} aria-label="فلترة المشاركات حسب التخصص">
+              <option value="">كل التخصصات</option>
+              {SPECIALTIES.map(item => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
         </div>
 
         {isRefreshing && <div className="feed-refresh-line"><RefreshCw size={14} className="spin-icon"/> بنحدّث المشاركات…</div>}
@@ -430,6 +450,18 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
             {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">من الشغل</span></div>}
             {post.body && <p className="post-body post-professional-body">{post.body}</p>}
+            {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell">
+              <div className="shared-post-attribution"><Share2 size={14}/><span>{post.display_name} شارك المنشور ده</span></div>
+              <article className="shared-post-original">
+                <header className="shared-post-original-header">
+                  <div className="avatar sm" style={{ background: post.shared_avatar_color || "var(--blue)" }}>{post.shared_display_name.slice(0, 1)}</div>
+                  <div className="user-meta"><strong>{post.shared_display_name}</strong><span className="small muted">{post.shared_job_title || (post.shared_specialty ? `تخصص ${post.shared_specialty}` : "من مجتمع AXIS")}</span></div>
+                  {post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatPostTime(post.shared_created_at)}</time>}
+                </header>
+                {post.shared_body && <p className="shared-post-original-body">{post.shared_body}</p>}
+                {post.shared_has_image && <a className="shared-post-original-media" href={`/api/posts/${post.shared_post_id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور الأصلي"><img src={`/api/posts/${post.shared_post_id}/image`} alt={`صورة من منشور ${post.shared_display_name}`} loading="lazy"/></a>}
+              </article>
+            </div>}
             {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt={`صورة مرفقة بمنشور ${post.display_name}`} loading="lazy"/></a>}
 
             {(post.like_count > 0 || post.comment_count > 0) && <div className="post-engagement-summary">
@@ -471,6 +503,17 @@ export function FeedClient({ user }: { user: SessionUser }) {
         ))}
       </section>
       <div className="feed-footer-note"><BadgeCheck size={15}/> AXIS مساحة للمهندسين أصحاب العضوية المعتمدة — شارك خبرتك واحترم خبرات غيرك.</div>
+      {sharingPost && <div className="feed-share-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !shareBusy) setSharingPost(null); }}>
+        <section className="feed-share-dialog" role="dialog" aria-modal="true" aria-labelledby="feed-share-dialog-title">
+          <header className="feed-share-dialog-header"><div><h2 id="feed-share-dialog-title">مشاركة داخل AXIS</h2><p>خلّي زملاءك يشوفوا المنشور على حسابك.</p></div><button type="button" className="icon-btn" aria-label="إغلاق نافذة المشاركة" disabled={shareBusy} onClick={() => setSharingPost(null)}><X size={18}/></button></header>
+          <div className="feed-share-destination"><span className="feed-share-destination-icon"><UserRound size={19}/></span><div><strong>ملفك الشخصي والرئيسية</strong><p>هيظهر المنشور باسمك مع الاحتفاظ باسم صاحبه الأصلي.</p></div><CheckCircle2 size={18} className="feed-share-destination-check"/></div>
+          <label className="feed-share-caption-label" htmlFor="feed-share-caption">تحب تضيف تعليق مع المشاركة؟ <span>(اختياري)</span></label>
+          <textarea id="feed-share-caption" className="field feed-share-caption" value={shareCaption} onChange={event => setShareCaption(event.target.value)} maxLength={5000} placeholder="اكتب رأيك أو قول لزملائك إيه اللي لفت نظرك في المنشور…" disabled={shareBusy}/>
+          <div className="feed-share-source"><span className="avatar sm" style={{ background: sharingPost.shared_avatar_color || sharingPost.avatar_color || "var(--blue)" }}>{(sharingPost.shared_display_name || sharingPost.display_name).slice(0, 1)}</span><div><strong>{sharingPost.shared_display_name || sharingPost.display_name}</strong><p>{sharingPost.shared_body || sharingPost.body || "منشور من مجتمع AXIS"}</p></div></div>
+          <p className="feed-share-groups-note">المشاركة في المجموعات هتكون متاحة لما نضيف المجموعات للمنصة.</p>
+          <footer className="feed-share-dialog-actions"><button type="button" className="btn" disabled={shareBusy} onClick={() => setSharingPost(null)}>إلغاء</button><button type="button" className="btn btn-primary" disabled={shareBusy} onClick={() => void confirmInternalShare()}><Share2 size={16}/>{shareBusy ? "جارٍ المشاركة…" : "مشاركة على حسابي"}</button></footer>
+        </section>
+      </div>}
     </AppShell>
   );
 }

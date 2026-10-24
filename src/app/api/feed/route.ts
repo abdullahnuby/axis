@@ -14,17 +14,32 @@ export async function GET(request: Request) {
   if (sharedPostId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sharedPostId)) return jsonError("رابط المنشور غير صالح.", 400);
   try {
     const result = await query(`SELECT p.id,p.author_id,u.username,u.display_name,u.role AS author_role,u.seniority_code,u.job_title,u.specialty AS profile_specialty,
-      u.verified_badges,u.avatar_color,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,
+      u.verified_badges,u.avatar_color,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,p.shared_post_id,
+      sp.body AS shared_body,sp.specialty AS shared_specialty,sp.created_at AS shared_created_at,
+      sp.image_data IS NOT NULL AS shared_has_image,sp.image_mime AS shared_image_mime,
+      su.username AS shared_username,su.display_name AS shared_display_name,su.role AS shared_author_role,
+      su.seniority_code AS shared_seniority_code,su.job_title AS shared_job_title,
+      su.specialty AS shared_profile_specialty,su.verified_badges AS shared_verified_badges,su.avatar_color AS shared_avatar_color,
       (SELECT count(*)::int FROM post_likes l WHERE l.post_id=p.id) AS like_count,
       (SELECT count(*)::int FROM comments c WHERE c.post_id=p.id) AS comment_count,
       EXISTS(SELECT 1 FROM post_likes l WHERE l.post_id=p.id AND l.user_id=$1) AS has_liked
       FROM posts p JOIN users u ON u.id=p.author_id
+      LEFT JOIN posts sp ON sp.id=p.shared_post_id
+      LEFT JOIN users su ON su.id=sp.author_id
       WHERE u.verification_status='verified' AND u.account_status='active'
+        AND (p.shared_post_id IS NULL OR (su.verification_status='verified' AND su.account_status='active'))
         AND ($2 = '' OR p.specialty=$2 OR (p.specialty IS NULL AND u.specialty=$2))
-        AND ($3 = '' OR p.body ILIKE '%'||$3||'%' OR u.display_name ILIKE '%'||$3||'%' OR u.username ILIKE '%'||$3||'%')
+        AND ($3 = '' OR p.body ILIKE '%'||$3||'%' OR u.display_name ILIKE '%'||$3||'%' OR u.username ILIKE '%'||$3||'%'
+             OR sp.body ILIKE '%'||$3||'%' OR su.display_name ILIKE '%'||$3||'%' OR su.username ILIKE '%'||$3||'%')
         AND ($4::uuid IS NULL OR p.id=$4::uuid)
       ORDER BY p.created_at DESC LIMIT 50`, [user!.id, specialty, q, sharedPostId || null]);
-    const posts = result.rows.map((row: Record<string, unknown>) => ({ ...row, specialty: row.specialty || row.profile_specialty, profile_specialty: undefined }));
+    const posts = result.rows.map((row: Record<string, unknown>) => ({
+      ...row,
+      specialty: row.specialty || row.profile_specialty,
+      shared_specialty: row.shared_specialty || row.shared_profile_specialty,
+      profile_specialty: undefined,
+      shared_profile_specialty: undefined,
+    }));
     return NextResponse.json({ posts });
   } catch (error) { console.error("AXIS feed error", (error as { code?: string })?.code || "database_error"); return jsonError("مش قادرين نحمّل المشاركات دلوقتي. جرّب تاني بعد شوية.", 500); }
 }

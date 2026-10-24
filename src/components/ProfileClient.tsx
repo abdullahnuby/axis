@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, CalendarDays,
   GraduationCap, LockKeyhole, MessageCircle, PencilLine, Save, ShieldCheck,
-  ThumbsUp, UserRound, X,
+  ThumbsUp, UserRound, X, Share2,
 } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
@@ -21,6 +21,14 @@ export type ProfilePostPreview = {
   has_image: boolean;
   like_count: number;
   comment_count: number;
+  shared_post_id: string | null;
+  shared_body?: string | null;
+  shared_created_at?: string | null;
+  shared_has_image?: boolean | null;
+  shared_display_name?: string | null;
+  shared_avatar_color?: string | null;
+  shared_specialty?: string | null;
+  shared_profile_specialty?: string | null;
 };
 
 const levelLabels: Record<string, string> = {
@@ -133,6 +141,14 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
             {posts.length ? <div className="profile-post-list">{posts.map((post) => <article key={post.id} className="card profile-post-card">
               <div className="profile-post-meta"><span>{post.specialty || user.specialty || "هندسة"}</span><span>·</span><time dateTime={post.created_at}>{formatDate(post.created_at)}</time></div>
               {post.body ? <p className="profile-post-body">{post.body}</p> : null}
+              {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell profile-shared-post-shell">
+                <div className="shared-post-attribution"><Share2 size={14}/><span>شاركت منشور {post.shared_display_name}</span></div>
+                <article className="shared-post-original">
+                  <header className="shared-post-original-header"><div className="avatar sm" style={{ background: post.shared_avatar_color || "var(--blue)" }}>{post.shared_display_name.slice(0, 1)}</div><div className="user-meta"><strong>{post.shared_display_name}</strong><span className="small muted">{post.shared_specialty || post.shared_profile_specialty || "من مجتمع AXIS"}</span></div>{post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatDate(post.shared_created_at)}</time>}</header>
+                  {post.shared_body && <p className="shared-post-original-body">{post.shared_body}</p>}
+                  {post.shared_has_image && <a className="shared-post-original-media" href={`/api/posts/${post.shared_post_id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور الأصلي"><img src={`/api/posts/${post.shared_post_id}/image`} alt={`صورة من منشور ${post.shared_display_name}`} loading="lazy"/></a>}
+                </article>
+              </div>}
               {post.has_image ? <a className="profile-post-image-link" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور"><img className="profile-post-image" src={`/api/posts/${post.id}/image`} alt="صورة مرفقة بالمنشور" loading="lazy"/></a> : null}
               <div className="profile-post-stats"><span><ThumbsUp size={14}/>{formatCount(post.like_count)} إعجاب</span><span><MessageCircle size={14}/>{formatCount(post.comment_count)} تعليق</span></div>
             </article>)}</div> : <div className="card profile-empty-posts"><div className="profile-empty-icon"><MessageCircle size={22}/></div><h3>لسه ما شاركتش حاجة</h3><p className="small muted">ابدأ بسؤال من الشغل أو احكيلنا عن تجربة ممكن تفيد زملاءك.</p><Link href="/feed#compose" className="btn btn-primary btn-small">أول مشاركة ليك</Link></div>}
