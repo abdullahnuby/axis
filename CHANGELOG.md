@@ -59,3 +59,12 @@
 - Applied context-aware identity: full lockup in the landing brand area; compact symbol + AXIS in headers/auth/navigation; symbol-only profile-cover watermark; symbol-only app and browser icons.
 - Bumped the public-static service-worker cache version so updated icons are not hidden behind the previous cached assets.
 - Added smoke and PWA checks for logo assets, colors, and contextual logo usage.
+
+
+## 2026-10-25 — mobile readability and social-language pass
+
+- Removed the oversized decorative feed intro/hero from the rendered Feed component; desktop content now starts directly with the composer, and the mobile flow retains filters, composer, event strip, and posts.
+- Added a final responsive typography layer: mobile post bodies are 15.5px, comment bodies 14.5px, form input/textarea 16px, filters and actions 12.5–13.5px, and bottom-nav labels 11.5px with larger touch targets.
+- Rewrote visible copy across the feed, composer, empty states, share/report feedback, profile, verification, notifications, settings, authentication, home page, and sidebar to sound warmer and more like a community conversation while keeping the admin workflow precise.
+- Replaced the user-facing “الموجز” term with “الرئيسية”, “آخر المشاركات”, or context-specific wording; updated the manifest shortcut and page metadata.
+- Added a regression test to ensure the Feed hero and stale terminology do not return.

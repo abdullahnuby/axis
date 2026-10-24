@@ -83,6 +83,19 @@ await check("mobile feed matches compact reference layout", async () => {
   assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
   assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
 });
+await check("feed removes the decorative hero, uses natural social copy, and keeps mobile text readable", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  const profile = await read("src/components/ProfileClient.tsx");
+  const verification = await read("src/components/VerificationClient.tsx");
+  const styles = await read("src/app/globals.css");
+  assert.doesNotMatch(feed, /<section className="feed-page-intro"/);
+  assert.match(feed, /آخر المشاركات/);
+  assert.match(feed, /إيه اللي حابب تشاركه مع زملائك/);
+  assert.match(profile, /<span>الرئيسية<\/span>/);
+  assert.doesNotMatch(feed + profile + verification, /الموجز/);
+  assert.match(styles, /\.post-professional-body \{[^}]*font-size: 15\.5px !important/s);
+  assert.match(styles, /\.mobile-bottom a \{[^}]*font-size: 11\.5px !important/s);
+});
 await check("feed sharing opens a selected post through a stable shared link", async () => {
   const feed = await read("src/components/FeedClient.tsx");
   const api = await read("src/app/api/feed/route.ts");
