@@ -56,7 +56,7 @@ await check("feed has professional post, composer, and mobile filter patterns", 
   const styles = await read("src/app/globals.css");
   assert.match(feed, /compose-professional/);
   assert.match(feed, /post-professional/);
-  assert.match(feed, /feed-filters/);
+  assert.match(feed, /feed-specialty-filter/);
   assert.match(feed, /PostSkeleton/);
   assert.match(feed, /post-report-panel/);
   assert.match(styles, /\.feed-page-intro/);
@@ -70,11 +70,19 @@ await check("feed post controls use real API actions and accessible states", asy
   assert.match(feed, /aria-pressed=\{post\.has_liked\}/);
   assert.match(feed, /aria-expanded=\{openComments === post\.id\}/);
 });
-await check("mobile feed matches compact reference layout", async () => {
+await check("mobile feed uses a compact composer and a single dropdown filter", async () => {
   const feed = await read("src/components/FeedClient.tsx");
   const shell = await read("src/components/AppShell.tsx");
   const styles = await read("src/app/globals.css");
-  assert.match(feed, /feed-mobile-filterbar/);
+  assert.doesNotMatch(feed, /feed-mobile-filterbar/);
+  assert.doesNotMatch(feed, /feed-filters-mobile|feed-filter-chip/);
+  assert.match(feed, /compose-compact-bar/);
+  assert.match(feed, /compose-expanded-content/);
+  assert.match(feed, /setComposerExpanded\(true\)/);
+  assert.match(feed, /id="feed-specialty-filter"/);
+  assert.match(styles, /\.compose-compact-bar/);
+  assert.match(styles, /\.compose-expanded-content\.is-open/);
+  assert.match(styles, /\.feed-specialty-filter/);
   assert.match(feed, /feed-event-strip/);
   assert.match(feed, /compose-input-row/);
   assert.match(feed, /post-action-bar-compact/);

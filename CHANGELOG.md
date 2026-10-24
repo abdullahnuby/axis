@@ -68,3 +68,9 @@
 - Rewrote visible copy across the feed, composer, empty states, share/report feedback, profile, verification, notifications, settings, authentication, home page, and sidebar to sound warmer and more like a community conversation while keeping the admin workflow precise.
 - Replaced the user-facing “الموجز” term with “الرئيسية”, “آخر المشاركات”, or context-specific wording; updated the manifest shortcut and page metadata.
 - Added a regression test to ensure the Feed hero and stale terminology do not return.
+
+## 2026-10-25 — Compact composer and single specialty filter
+- Mobile composer now starts as a compact horizontal entry bar and expands only on demand.
+- Removed repeated specialty chips and replaced them with one dropdown beside the latest-posts heading.
+- Preserved the dark events strip under the composer and retained the richer desktop editor.
+- Added static smoke-check guards for the new layout.
