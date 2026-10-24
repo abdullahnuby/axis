@@ -1,3 +1,16 @@
+# Changelog
+
+## Unreleased — one-sprint social network foundation
+
+- Added a searchable, verified-member directory and public professional profile routes, follow/unfollow actions, and follow notifications.
+- Added public/closed engineering groups, owner membership controls, join requests, group post feeds, and closed-group post visibility checks.
+- Added private one-to-one conversations, message sending, unread counters, polling refresh, and message notifications.
+- Added password reset and email-confirmation flows that use one-time hashed tokens and Resend when configured; documented required environment variables.
+- Added cursor pagination and a "following" feed scope, post editing/deletion validation, in-platform internal repost behavior, and a dedicated mobile create-post action.
+- Added hashed persistent database-backed rate limits for registration, password reset/email verification, posting, comments, follows, group creation/joining, sharing, reports, likes, and direct messages.
+- Added an idempotent database migration for social graph, groups, messaging, token storage, notification targets, and rate limiting. Added smoke tests for the new routes and nav.
+- Production build/typecheck and live Neon integration are still required before calling the Sprint production-ready; current checks are static and syntax-level in this environment.
+
 ## Unreleased — professional profile and verification administration
 
 - Rebuilt the profile page around a verified professional identity, real approved credentials, editable public details, actual authored posts, and a clear privacy note. No placeholder posts or unverified badges are invented.
@@ -6,7 +19,6 @@
 - Added an admin-only API and UI for reviewing recent actions from `audit_logs`.
 - Added responsive CSS and static smoke coverage for profile data and admin review workflows.
 
-# Changelog
 
 ## Unreleased — reference-matched mobile feed
 

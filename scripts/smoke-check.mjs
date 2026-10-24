@@ -11,6 +11,67 @@ async function check(name, fn) { await fn(); checks.push(name); }
 await check("core pages and admin entrypoints exist", async () => {
   for (const file of ["src/app/page.tsx", "src/app/register/page.tsx", "src/app/login/page.tsx", "src/app/verification/page.tsx", "src/app/feed/page.tsx", "src/app/admin/page.tsx", "src/app/admin/login/page.tsx", "db/schema.sql"]) assert.equal(await exists(file), true, `${file} missing`);
 });
+await check("one-sprint social graph, groups, direct messaging, recovery, and rate limits are database-backed", async () => {
+  const schema = await read("db/schema.sql");
+  const migration = await read("db/migrations/20261025_social_network_sprint.sql");
+  const combinedMigration = await read("db/migrations/20261025_one_sprint.sql");
+  const rateLimit = await read("src/lib/rate-limit.ts");
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS user_follows/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS engineering_groups/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS conversations/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS messages/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS password_reset_tokens/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS email_verification_tokens/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS rate_limits/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.user_follows/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.messages/);
+  assert.match(combinedMigration, /Source: 20261025_comment_interactions\.sql/);
+  assert.match(combinedMigration, /Source: 20261025_internal_post_sharing\.sql/);
+  assert.match(combinedMigration, /Source: 20261025_social_network_sprint\.sql/);
+  assert.match(rateLimit, /createHash\("sha256"\)/);
+  assert.match(rateLimit, /ON CONFLICT \(bucket, subject_hash\) DO UPDATE/);
+});
+await check("closed group posts are restricted to members and report endpoint respects private-group visibility", async () => {
+  const groupRoute = await read("src/app/api/groups/[groupId]/posts/route.ts");
+  const feedRoute = await read("src/app/api/feed/route.ts");
+  const reportRoute = await read("src/app/api/posts/[postId]/report/route.ts");
+  assert.match(groupRoute, /g\.visibility='public'/);
+  assert.match(groupRoute, /group_members gm WHERE gm\.group_id=p\.group_id AND gm\.user_id=\$1 AND gm\.status='active'/);
+  assert.match(feedRoute, /followingOnly|following/);
+  assert.match(feedRoute, /before/);
+  assert.match(reportRoute, /g\.visibility='public'/);
+});
+await check("people directory has load-more pagination and staff can reach admin from app header", async () => {
+  const people = await read("src/components/PeopleClient.tsx");
+  const header = await read("src/components/AppHeader.tsx");
+  assert.match(people, /offset:String\(people\.length\)/);
+  assert.match(people, /عرض مهندسين أكتر/);
+  assert.match(header, /staff-admin-shortcut/);
+  assert.match(header, /href="\/admin"/);
+});
+await check("email reset and verification are one-time token flows and use documented provider env vars", async () => {
+  const reset = await read("src/app/api/auth/password-reset/route.ts");
+  const resetRequest = await read("src/app/api/auth/password-reset-request/route.ts");
+  const verify = await read("src/app/api/auth/verify-email/route.ts");
+  const register = await read("src/app/api/auth/register/route.ts");
+  const env = await read(".env.example");
+  assert.match(reset, /FOR UPDATE/);
+  assert.match(reset, /DELETE FROM sessions WHERE user_id/);
+  assert.match(resetRequest, /expires_at/);
+  assert.match(verify, /email_verified_at=now\(\)/);
+  assert.match(register, /sendTransactionalEmail/);
+  assert.match(env, /RESEND_API_KEY/);
+  assert.match(env, /EMAIL_FROM/);
+});
+await check("one-sprint social pages and APIs exist", async () => {
+  for (const file of [
+    "src/app/people/page.tsx", "src/app/people/[username]/page.tsx", "src/app/groups/page.tsx",
+    "src/app/groups/[groupId]/page.tsx", "src/app/messages/page.tsx", "src/app/messages/[conversationId]/page.tsx",
+    "src/app/forgot-password/page.tsx", "src/app/reset-password/page.tsx", "src/app/verify-email/page.tsx",
+    "src/app/api/people/route.ts", "src/app/api/groups/route.ts", "src/app/api/conversations/route.ts",
+    "src/app/api/auth/password-reset-request/route.ts", "src/app/api/auth/verify-email/route.ts"
+  ]) assert.equal(await exists(file), true, `${file} missing`);
+});
 await check("private community pages have server guards", async () => {
   assert.match(await read("src/app/feed/page.tsx"), /requireVerifiedPage/);
   assert.match(await read("src/app/profile/page.tsx"), /requireVerifiedPage/);
@@ -90,6 +151,20 @@ await check("mobile feed uses a compact composer and a single dropdown filter", 
   assert.match(shell, /href="\/feed#compose"/);
   assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
   assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
+});
+await check("mobile navigation includes a dedicated create-post action", async () => {
+  const shell = await read("src/components/AppShell.tsx");
+  assert.match(shell, /href="\/feed#compose"/);
+  assert.match(shell, /mobile-compose-link/);
+  assert.match(shell, /<Plus size=\{21\}/);
+  assert.match(await read("src/components/FeedClient.tsx"), /id="compose"/);
+});
+await check("directory, groups, direct messaging, and account recovery are wired into navigation", async () => {
+  const shell = await read("src/components/AppShell.tsx");
+  assert.match(shell, /href: "\/people"/);
+  assert.match(shell, /href: "\/groups"/);
+  assert.match(shell, /href: "\/messages"/);
+  assert.match(await read("src/components/AuthForm.tsx"), /href="\/forgot-password"/);
 });
 await check("feed removes the decorative hero, uses natural social copy, and keeps mobile text readable", async () => {
   const feed = await read("src/components/FeedClient.tsx");
