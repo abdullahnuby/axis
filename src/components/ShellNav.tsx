@@ -24,15 +24,15 @@ export function SidebarNav() {
   const pathname = usePathname();
   return <LocalizedContent>{<>{sideItems.map(({ href, text, icon: Icon }) => {
     const active = isActive(pathname, href);
-    return <LocalizedContent>{<Link key={href} href={href} className={`nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}><Icon size={18}/><span>{text}</spa}</LocalizedContent>n></Link>}</LocalizedContent>;
-  })}</>;
+    return <Link key={href} href={href} className={`nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}><Icon size={18}/><span>{text}</span></Link>;
+  })}</>}</LocalizedContent>;
 }
 
 export function MobileNav() {
   const pathname = usePathname();
   const item = (href: string, text: string, Icon: typeof Home) => {
     const active = isActive(pathname, href);
-    return <LocalizedContent>{<Link href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}><Icon size={19}/><span>{text}</span></Link>}</LocalizedContent>;
+    return <Link href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}><Icon size={19}/><span>{text}</span></Link>;
   };
   return <LocalizedContent>{<nav className="mobile-bottom" aria-label="التنقل الرئيسي">
     {item("/feed", "الرئيسية", Home)}
