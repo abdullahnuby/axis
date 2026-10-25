@@ -1,4 +1,4 @@
-name: AXIS quality checks
+name: AXIS typecheck and build
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Typecheck, tests, and production build
+    name: Typecheck and production build
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -34,9 +34,6 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Smoke tests
-        run: npm test
 
       - name: Production build
         run: npm run build

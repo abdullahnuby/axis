@@ -9,7 +9,7 @@ const exists = async (file) => { try { await access(path.join(root, file), fsCon
 const checks = [];
 async function check(name, fn) { await fn(); checks.push(name); }
 await check("core pages and admin entrypoints exist", async () => {
-  for (const file of ["src/app/page.tsx", "src/app/register/page.tsx", "src/app/login/page.tsx", "src/app/verification/page.tsx", "src/app/(app)/feed/page.tsx", "src/app/admin/page.tsx", "src/app/admin/login/page.tsx", "db/schema.sql"]) assert.equal(await exists(file), true, `${file} missing`);
+  for (const file of ["src/app/page.tsx", "src/app/register/page.tsx", "src/app/login/page.tsx", "src/app/verification/page.tsx", "src/app/feed/page.tsx", "src/app/admin/page.tsx", "src/app/admin/login/page.tsx", "db/schema.sql"]) assert.equal(await exists(file), true, `${file} missing`);
 });
 await check("one-sprint social graph, groups, direct messaging, recovery, and rate limits are database-backed", async () => {
   const schema = await read("db/schema.sql");
@@ -45,7 +45,7 @@ await check("people directory has load-more pagination and staff can reach admin
   const people = await read("src/components/PeopleClient.tsx");
   const header = await read("src/components/AppHeader.tsx");
   assert.match(people, /offset:String\(people\.length\)/);
-  assert.match(people, /عرض (?:أعضاء|مهندسين) أكتر/);
+  assert.match(people, /عرض مهندسين أكتر/);
   assert.match(header, /staff-admin-shortcut/);
   assert.match(header, /href="\/admin"/);
 });
@@ -54,7 +54,7 @@ await check("email reset and verification are one-time token flows and use docum
   const resetRequest = await read("src/app/api/auth/password-reset-request/route.ts");
   const verify = await read("src/app/api/auth/verify-email/route.ts");
   const register = await read("src/app/api/auth/register/route.ts");
-  const env = await read("README.md");
+  const env = await read(".env.example");
   assert.match(reset, /FOR UPDATE/);
   assert.match(reset, /DELETE FROM sessions WHERE user_id/);
   assert.match(resetRequest, /expires_at/);
@@ -65,18 +65,18 @@ await check("email reset and verification are one-time token flows and use docum
 });
 await check("one-sprint social pages and APIs exist", async () => {
   for (const file of [
-    "src/app/(app)/people/page.tsx", "src/app/(app)/people/[username]/page.tsx", "src/app/(app)/groups/page.tsx",
-    "src/app/(app)/groups/[groupId]/page.tsx", "src/app/(app)/messages/page.tsx", "src/app/(app)/messages/[conversationId]/page.tsx",
+    "src/app/people/page.tsx", "src/app/people/[username]/page.tsx", "src/app/groups/page.tsx",
+    "src/app/groups/[groupId]/page.tsx", "src/app/messages/page.tsx", "src/app/messages/[conversationId]/page.tsx",
     "src/app/forgot-password/page.tsx", "src/app/reset-password/page.tsx", "src/app/verify-email/page.tsx",
     "src/app/api/people/route.ts", "src/app/api/groups/route.ts", "src/app/api/conversations/route.ts",
     "src/app/api/auth/password-reset-request/route.ts", "src/app/api/auth/verify-email/route.ts"
   ]) assert.equal(await exists(file), true, `${file} missing`);
 });
 await check("private community pages have server guards", async () => {
-  assert.match(await read("src/app/(app)/feed/page.tsx"), /requireVerifiedPage/);
-  assert.match(await read("src/app/(app)/profile/page.tsx"), /requireVerifiedPage/);
-  assert.match(await read("src/app/(app)/settings/page.tsx"), /requireVerifiedPage/);
-  assert.match(await read("src/app/(app)/notifications/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/feed/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/profile/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/settings/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/notifications/page.tsx"), /requireVerifiedPage/);
   assert.match(await read("src/app/admin/page.tsx"), /requireAdminPage/);
   assert.match(await read("src/app/page.tsx"), /href="\/admin\/login"/);
 });
@@ -85,7 +85,7 @@ await check("profile does not repeat a universal verification badge", async () =
 });
 await check("professional profile shows real member posts and verified credentials", async () => {
   const profile = await read("src/components/ProfileClient.tsx");
-  const page = await read("src/app/(app)/profile/page.tsx");
+  const page = await read("src/app/profile/page.tsx");
   assert.match(profile, /profile-content-grid/);
   assert.match(profile, /profile-credential-list/);
   assert.match(profile, /profile-empty-posts/);
@@ -127,14 +127,13 @@ await check("feed has professional post, composer, and mobile filter patterns", 
 await check("feed post controls use real API actions and accessible states", async () => {
   const feed = await read("src/components/FeedClient.tsx");
   assert.match(feed, /api\/posts\/\$\{post\.id\}\/like/);
-  assert.match(feed, /api\/posts\/\$\{(?:post\.id|postId)\}\/comments/);
+  assert.match(feed, /api\/posts\/\$\{post\.id\}\/comments/);
   assert.match(feed, /aria-pressed=\{post\.has_liked\}/);
   assert.match(feed, /aria-expanded=\{openComments === post\.id\}/);
 });
 await check("mobile feed uses a compact composer and a single dropdown filter", async () => {
   const feed = await read("src/components/FeedClient.tsx");
   const shell = await read("src/components/AppShell.tsx");
-  const nav = await read("src/components/ShellNav.tsx");
   const styles = await read("src/app/globals.css");
   assert.doesNotMatch(feed, /feed-mobile-filterbar/);
   assert.doesNotMatch(feed, /feed-filters-mobile|feed-filter-chip/);
@@ -149,12 +148,12 @@ await check("mobile feed uses a compact composer and a single dropdown filter", 
   assert.match(feed, /compose-input-row/);
   assert.match(feed, /post-action-bar-compact/);
   assert.match(feed, /id="compose"/);
-  assert.match(nav, /<MobileCreatePostButton\/>/);
+  assert.match(shell, /<MobileCreatePostButton\/>/);
   assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
   assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
 });
 await check("mobile navigation includes a dedicated create-post action", async () => {
-  const shell = await read("src/components/ShellNav.tsx");
+  const shell = await read("src/components/AppShell.tsx");
   assert.match(shell, /<MobileCreatePostButton\/>/);
   const action = await read("src/components/MobileCreatePostButton.tsx");
   assert.match(action, /mobile-compose-link/);
@@ -186,7 +185,7 @@ await check("post sharing is an in-platform repost to profile and feed, not an e
   const api = await read("src/app/api/posts/[postId]/share/route.ts");
   const schema = await read("db/schema.sql");
   const migration = await read("db/migrations/20261025_internal_post_sharing.sql");
-  const profilePage = await read("src/app/(app)/profile/page.tsx");
+  const profilePage = await read("src/app/profile/page.tsx");
   const profileClient = await read("src/components/ProfileClient.tsx");
   assert.doesNotMatch(feed, /navigator\.share|clipboard\.writeText/);
   assert.match(feed, /مشاركة داخل AXIS/);
@@ -446,7 +445,7 @@ await check("notification buttons navigate only after read status is acknowledge
   assert.match(client, /router\.push\(target\(item\)\)/);
 });
 await check("public-profile TypeScript query is explicitly typed to fix latest Vercel build failure", async () => {
-  const page = await read("src/app/(app)/people/[username]/page.tsx");
+  const page = await read("src/app/people/[username]/page.tsx");
   assert.match(page, /query<PublicProfileRecord>/);
   assert.match(page, /profile=\{\{\.\.\.profile,created_at:String\(profile\.created_at\),updated_at:String\(profile\.updated_at\)\}\}/);
 });
