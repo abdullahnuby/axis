@@ -86,3 +86,18 @@
 - Removed repeated specialty chips and replaced them with one dropdown beside the latest-posts heading.
 - Preserved the dark events strip under the composer and retained the richer desktop editor.
 - Added static smoke-check guards for the new layout.
+
+
+## 2026-10-25 — Responsive feedback, profile media, and PWA onboarding
+
+- Success/error feedback now portals to `document.body` so transformed page containers cannot trap the notification; toast is viewport-fixed and non-layout-shifting.
+- Feed post/comment edit and delete use their confirmed API response to update local UI immediately; removed redundant background re-fetches that could overwrite the just-applied state.
+- Profile avatar and cover controls are available directly on the profile header without first entering profile-details edit mode.
+- Avatar and cover uploads are normalized with Sharp to WebP, orientation-corrected, resized, and pixel-limited before storage to reduce database size and reject problematic images.
+- Group discussion cards, group composer, and pending-member lists use the same profile-avatar component.
+- iPhone install instructions retain a clear in-site guide because the browser's share sheet is owned by iOS; if the action is missing, the guide directs the user to Edit Actions or Safari.
+
+- App navigation now shows a per-user unread notification badge; the count refreshes on focus/visibility and on a 30-second interval. The notifications list refreshes while visible, so updates arrive without a manual page reload.
+- Added public privacy, terms-of-use, and community-guideline pages, linked from the landing page and authenticated app footer. The text is an operational draft and requires local legal review before broad public launch.
+- Bumped the public-static service-worker cache from v3 to v4 so existing installs replace the cached set on the next update.
+- Added regression coverage for public policy pages and their app-wide links.

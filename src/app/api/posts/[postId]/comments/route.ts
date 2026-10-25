@@ -21,7 +21,7 @@ export async function GET(_request: Request, context: Ctx) {
     if (!visible.rows[0]) return jsonError("المنشور غير موجود.", 404);
     const result = await query(
       `SELECT c.id,c.post_id,c.author_id,c.parent_comment_id,u.display_name,u.username,u.role AS author_role,
-              u.avatar_color,u.seniority_code,u.verified_badges,c.body,c.created_at,c.edited_at,
+              u.avatar_color,(u.avatar_image_mime IS NOT NULL) AS has_avatar,u.seniority_code,u.verified_badges,c.body,c.created_at,c.edited_at,
               COUNT(cl.user_id)::int AS like_count,
               EXISTS(SELECT 1 FROM comment_likes mine WHERE mine.comment_id=c.id AND mine.user_id=$2) AS has_liked
          FROM comments c
@@ -91,6 +91,7 @@ export async function POST(request: Request, context: Ctx) {
       username: user!.username,
       author_role: user!.role,
       avatar_color: user!.avatar_color,
+      has_avatar: Boolean(user!.has_avatar),
       seniority_code: user!.seniority_code,
       verified_badges: user!.verified_badges,
       like_count: 0,

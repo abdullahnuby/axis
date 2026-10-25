@@ -378,7 +378,7 @@ img,video,canvas,svg{max-width:100%}
 .compose-input-row{display:block}
 .compose-mobile-avatar,.compose-quick-image{display:none}
 .header-notification{position:relative}
-.header-notification::after{content:"";position:absolute;top:7px;inset-inline-end:8px;width:6px;height:6px;border:1.5px solid #fff;border-radius:50%;background:var(--gold)}
+.notification-count-badge{position:absolute;inset-block-start:-5px;inset-inline-end:-5px;min-width:17px;height:17px;padding-inline:4px;display:grid;place-items:center;border:2px solid #fff;border-radius:999px;background:#D92D20;color:#fff;font-size:9px;line-height:1;font-weight:800;direction:ltr;box-shadow:0 1px 3px rgba(10,30,50,.18)}
 
 @media(max-width:760px){
   .topbar.app-topbar{height:48px;min-height:48px}
@@ -391,7 +391,6 @@ img,video,canvas,svg{max-width:100%}
   .topbar.app-topbar .topbar-actions .icon-btn svg{width:16px;height:16px}
   .topbar.app-topbar .topbar-actions .header-profile,
   .topbar.app-topbar .topbar-actions button[aria-label="تسجيل الخروج"]{display:none!important}
-  .topbar.app-topbar .header-notification::after{top:3px;inset-inline-end:3px;width:5px;height:5px}
   .topbar.app-topbar .topbar.search-open .header-search{top:calc(100% + 6px)}
 
   .shell-layout{padding-top:6px!important;padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))!important}
@@ -1152,3 +1151,28 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .message-edit-form{display:grid;gap:8px;min-width:min(320px,70vw)}
 .message-edit-form .field{font-size:16px;min-width:0}
 @media(max-width:760px){.profile-post-manage-actions{justify-content:flex-start}.message-edit-form{min-width:0}.message-bubble-footer{gap:8px}.message-actions button{min-width:32px;min-height:32px}}
+
+
+/* Floating feedback: mutation results stay visible without shifting content. */
+.axis-toast{position:fixed;z-index:1200;inset-inline-start:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(560px,calc(100vw - 28px));display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:14px;box-shadow:0 12px 38px rgba(9,27,48,.18);border:1px solid var(--line);background:#fff;color:var(--ink);font-size:14px;font-weight:650;line-height:1.65;animation:axis-toast-in .18s ease-out both;pointer-events:auto}
+.axis-toast>svg{flex:none;color:#07966A}.axis-toast-error{background:#FFF8F7;border-color:#F1C9C5;color:#8E271E}.axis-toast-error>svg{color:#B42318}.axis-toast-close{display:grid;place-items:center;width:30px;height:30px;min-width:30px;margin-inline-start:auto;border:0;border-radius:9px;background:transparent;color:inherit}.axis-toast-close:hover{background:rgba(20,35,55,.07)}
+@keyframes axis-toast-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+.axis-user-avatar{position:relative;overflow:hidden;isolation:isolate}.axis-avatar-fallback{position:relative;z-index:0;display:grid;place-items:center;width:100%;height:100%}.axis-user-avatar>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:1;background:var(--soft)}
+.profile-cover-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}.profile-cover-mark{z-index:1;pointer-events:none}.profile-cover-controls{position:absolute;z-index:2;inset-inline-end:18px;bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.profile-cover-controls .btn{min-height:34px;box-shadow:0 2px 8px rgba(0,0,0,.12)}.profile-avatar-wrap{position:relative;flex:none;margin-top:-28px}.profile-avatar-wrap .profile-avatar{margin-top:0}.profile-avatar-edit{position:absolute;inset-inline-end:2px;bottom:3px;width:30px;height:30px;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;background:var(--blue);color:#fff;box-shadow:0 2px 7px rgba(10,30,50,.18)}.profile-avatar-edit:disabled{opacity:.6}.profile-media-hint{margin:0;padding:11px 14px;border:1px solid #B8E8ED;border-radius:12px;background:#F0FCFD;color:#24566A;font-size:13px;line-height:1.8}.public-profile-cover-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}.public-profile-watermark{z-index:1;pointer-events:none}.public-profile-avatar{position:relative;overflow:hidden}.header-install-action{display:flex;align-items:center}.header-install-action .pwa-install-button{min-height:36px;padding:6px 10px;font-size:12px;gap:6px}.pwa-steps{margin:12px 0;padding-inline-start:24px;display:grid;gap:8px;line-height:1.85}.pwa-steps li{padding-inline-start:3px}.pwa-copy-address{width:100%;justify-content:center;margin-top:8px;background:#F4F8FC}
+@media(max-width:760px){.axis-toast{bottom:calc(76px + env(safe-area-inset-bottom,0px));width:calc(100vw - 24px);padding:11px 12px;font-size:13px}.header-install-action .pwa-install-button{width:auto;min-width:58px;height:32px;min-height:32px;padding:4px 7px;gap:4px;justify-content:center;font-size:10.5px;white-space:nowrap}.header-install-action .pwa-install-button svg{width:14px;height:14px}.profile-cover-controls{inset-inline-end:8px;bottom:8px;gap:5px}.profile-cover-controls .btn{font-size:11px;padding:5px 8px;min-height:32px}.profile-avatar-wrap{margin-top:-24px}.profile-media-hint{font-size:12px}.profile-cover-photo{object-position:center}.pwa-guide-card h2{font-size:20px}.pwa-steps{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.axis-toast{animation:none}}
+
+/* Make app installation discoverable before the visitor reaches the page footer. */
+.landing-hero-actions .pwa-install-button{background:#FFFFFF;color:#0E1A2B;border-color:#FFFFFF}
+.landing-hero-actions .pwa-install-button:hover{background:#F0F7FF;border-color:#D7E8FB}
+@media(max-width:520px){.landing-hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.landing-hero-actions>.btn{width:100%;min-height:44px;padding-inline:10px;font-size:13px}.landing-hero-actions>.pwa-install-button{grid-column:1/-1;grid-row:2}.landing-hero-actions>a[href="#how"]{grid-column:1/-1;grid-row:3}}
+.pwa-address-label{display:block;font-size:13px;font-weight:700;margin:14px 0 5px}.pwa-address-field{direction:ltr;text-align:left;font-size:16px!important;user-select:all;background:#F7FAFD}
+
+/* Profile media upload feedback and fixed toast stacking. */
+.profile-media-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.55);border-top-color:#fff;border-radius:50%;animation:profile-media-spin .7s linear infinite}
+@keyframes profile-media-spin{to{transform:rotate(360deg)}}
+.profile-cover-controls .btn{backdrop-filter:blur(8px)}
+.axis-toast{inset-block-start:auto;max-height:min(30vh,180px);overflow:auto}
+
+/* Public trust and policy pages */
+.legal-page{min-height:100vh;background:var(--bg,#F8FCFF);padding-bottom:36px}.legal-topbar{position:relative}.legal-container{max-width:900px;padding-top:34px;padding-bottom:36px}.legal-eyebrow{display:flex;align-items:center;gap:7px;color:var(--blue);font-size:13px;font-weight:750;margin-bottom:12px}.legal-title{font-size:clamp(26px,4vw,36px);margin:0 0 10px}.legal-intro{font-size:16px;line-height:1.9;color:var(--muted);max-width:760px}.legal-updated{margin:16px 0}.legal-card{padding:clamp(18px,3.5vw,34px)}.legal-section+.legal-section{border-top:1px solid var(--line);margin-top:24px;padding-top:22px}.legal-section h2{font-size:18px;margin:0 0 10px;color:var(--ink)}.legal-section p,.legal-section li{line-height:2;color:var(--muted);font-size:14px}.legal-section p{margin:0 0 10px}.legal-section ul{padding-inline-start:23px;margin:8px 0}.legal-section li{padding-inline-start:3px;margin-bottom:5px}.legal-links,.legal-footer-links,.app-legal-footer{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 18px}.legal-links{margin-top:18px}.legal-links a,.legal-footer-links a,.app-legal-footer a{color:var(--blue);font-size:12px;text-decoration:underline;text-underline-offset:3px}.legal-footer-links{display:inline-flex;margin-inline-start:8px;gap:5px 12px}.app-legal-footer{padding:14px 16px 22px;color:var(--muted)}@media(max-width:760px){.legal-container{padding-top:24px}.legal-intro{font-size:14px}.legal-section h2{font-size:16px}.legal-section p,.legal-section li{font-size:13px}.app-legal-footer{padding-bottom:94px;gap:8px 14px}}

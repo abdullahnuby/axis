@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import {
   ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, CalendarDays,
@@ -12,6 +12,7 @@ import type { SessionUser } from "@/lib/types";
 import { BADGE_OPTIONS, GLOSSARY, SPECIALTIES } from "@/lib/constants";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
 import { Toast } from "@/components/Toast";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export type ProfilePostPreview = {
   id: string;
@@ -26,7 +27,9 @@ export type ProfilePostPreview = {
   shared_created_at?: string | null;
   shared_has_image?: boolean | null;
   shared_display_name?: string | null;
+  shared_author_id?: string | null;
   shared_avatar_color?: string | null;
+  shared_has_avatar?: boolean;
   shared_specialty?: string | null;
   shared_profile_specialty?: string | null;
 };
@@ -61,6 +64,10 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState<"avatar" | "cover" | null>(null);
+  const [mediaRevision, setMediaRevision] = useState(0);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const isMember = user.role === "member";
   const approvedBadges = isMember ? user.verified_badges.filter((code) => badgeLabels.has(code)) : [];
 
@@ -123,6 +130,47 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
     }
   }
 
+  async function uploadProfileMedia(kind: "avatar" | "cover", event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const maxBytes = kind === "cover" ? 4_000_000 : 2_000_000;
+    if (!file.type.startsWith("image/") || file.size > maxBytes) {
+      setError(kind === "cover" ? "اختار صورة غلاف بصيغة JPG أو PNG أو WebP وحجم أقل من 4 ميجابايت." : "اختار صورة شخصية بصيغة JPG أو PNG أو WebP وحجم أقل من 2 ميجابايت.");
+      event.target.value = "";
+      return;
+    }
+    setMediaBusy(kind); setError(""); setSuccess("");
+    const data = new FormData(); data.set("kind", kind); data.set("file", file);
+    try {
+      const response = await fetch("/api/me/media", { method: "POST", body: data });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نحفظ الصورة. جرّب تاني.");
+      setUser(old => ({ ...old, has_avatar: Boolean(payload.has_avatar), has_cover: Boolean(payload.has_cover), updated_at: payload.updated_at || new Date().toISOString() }));
+      setMediaRevision(Date.now());
+      setSuccess(kind === "avatar" ? "صورتك الشخصية اتحدّثت بنجاح." : "صورة الغلاف اتحدّثت بنجاح.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نحفظ الصورة. جرّب تاني.");
+    } finally {
+      setMediaBusy(null); event.target.value = "";
+    }
+  }
+
+  async function removeProfileMedia(kind: "avatar" | "cover") {
+    if (!user[kind === "avatar" ? "has_avatar" : "has_cover"] || mediaBusy) return;
+    if (!window.confirm(kind === "avatar" ? "تشيل صورتك الشخصية وترجع للأحرف؟" : "تشيل صورة الغلاف؟")) return;
+    setMediaBusy(kind); setError(""); setSuccess("");
+    try {
+      const response = await fetch(`/api/me/media?kind=${kind}`, { method: "DELETE" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نشيل الصورة. جرّب تاني.");
+      setUser(old => ({ ...old, has_avatar: Boolean(payload.has_avatar), has_cover: Boolean(payload.has_cover), updated_at: payload.updated_at || new Date().toISOString() }));
+      setMediaRevision(Date.now());
+      setSuccess(kind === "avatar" ? "اتشالت صورتك الشخصية." : "اتشالت صورة الغلاف.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نشيل الصورة. جرّب تاني.");
+    } finally { setMediaBusy(null); }
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); setSuccess(""); setBusy(true);
     try {
@@ -152,10 +200,16 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
       <Toast message={success} />
 
       <section className="card profile-hero-card">
-        <div className="profile-cover" aria-hidden="true"><AxisLogoMark className="profile-cover-mark" title=""/></div>
+        <input ref={avatarInputRef} className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void uploadProfileMedia("avatar", event)}/>
+        <input ref={coverInputRef} className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void uploadProfileMedia("cover", event)}/>
+        <div className="profile-cover" aria-label="صورة غلاف الملف الشخصي">
+          {user.has_cover ? <img className="profile-cover-photo" src={`/api/people/${encodeURIComponent(user.id)}/media?kind=cover&v=${mediaRevision || encodeURIComponent(String(user.updated_at || "1"))}`} alt=""/> : null}
+          <AxisLogoMark className="profile-cover-mark" title=""/>
+          <div className="profile-cover-controls"><button type="button" className="btn btn-small" onClick={() => coverInputRef.current?.click()} disabled={mediaBusy !== null}><Camera size={14}/>{mediaBusy === "cover" ? "جارٍ الرفع…" : user.has_cover ? "تغيير الغلاف" : "إضافة غلاف"}</button>{user.has_cover && <button type="button" className="btn btn-small btn-danger" onClick={() => void removeProfileMedia("cover")} disabled={mediaBusy !== null}>إزالة</button>}</div>
+        </div>
         <div className="profile-hero-details">
           <div className="profile-identity">
-            <div className="avatar profile-avatar" style={{ background: user.avatar_color }}>{user.display_name.slice(0, 1)}</div>
+            <div className="profile-avatar-wrap"><UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={mediaRevision || user.updated_at} className="profile-avatar"/><button type="button" className="profile-avatar-edit" onClick={() => avatarInputRef.current?.click()} disabled={mediaBusy !== null} aria-label={mediaBusy === "avatar" ? "جارٍ رفع الصورة الشخصية" : "تغيير الصورة الشخصية"} title={mediaBusy === "avatar" ? "جارٍ الرفع…" : "تغيير الصورة الشخصية"}>{mediaBusy === "avatar" ? <span className="profile-media-spinner" aria-hidden="true"/> : <Camera size={15}/>}</button></div>
             <div className="profile-identity-copy">
               <div className="profile-name-row">
                 <h2>{user.display_name}</h2>
@@ -178,6 +232,8 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
           </button>
         </div>
       </section>
+
+      <p className="profile-media-hint">تقدر تغيّر الصورة الشخصية أو الغلاف مباشرة من هنا. الصور بتتظبط تلقائيًا لتناسب العرض. الأنواع المدعومة JPG وPNG وWebP.</p>
 
       {editing && <section id="profile-edit-panel" className="card profile-edit-panel">
         <div className="profile-section-heading"><div><h2 className="section-title">عدّل بياناتك</h2><p className="small muted">غيّر اسمك أو تخصصك أو النبذة اللي زملاؤك بيشوفوها.</p></div><PencilLine size={19} className="muted"/></div>
@@ -216,7 +272,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
               {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell profile-shared-post-shell">
                 <div className="shared-post-attribution"><Share2 size={14}/><span>شاركت منشور {post.shared_display_name}</span></div>
                 <article className="shared-post-original">
-                  <header className="shared-post-original-header"><div className="avatar sm" style={{ background: post.shared_avatar_color || "var(--blue)" }}>{post.shared_display_name.slice(0, 1)}</div><div className="user-meta"><strong>{post.shared_display_name}</strong><span className="small muted">{post.shared_specialty || post.shared_profile_specialty || "من مجتمع AXIS"}</span></div>{post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatDate(post.shared_created_at)}</time>}</header>
+                  <header className="shared-post-original-header"><UserAvatar userId={post.shared_author_id} displayName={post.shared_display_name} avatarColor={post.shared_avatar_color} hasAvatar={post.shared_has_avatar} className="sm"/><div className="user-meta"><strong>{post.shared_display_name}</strong><span className="small muted">{post.shared_specialty || post.shared_profile_specialty || "من مجتمع AXIS"}</span></div>{post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatDate(post.shared_created_at)}</time>}</header>
                   {post.shared_body && <p className="shared-post-original-body">{post.shared_body}</p>}
                   {post.shared_has_image && <a className="shared-post-original-media" href={`/api/posts/${post.shared_post_id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور الأصلي"><img src={`/api/posts/${post.shared_post_id}/image`} alt={`صورة من منشور ${post.shared_display_name}`} loading="lazy"/></a>}
                 </article>

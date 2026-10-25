@@ -7,7 +7,7 @@ export async function GET() {
   const { user, response } = await getApiUser({ verified: true }); if (response) return response;
   try {
     const result = await query(`SELECT c.id,c.updated_at,other.id AS other_user_id,other.username AS other_username,
-      other.display_name AS other_display_name,other.avatar_color AS other_avatar_color,other.specialty AS other_specialty,
+      other.display_name AS other_display_name,other.avatar_color AS other_avatar_color,(other.avatar_image_mime IS NOT NULL) AS other_has_avatar,other.specialty AS other_specialty,
       last.body AS last_message,last.created_at AS last_message_at,last.sender_id AS last_sender_id,
       (SELECT count(*)::int FROM messages unread WHERE unread.conversation_id=c.id AND unread.sender_id<>$1 AND unread.created_at>mine.last_read_at AND unread.deleted_at IS NULL) AS unread_count
       FROM conversations c

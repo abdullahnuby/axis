@@ -27,6 +27,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
+import { UserAvatar } from "@/components/UserAvatar";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
 import { Toast } from "@/components/Toast";
 import { SPECIALTIES } from "@/lib/constants";
@@ -302,6 +303,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     if (!body || body.length > 1200 || busyEditCommentId) return;
     setBusyEditCommentId(comment.id);
     setError("");
+    setSuccess("");
     try {
       const response = await fetch(`/api/comments/${comment.id}`, {
         method: "PATCH",
@@ -331,6 +333,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     if (busyDeleteCommentId || !window.confirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
     setBusyDeleteCommentId(comment.id);
     setError("");
+    setSuccess("");
     try {
       const response = await fetch(`/api/comments/${comment.id}`, { method: "DELETE" });
       const payload = await response.json();
@@ -390,13 +393,14 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
   async function savePostEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!editingPost || editBusy) return;
-    setEditBusy(true); setError("");
+    setEditBusy(true); setError(""); setSuccess("");
     try {
       const response = await fetch(`/api/posts/${editingPost.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: editBody, specialty: editSpecialty }) });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "ما قدرناش نحفظ التعديل.");
       setPosts(old => old.map(post => post.id === editingPost.id ? { ...post, body: payload.post.body, specialty: payload.post.specialty } : post));
-      setEditingPost(null); setSuccess("اتحفظ تعديل المنشور.");
+      setEditingPost(null);
+      setSuccess("اتحفظ تعديل المنشور.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحفظ التعديل."); }
     finally { setEditBusy(false); }
   }
@@ -405,6 +409,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     if (post.author_id !== user.id || busyDeletePostId || !window.confirm("متأكد إنك عايز تحذف المنشور نهائيًا؟")) return;
     setBusyDeletePostId(post.id);
     setError("");
+    setSuccess("");
     try {
       const response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
       const payload = await response.json();
@@ -426,7 +431,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     return (
       <div className={`comment-thread ${depth > 0 ? "comment-thread-reply" : ""}`} id={`comment-${comment.id}`} key={comment.id}>
         <div className="comment comment-professional">
-          <div className="avatar sm comment-avatar" style={{ background: comment.avatar_color || "var(--blue)" }}>{comment.display_name.slice(0, 1)}</div>
+          <UserAvatar userId={comment.author_id} displayName={comment.display_name} avatarColor={comment.avatar_color} hasAvatar={comment.has_avatar} className="sm comment-avatar"/>
           <div className="comment-content">
             <div className="comment-body comment-bubble">
               {isEditing ? (
@@ -478,7 +483,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       <form id="compose" className={`card compose compose-professional ${composerExpanded ? "compose-is-expanded" : ""}`} onSubmit={createPost}>
         <input ref={imageInputRef} className="hidden" type="file" id="post-image" accept="image/jpeg,image/png,image/webp" onChange={chooseImage}/>
         <div className="compose-compact-bar">
-          <div className="avatar compose-compact-avatar" style={{ background: user.avatar_color || "var(--blue)" }} aria-hidden="true">{user.display_name.slice(0, 1)}</div>
+          <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="compose-compact-avatar"/>
           <button type="button" className="compose-compact-trigger" onClick={() => setComposerExpanded(true)} aria-label="فتح كتابة مشاركة جديدة">
             {body.trim() ? body.trim().slice(0, 74) : "إيه اللي حابب تشاركه مع زملائك؟"}
           </button>
@@ -489,7 +494,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
           <div className="compose-mobile-expanded-heading"><strong>مشاركة جديدة</strong><button type="button" className="compose-collapse-button" onClick={() => setComposerExpanded(false)} aria-label="تصغير مربع المشاركة"><X size={16}/><span>تصغير</span></button></div>
           <div className="compose-heading">
             <div className="user-line compose-user-line">
-              <div className="avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
+              <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at}/>
               <div className="user-meta">
                 <div className="user-name compose-display-name">{user.display_name}{user.role === "member" ? <ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact/> : <span className="pill navy">فريق AXIS</span>}</div>
                 <div className="user-sub">خبرتك ممكن تفيد زميلك — شاركها معانا</div>
@@ -498,7 +503,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
             <span className="compose-private"><BadgeCheck size={15}/> مساحة للمهندسين المعتمدين</span>
           </div>
           <div className="compose-input-row">
-            <div className="avatar compose-mobile-avatar" style={{ background: user.avatar_color || "var(--blue)" }} aria-hidden="true">{user.display_name.slice(0, 1)}</div>
+            <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="compose-mobile-avatar"/>
             <label className="sr-only" htmlFor="feed-post-body">نص المشاركة</label>
             <textarea id="feed-post-body" className="field compose-textarea" value={body} onFocus={() => setComposerExpanded(true)} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="إيه اللي حابب تشاركه مع زملائك؟" aria-label="نص المشاركة" />
           </div>
@@ -563,7 +568,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
           <article className="card post post-professional" id={`post-${post.id}`} key={post.id} tabIndex={-1}>
             <header className="post-header">
               <div className="user-line post-author-line">
-                <div className="avatar post-avatar" style={{ background: post.avatar_color || "var(--blue)" }}>{post.display_name.slice(0, 1)}</div>
+                <UserAvatar userId={post.author_id} displayName={post.display_name} avatarColor={post.avatar_color} hasAvatar={post.has_avatar} className="post-avatar"/>
                 <div className="user-meta post-author-meta">
                   <div className="post-author-name-row">
                     <Link className="post-author-name" href={`/people/${encodeURIComponent(post.username)}`}>{post.display_name}</Link>
@@ -593,7 +598,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
               <div className="shared-post-attribution"><Share2 size={14}/><span>{post.display_name} شارك المنشور ده</span></div>
               <article className="shared-post-original">
                 <header className="shared-post-original-header">
-                  <div className="avatar sm" style={{ background: post.shared_avatar_color || "var(--blue)" }}>{post.shared_display_name.slice(0, 1)}</div>
+                  <UserAvatar userId={post.shared_author_id} displayName={post.shared_display_name} avatarColor={post.shared_avatar_color} hasAvatar={post.shared_has_avatar} className="sm"/>
                   <div className="user-meta"><Link href={`/people/${encodeURIComponent(post.shared_username || "")}`}><strong>{post.shared_display_name}</strong></Link><span className="small muted">{post.shared_job_title || (post.shared_specialty ? `تخصص ${post.shared_specialty}` : "من مجتمع AXIS")}</span></div>
                   {post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatPostTime(post.shared_created_at)}</time>}
                 </header>
@@ -632,7 +637,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
               {!comments[post.id] ? <div className="comments-loading">بنحمّل التعليقات…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
               {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء <X size={13}/></button></div>}
               <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>
-                <div className="avatar sm comment-current-avatar" style={{ background: user.avatar_color || "var(--blue)" }}>{user.display_name.slice(0, 1)}</div>
+                <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="sm comment-current-avatar"/>
                 <label className="sr-only" htmlFor={`comment-${post.id}`}>{replyTargets[post.id] ? "اكتب ردك" : "اكتب تعليقك"}</label>
                 <input id={`comment-${post.id}`} className="field" value={commentDrafts[post.id] || ""} onChange={event => setCommentDrafts(old => ({ ...old, [post.id]: event.target.value }))} maxLength={1200} placeholder={replyTargets[post.id] ? `الرد على ${replyTargets[post.id]!.display_name}…` : "اكتب تعليقك…"}/>
                 <button type="submit" className="comment-send" disabled={commentBusy || !(commentDrafts[post.id] || "").trim()} aria-label={replyTargets[post.id] ? "إرسال الرد" : "إرسال التعليق"}><Send size={17}/></button>

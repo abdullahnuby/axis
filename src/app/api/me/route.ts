@@ -11,6 +11,6 @@ export async function PATCH(request: Request) {
   const displayName = cleanText(body.displayName, 80); const specialty = cleanText(body.specialty, 80); const bio = cleanText(body.bio, 600);
   if (displayName.length < 2) return jsonError("اسم الظهور قصير جدًا.");
   if (specialty && !(SPECIALTIES as readonly string[]).includes(specialty)) return jsonError("التخصص غير صالح.");
-  const result = await query("UPDATE users SET display_name=$1, specialty=$2, bio=$3 WHERE id=$4 RETURNING id,email,username,display_name,role,verification_status,account_status,specialty,bio,job_title,approved_years,seniority_code,verified_badges,avatar_color,created_at", [displayName, specialty || null, bio || null, user!.id]);
+  const result = await query("UPDATE users SET display_name=$1, specialty=$2, bio=$3,updated_at=now() WHERE id=$4 RETURNING id,email,username,display_name,role,verification_status,account_status,specialty,bio,job_title,approved_years,seniority_code,verified_badges,avatar_color,avatar_image_mime IS NOT NULL AS has_avatar,cover_image_mime IS NOT NULL AS has_cover,created_at,updated_at", [displayName, specialty || null, bio || null, user!.id]);
   return NextResponse.json({ user: result.rows[0] });
 }

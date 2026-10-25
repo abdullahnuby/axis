@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   }
   try {
     const result = await query(`SELECT u.id,u.username,u.display_name,u.specialty,u.job_title,u.bio,u.seniority_code,
-        u.verified_badges,u.avatar_color,u.approved_years,u.created_at,
+        u.verified_badges,u.avatar_color,(u.avatar_image_mime IS NOT NULL) AS has_avatar,u.approved_years,u.created_at,
         (SELECT count(*)::int FROM user_follows f WHERE f.following_id=u.id) AS follower_count,
         (SELECT count(*)::int FROM user_follows f WHERE f.follower_id=u.id) AS following_count,
         EXISTS(SELECT 1 FROM user_follows mine WHERE mine.follower_id=$1 AND mine.following_id=u.id) AS is_following

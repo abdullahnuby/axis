@@ -10,7 +10,9 @@ export default async function ProfilePage() {
       (p.image_data IS NOT NULL) AS has_image,
       sp.body AS shared_body, sp.created_at AS shared_created_at,
       (sp.image_data IS NOT NULL) AS shared_has_image,
-      su.display_name AS shared_display_name, su.avatar_color AS shared_avatar_color,
+      sp.author_id AS shared_author_id, sp.author_id AS shared_author_id, su.display_name AS shared_display_name, su.avatar_color AS shared_avatar_color,
+      (su.avatar_image_mime IS NOT NULL) AS shared_has_avatar,
+      (su.avatar_image_mime IS NOT NULL) AS shared_has_avatar,
       su.specialty AS shared_profile_specialty, sp.specialty AS shared_specialty,
       (SELECT count(*)::int FROM post_likes l WHERE l.post_id=p.id) AS like_count,
       (SELECT count(*)::int FROM comments c WHERE c.post_id=p.id) AS comment_count

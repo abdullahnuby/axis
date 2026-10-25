@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS users (
   seniority_code text NOT NULL DEFAULT 'JNR' CHECK (seniority_code IN ('JNR','MID','SNR','EXP')),
   verified_badges text[] NOT NULL DEFAULT '{}',
   avatar_color text NOT NULL DEFAULT '#1B4F8F',
+  avatar_image_data bytea,
+  avatar_image_mime text CHECK (avatar_image_mime IS NULL OR avatar_image_mime IN ('image/jpeg','image/png','image/webp')),
+  cover_image_data bytea,
+  cover_image_mime text CHECK (cover_image_mime IS NULL OR cover_image_mime IN ('image/jpeg','image/png','image/webp')),
   email_verified_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -23,6 +27,18 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS users_status_idx ON users (verification_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS users_specialty_idx ON users (specialty);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_image_data bytea;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_image_mime text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS cover_image_data bytea;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS cover_image_mime text;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_avatar_image_mime_check') THEN
+    ALTER TABLE users ADD CONSTRAINT users_avatar_image_mime_check CHECK (avatar_image_mime IS NULL OR avatar_image_mime IN ('image/jpeg','image/png','image/webp'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_cover_image_mime_check') THEN
+    ALTER TABLE users ADD CONSTRAINT users_cover_image_mime_check CHECK (cover_image_mime IS NULL OR cover_image_mime IN ('image/jpeg','image/png','image/webp'));
+  END IF;
+END $$;
 
 -- Professional community relationships and interest groups.
 CREATE TABLE IF NOT EXISTS user_follows (

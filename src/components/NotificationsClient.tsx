@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCheck, Heart, MessageCircle, UserPlus, Share2, Send, Users } from "lucide-react";
 import Link from "next/link";
@@ -11,8 +11,24 @@ type Notification = { id: string; kind: string; message: string; target_post_id:
 export function NotificationsClient({ user }: { user: SessionUser }) {
   const router = useRouter();
   const [items, setItems] = useState<Notification[]>([]); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-  useEffect(() => { void (async () => { try { const res = await fetch("/api/notifications", { cache: "no-store" }); const data = await res.json(); if (!res.ok) throw new Error(data.error || "مش قادرين نحمّل الإشعارات دلوقتي. جرّب تاني."); setItems(data.notifications || []); } catch (caught) { setError(caught instanceof Error ? caught.message : "مش قادرين نحمّل الإشعارات دلوقتي. جرّب تاني."); } })(); }, []);
-  async function markRead() { setBusy(true); setError(""); try { const res = await fetch("/api/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markAllRead: true }) }); const data = await res.json(); if (!res.ok) throw new Error(data.error || "ما قدرناش نحدّث الإشعارات. جرّب تاني."); setItems(old => old.map(n => ({ ...n, is_read: true }))); } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحدّث الإشعارات. جرّب تاني."); } finally { setBusy(false); } }
+  const load = useCallback(async () => {
+    if (document.visibilityState !== "visible") return;
+    try {
+      const res = await fetch("/api/notifications", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "مش قادرين نحمّل الإشعارات دلوقتي. جرّب تاني.");
+      setItems(Array.isArray(data.notifications) ? data.notifications : []);
+      setError("");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "مش قادرين نحمّل الإشعارات دلوقتي. جرّب تاني."); }
+  }, []);
+  useEffect(() => {
+    void load();
+    const interval = window.setInterval(() => void load(), 25_000);
+    document.addEventListener("visibilitychange", load);
+    window.addEventListener("focus", load);
+    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", load); window.removeEventListener("focus", load); };
+  }, [load]);
+  async function markRead() { setBusy(true); setError(""); try { const res = await fetch("/api/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markAllRead: true }) }); const data = await res.json(); if (!res.ok) throw new Error(data.error || "ما قدرناش نحدّث الإشعارات. جرّب تاني."); setItems(old => old.map(n => ({ ...n, is_read: true }))); window.dispatchEvent(new Event("axis-notifications-updated")); } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحدّث الإشعارات. جرّب تاني."); } finally { setBusy(false); } }
   async function openNotification(event: MouseEvent<HTMLAnchorElement>, item: Notification) {
     event.preventDefault();
     setError("");
@@ -22,6 +38,7 @@ export function NotificationsClient({ user }: { user: SessionUser }) {
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "ما قدرناش نعلّم الإشعار كمقروء.");
         setItems(old => old.map(n => n.id === item.id ? { ...n, is_read: true } : n));
+        window.dispatchEvent(new Event("axis-notifications-updated"));
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : "ما قدرناش نحدّث الإشعار. جرّب تاني.");
         return;

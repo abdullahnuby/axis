@@ -5,7 +5,7 @@
   "description": "مساحة للمهندسين لتبادل الخبرات والأسئلة وتجارب مواقع العمل داخل مجتمع بعضوية موثّقة.",
   "lang": "ar-EG",
   "dir": "rtl",
-  "start_url": "/",
+  "start_url": "/feed",
   "scope": "/",
   "display": "standalone",
   "display_override": [

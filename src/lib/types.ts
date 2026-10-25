@@ -18,6 +18,9 @@ export interface SessionUser {
   seniority_code: SeniorityCode;
   verified_badges: string[];
   avatar_color: string;
+  has_avatar?: boolean;
+  has_cover?: boolean;
+  updated_at?: string;
   created_at?: string;
   email_verified_at?: string | null;
 }
@@ -29,6 +32,7 @@ export interface FeedPost {
   display_name: string;
   author_role?: UserRole;
   avatar_color?: string;
+  has_avatar?: boolean;
   seniority_code: SeniorityCode;
   job_title: string | null;
   specialty: string | null;
@@ -49,6 +53,8 @@ export interface FeedPost {
   shared_display_name?: string | null;
   shared_author_role?: UserRole;
   shared_avatar_color?: string | null;
+  shared_author_id?: string | null;
+  shared_has_avatar?: boolean;
   shared_seniority_code?: SeniorityCode;
   shared_job_title?: string | null;
   shared_specialty?: string | null;
@@ -65,6 +71,7 @@ export interface FeedComment {
   username: string;
   author_role?: UserRole;
   avatar_color?: string;
+  has_avatar?: boolean;
   seniority_code: SeniorityCode;
   verified_badges: string[];
   body: string;

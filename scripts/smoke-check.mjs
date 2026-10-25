@@ -394,7 +394,75 @@ await check("notification buttons navigate only after read status is acknowledge
 await check("public-profile TypeScript query is explicitly typed to fix latest Vercel build failure", async () => {
   const page = await read("src/app/people/[username]/page.tsx");
   assert.match(page, /query<PublicProfileRecord>/);
-  assert.match(page, /profile=\{\{\.\.\.profile,created_at:String\(profile\.created_at\)\}\}/);
+  assert.match(page, /profile=\{\{\.\.\.profile,created_at:String\(profile\.created_at\),updated_at:String\(profile\.updated_at\)\}\}/);
+});
+
+
+await check("profile avatar and cover uploads are persisted, validated, and gated behind a verified session", async () => {
+  const upload = await read("src/app/api/me/media/route.ts");
+  const fetchMedia = await read("src/app/api/people/[userId]/media/route.ts");
+  const profile = await read("src/components/ProfileClient.tsx");
+  const schema = await read("db/migrations/20261025_profile_media.sql");
+  assert.match(upload, /getApiUser\(\{ verified: true \}\)/);
+  assert.match(upload, /parseSafeUpload/);
+  assert.match(upload, /sharp\(/);
+  assert.match(upload, /limitInputPixels/);
+  assert.match(upload, /webp\(\{ quality: 84/);
+  assert.match(upload, /avatar_image_data/);
+  assert.match(upload, /cover_image_data/);
+  assert.match(fetchMedia, /getApiUser\(\{ verified: true \}\)/);
+  assert.match(fetchMedia, /X-Content-Type-Options/);
+  assert.match(profile, /uploadProfileMedia/);
+  assert.match(profile, /تغيير صورة الغلاف|تغيير الغلاف|إضافة غلاف/);
+  assert.match(profile, /profile-avatar-edit/);
+  assert.match(schema, /ADD COLUMN IF NOT EXISTS avatar_image_data/);
+  assert.match(schema, /ADD COLUMN IF NOT EXISTS cover_image_data/);
+});
+await check("post and comment mutations update the visible UI without stale background overwrites", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  const toast = await read("src/components/Toast.tsx");
+  assert.match(feed, /setPosts\(old => old\.map\(post => post\.id === editingPost\.id/);
+  assert.match(feed, /setPosts\(old => old\.filter\(item => item\.id !== post\.id\)\)/);
+  assert.match(feed, /setComments\(old => \(\{[\s\S]*?item\.id === comment\.id/);
+  assert.doesNotMatch(feed, /setSuccess\("اتحذف المنشور\."\);[\s\S]{0,180}void load\(\)/);
+  assert.doesNotMatch(feed, /setSuccess\("اتحفظ تعديل المنشور\."\);[\s\S]{0,180}void load\(\)/);
+  assert.match(toast, /createPortal/);
+  assert.match(toast, /document\.body/);
+});
+await check("unread notification count is per-user and appears in the app header", async () => {
+  const route = await read("src/app/api/notifications/unread-count/route.ts");
+  const header = await read("src/components/AppHeader.tsx");
+  const styles = await read("src/app/globals.css");
+  assert.match(route, /getApiUser\(\{ verified: true \}\)/);
+  assert.match(route, /WHERE user_id=\$1 AND is_read=false/);
+  assert.match(header, /api\/notifications\/unread-count/);
+  assert.match(header, /notification-count-badge/);
+  assert.match(header, /setInterval/);
+  assert.match(styles, /\.notification-count-badge/);
+  assert.match(await read("src/components/NotificationsClient.tsx"), /setInterval/);
+});
+await check("PWA installation guidance is reachable on the landing hero and documents iPhone Share actions", async () => {
+  const home = await read("src/app/page.tsx");
+  const install = await read("src/components/PWAInstallButton.tsx");
+  const provider = await read("src/components/PWAProvider.tsx");
+  assert.match(home, /landing-hero-actions[\s\S]*<PWAInstallButton/);
+  assert.match(install, /إضافة إلى الشاشة الرئيسية/);
+  assert.match(install, /تعديل الإجراءات/);
+  assert.match(provider, /beforeinstallprompt/);
+});
+
+await check("public privacy, terms, and community-guideline pages are linked across the platform", async () => {
+  for (const file of ["src/app/privacy/page.tsx", "src/app/terms/page.tsx", "src/app/community-guidelines/page.tsx", "src/components/LegalPage.tsx"]) assert.equal(await exists(file), true, `${file} missing`);
+  const landing = await read("src/app/page.tsx");
+  const shell = await read("src/components/AppShell.tsx");
+  const privacy = await read("src/app/privacy/page.tsx");
+  const terms = await read("src/app/terms/page.tsx");
+  const guidelines = await read("src/app/community-guidelines/page.tsx");
+  assert.match(landing, /href="\/privacy"/);
+  assert.match(shell, /href="\/terms"/);
+  assert.match(privacy, /مستندات التحقق/);
+  assert.match(terms, /مسؤولية المحتوى/);
+  assert.match(guidelines, /سرية المشروعات والعملاء/);
 });
 
 console.log(`AXIS static smoke checks: ${checks.length} passed`);

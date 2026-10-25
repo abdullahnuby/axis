@@ -11,6 +11,7 @@ type PWAContextValue = {
   canInstall: boolean;
   isInstalled: boolean;
   isIOS: boolean;
+  isSafari: boolean;
   install: () => Promise<boolean>;
 };
 
@@ -18,6 +19,7 @@ const PWAContext = createContext<PWAContextValue>({
   canInstall: false,
   isInstalled: false,
   isIOS: false,
+  isSafari: false,
   install: async () => false,
 });
 
@@ -25,12 +27,15 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   const [promptEvent, setPromptEvent] = useState<InstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
 
   useEffect(() => {
     const ua = window.navigator.userAgent;
     const ios = /iPad|iPhone|iPod/.test(ua) || (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
     const standalone = window.matchMedia("(display-mode: standalone)").matches || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+    const safari = /Safari/i.test(ua) && !/(CriOS|FxiOS|EdgiOS|OPiOS|Brave|DuckDuckGo|GSA|YaBrowser)/i.test(ua);
     setIsIOS(ios);
+    setIsSafari(safari);
     setIsInstalled(standalone);
 
     const handleInstallPrompt = (event: Event) => {
@@ -71,7 +76,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     }
   }, [promptEvent]);
 
-  const value = useMemo(() => ({ canInstall: Boolean(promptEvent), isInstalled, isIOS, install }), [promptEvent, isInstalled, isIOS, install]);
+  const value = useMemo(() => ({ canInstall: Boolean(promptEvent), isInstalled, isIOS, isSafari, install }), [promptEvent, isInstalled, isIOS, isSafari, install]);
   return <PWAContext.Provider value={value}>{children}</PWAContext.Provider>;
 }
 

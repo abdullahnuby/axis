@@ -3,7 +3,7 @@
  * Only versioned Next.js static assets and public app icons may be cached.
  */
 const CACHE_PREFIX = "axis-public-static-";
-const CACHE_NAME = `${CACHE_PREFIX}v3`;
+const CACHE_NAME = `${CACHE_PREFIX}v4`;
 const PRECACHE_URLS = [
   "/offline.html",
   "/axis-mark.svg",
