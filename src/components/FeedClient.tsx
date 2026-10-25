@@ -543,7 +543,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
               </select>
             </div>
             <div className="compose-submit-row">
-              <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("ar-EG-u-nu-latn-u-nu-latn")} / 5000</span>
+              <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("en-US")} / 5000</span>
               <button type="submit" className="btn btn-primary compose-publish" disabled={busy || (!body.trim() && !image)}><Send size={15}/><span>{busy ? "جارٍ النشر…" : "نشر"}</span></button>
             </div>
           </div>
