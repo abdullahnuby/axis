@@ -8,7 +8,7 @@ import { BADGE_OPTIONS, SPECIALTIES } from "@/lib/constants";
 import type { SessionUser } from "@/lib/types";
 
 type Doc = { id: string; category: string; original_name: string; content_type: string; size_bytes: number };
-type RequestRow = { id: string; user_id: string; username: string; display_name: string; email: string; legal_name: string; membership_number: string; status: string; applicant_note: string | null; review_note: string | null; specialty: string | null; created_at: string; documents: Doc[] };
+type RequestRow = { id: string; user_id: string; username: string; display_name: string; email: string; legal_name: string; membership_number: string | null; status: string; request_exists: boolean; applicant_note: string | null; review_note: string | null; specialty: string | null; created_at: string; documents: Doc[] };
 type Member = { id: string; username: string; display_name: string; email: string; role: string; verification_status: string; account_status: string; seniority_code: string; approved_years: string | number | null; specialty: string | null; created_at: string };
 type Report = { id: string; target_type: string; target_id: string; reason: string; status: string; created_at: string; reporter: string; target_summary: string | null };
 type Event = { id: string; title: string; description: string | null; location: string | null; event_url: string | null; starts_at: string | null; is_published: boolean };
@@ -36,10 +36,10 @@ function adminPageDescription(tab: string) {
   return ({ requests: "راجع الطلبات والمستندات واتخذ قرار التوثيق يدويًا.", members: "إدارة حالة حسابات أعضاء المجتمع.", reports: "مراجعة البلاغات المسجلة من الأعضاء.", events: "إدارة الأحداث والفعاليات الهندسية.", audit: "متابعة الإجراءات الإدارية التي تم تسجيلها." } as Record<string, string>)[tab] || "إدارة مجتمع AXIS.";
 }
 function verificationStatusLabel(status: string) {
-  return ({ pending: "قيد المراجعة", needs_info: "مطلوب استكمال", approved: "معتمدة", rejected: "مرفوضة" } as Record<string, string>)[status] || status;
+  return ({ pending: "قيد المراجعة", needs_info: "مطلوب استكمال", approved: "معتمدة", rejected: "مرفوضة", not_submitted: "لم يبدأ التوثيق" } as Record<string, string>)[status] || status;
 }
 function auditActionLabel(action: string) {
-  return ({ verification_submitted: "تقديم طلب توثيق", verification_approved: "اعتماد عضوية هندسية", verification_rejected: "رفض طلب توثيق", verification_more_info: "طلب استكمال بيانات", member_suspended: "إيقاف حساب عضو", member_reactivated: "إعادة تفعيل حساب عضو", report_resolved: "معالجة بلاغ", event_created: "إضافة فعالية", event_deleted: "حذف فعالية" } as Record<string, string>)[action] || action.replaceAll("_", " ");
+  return ({ verification_submitted: "تقديم طلب توثيق", verification_approved: "اعتماد عضوية هندسية", verification_rejected: "رفض طلب توثيق", verification_more_info: "طلب استكمال بيانات", verification_step_reopened: "إعادة فتح خطوة التوثيق", member_suspended: "إيقاف حساب عضو", member_reactivated: "إعادة تفعيل حساب عضو", report_resolved: "معالجة بلاغ", event_created: "إضافة فعالية", event_deleted: "حذف فعالية" } as Record<string, string>)[action] || action.replaceAll("_", " ");
 }
 function auditTargetLabel(target: string) {
   return ({ verification_request: "طلب توثيق", user: "عضو", report: "بلاغ", event: "فعالية" } as Record<string, string>)[target] || target;
@@ -81,6 +81,20 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
     try { const r = await fetch(`/api/admin/verifications/${selected.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, note: reviewNote, approvedYears: Number(approvedYears), jobTitle, specialty, badges, expertApproved }) }); const d = await r.json(); if (!r.ok) throw new Error(d.error || "تعذر حفظ قرار المراجعة."); setMessage(action === "approve" ? "تم قبول التوثيق وفتح الحساب." : action === "reject" ? "تم رفض الطلب." : "تم طلب استكمال البيانات."); setSelected(null); await Promise.all([loadRequests(), loadOverview()]); }
     catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ."); } finally { setBusy(false); }
   }
+  async function reopenVerification(member: RequestRow) {
+    if (member.request_exists || busy) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const r = await fetch("/api/admin/members/" + member.user_id + "/reopen-verification", { method: "POST" });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "تعذر إعادة الحساب إلى خطوة التوثيق.");
+      setMessage(d.message || "تمت إعادة الحساب إلى خطوة التوثيق.");
+      await Promise.all([loadRequests(), loadOverview()]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "تعذر إعادة الحساب إلى خطوة التوثيق.");
+    } finally { setBusy(false); }
+  }
+
   async function toggleMember(member: Member) {
     const accountStatus = member.account_status === "suspended" ? "active" : "suspended";
     if (accountStatus === "suspended" && !window.confirm(`متأكد إنك عايز توقف حساب ${member.display_name}؟ هيتسجل خروجه من الجلسات الحالية.`)) return;
@@ -142,7 +156,7 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
   </aside><main className="admin-main"><div className="between admin-page-heading" style={{ marginBottom: 22 }}><div><h1 className="page-title">{adminPageTitle(tab)}</h1><p className="small muted" style={{ margin: 0 }}>{adminPageDescription(tab)}</p></div><button className="btn btn-small" onClick={() => { void loadOverview(); if (tab === "requests") void loadRequests(); if (tab === "members") void loadMembers(); if (tab === "reports") void loadReports(); if (tab === "events") void loadEvents(); if (tab === "audit") void loadAudit(); }}><RefreshCw size={15}/> تحديث البيانات</button></div>
     <Toast message={error} error/><Toast message={message}/>
     <div className="stat-grid admin-overview-grid" style={{ marginBottom: 22 }}>
-      <div className="card stat"><span className="admin-stat-label"><span className="admin-stat-dot amber"/>طلبات قيد المراجعة</span><strong className="stat-number">{overview.pending}</strong><span className="admin-stat-hint">تحتاج قرار الإدارة</span></div>
+      <div className="card stat"><span className="admin-stat-label"><span className="admin-stat-dot amber"/>بانتظار التوثيق</span><strong className="stat-number">{overview.pending}</strong><span className="admin-stat-hint">طلبات مقدمة أو حسابات لم تستكمل الطلب</span></div>
       <div className="card stat"><span className="admin-stat-label"><span className="admin-stat-dot blue"/>بانتظار الاستكمال</span><strong className="stat-number">{overview.needsInfo}</strong><span className="admin-stat-hint">بيانات ناقصة من المتقدم</span></div>
       <div className="card stat"><span className="admin-stat-label"><span className="admin-stat-dot green"/>أعضاء موثقون</span><strong className="stat-number">{overview.verified}</strong><span className="admin-stat-hint">عضوية مفعّلة</span></div>
       <div className="card stat"><span className="admin-stat-label"><span className="admin-stat-dot red"/>بلاغات مفتوحة</span><strong className="stat-number">{overview.openReports}</strong><span className="admin-stat-hint">تحتاج مراجعة</span></div>
@@ -152,7 +166,7 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
       <div className="admin-section-heading"><div><h2 className="section-title">مراجعة الطلبات</h2><p className="small muted">راجع هوية المتقدم ومستنداته قبل اعتماد العضوية.</p></div><span className="pill navy"><ShieldCheck size={13}/> مراجعة موثّقة</span></div>
       <div className="admin-review-workspace">
         <section className="card admin-requests-panel">
-          <div className="admin-panel-heading"><div><h3 className="section-title">قائمة الطلبات</h3><p className="tiny muted">{requests.length.toLocaleString("ar-EG-u-nu-latn")} طلب في العرض الحالي</p></div><label className="admin-status-filter"><span className="tiny muted">الحالة</span><select className="field" aria-label="تصفية الطلبات حسب الحالة" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="pending">قيد المراجعة</option><option value="needs_info">تحتاج استكمالًا</option><option value="rejected">مرفوضة</option><option value="approved">مقبولة</option><option value="all">كل الطلبات</option></select></label></div>
+          <div className="admin-panel-heading"><div><h3 className="section-title">قائمة الطلبات</h3><p className="tiny muted">{requests.length.toLocaleString("ar-EG-u-nu-latn")} حساب / طلب في العرض الحالي</p></div><label className="admin-status-filter"><span className="tiny muted">الحالة</span><select className="field" aria-label="تصفية الطلبات حسب الحالة" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="pending">قيد المراجعة + لم يبدأ التوثيق</option><option value="not_submitted">لم يرسلوا طلب التوثيق</option><option value="needs_info">تحتاج استكمالًا</option><option value="rejected">مرفوضة</option><option value="approved">مقبولة</option><option value="all">كل الطلبات والحسابات</option></select></label></div>
           <div className="admin-verification-table-wrap"><table className="admin-verification-table"><thead><tr><th>اسم الظهور</th><th>التخصص</th><th>تاريخ الطلب</th><th>الحالة</th></tr></thead><tbody>
             {requests.map(req => <tr key={req.id} tabIndex={0} aria-selected={selected?.id === req.id} className={selected?.id === req.id ? "is-selected" : ""} onClick={() => selectRequest(req)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectRequest(req); } }}>
               <td><strong>{req.display_name}</strong><span className="admin-table-secondary">@{req.username}</span></td><td>{req.specialty || "غير محدد"}</td><td><time dateTime={req.created_at}>{formatAdminDate(req.created_at)}</time></td><td><span className={`pill ${req.status === "approved" ? "green" : req.status === "rejected" ? "red" : req.status === "needs_info" ? "navy" : "gold"}`}>{verificationStatusLabel(req.status)}</span></td>
@@ -164,8 +178,8 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
         </section>
 
         <aside className="card admin-review-panel" aria-live="polite">
-          {selected ? <>
-            <div className="admin-review-panel-heading"><div><span className="admin-review-kicker">ملف قيد المراجعة</span><h3 className="section-title">{selected.legal_name}</h3><p className="tiny muted">حساب @{selected.username}</p></div><button type="button" className="icon-btn admin-clear-selection" aria-label="إلغاء تحديد الطلب" onClick={() => setSelected(null)}><X size={16}/></button></div>
+          {selected ? (selected.request_exists ? <>
+            <div className="admin-review-panel-heading"><div><span className="admin-review-kicker">{selected.request_exists ? "ملف قيد المراجعة" : "حساب لم يبدأ التوثيق"}</span><h3 className="section-title">{selected.legal_name}</h3><p className="tiny muted">حساب @{selected.username}</p></div><button type="button" className="icon-btn admin-clear-selection" aria-label="إلغاء تحديد الطلب" onClick={() => setSelected(null)}><X size={16}/></button></div>
             <div className="admin-review-facts"><div><span>البريد الإلكتروني</span><strong dir="ltr">{selected.email}</strong></div><div><span>رقم العضوية</span><strong className="admin-membership-number" dir="ltr">{selected.membership_number}</strong></div><div><span>التخصص</span><strong>{selected.specialty || "غير محدد"}</strong></div><div><span>تاريخ التقديم</span><strong>{formatAdminDate(selected.created_at)}</strong></div></div>
             {selected.applicant_note ? <div className="admin-applicant-note"><span className="label">ملاحظة المتقدم</span><p>{selected.applicant_note}</p></div> : null}
             <div className="admin-documents-section"><div className="admin-subsection-heading"><span className="label">المستندات المرفوعة</span><span className="pill navy">{selected.documents.length.toLocaleString("ar-EG-u-nu-latn")}</span></div>
@@ -179,7 +193,12 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
               <div className="form-row"><label className="label">ملاحظة القرار للمتقدم</label><textarea className="field" value={reviewNote} onChange={e => setReviewNote(e.target.value)} maxLength={1000} placeholder="اكتب سبب الرفض أو المستند المطلوب استكماله…"/></div>
               <div className="admin-decision-actions"><button className="btn btn-success" disabled={busy} onClick={() => decide("approve")}><CheckCircle2 size={16}/>{busy ? "جارٍ الحفظ…" : "قبول وفتح المجتمع"}</button><div className="admin-decision-secondary"><button className="btn btn-outline-blue" disabled={busy} onClick={() => decide("needs_info")}>طلب استكمال</button><button className="btn btn-danger" disabled={busy} onClick={() => decide("reject")}><XCircle size={15}/> رفض الطلب</button></div></div>
             </div>
-          </> : <div className="admin-review-placeholder"><span className="admin-review-placeholder-icon"><Search size={22}/></span><h3>اختر طلبًا لمراجعته</h3><p>حدد أحد المتقدمين من القائمة لعرض بياناته ومستنداته واتخاذ قرار التوثيق.</p><div className="admin-review-placeholder-steps"><span><CheckCircle2 size={15}/> راجع بيانات العضو</span><span><FileText size={15}/> افحص المستندات</span><span><ShieldCheck size={15}/> اعتمد المؤهلات المثبتة فقط</span></div></div>}
+          </> : <>
+            <div className="admin-review-panel-heading"><div><span className="admin-review-kicker">حساب مسجّل بدون طلب توثيق</span><h3 className="section-title">{selected.display_name}</h3><p className="tiny muted">حساب @{selected.username}</p></div><button type="button" className="icon-btn admin-clear-selection" aria-label="إلغاء تحديد الحساب" onClick={() => setSelected(null)}><X size={16}/></button></div>
+            <div className="admin-review-facts"><div><span>البريد الإلكتروني</span><strong dir="ltr">{selected.email}</strong></div><div><span>التخصص</span><strong>{selected.specialty || "غير محدد"}</strong></div><div><span>تاريخ التسجيل</span><strong>{formatAdminDate(selected.created_at)}</strong></div></div>
+            <div className="alert">الحساب موجود، لكن العضو لم يرسل طلب التوثيق بعد؛ لذلك لا يوجد رقم نقابة محفوظ أو بيانات تراجعها. لا يمكن اعتماد العضوية من هذه الشاشة قبل أن يدخل العضو رقم النقابة ويرسل الطلب.</div>
+            <div className="admin-decision-actions"><button className="btn btn-primary" disabled={busy} onClick={() => void reopenVerification(selected)}><ShieldCheck size={16}/>{busy ? "جارٍ تحديث الخطوة…" : "إعادة فتح خطوة التوثيق"}</button></div>
+          </>) : <div className="admin-review-placeholder"><span className="admin-review-placeholder-icon"><Search size={22}/></span><h3>اختر طلبًا لمراجعته</h3><p>حدد أحد المتقدمين من القائمة لعرض بياناته ومستنداته واتخاذ قرار التوثيق.</p><div className="admin-review-placeholder-steps"><span><CheckCircle2 size={15}/> راجع بيانات العضو</span><span><FileText size={15}/> افحص المستندات</span><span><ShieldCheck size={15}/> اعتمد المؤهلات المثبتة فقط</span></div></div>}
         </aside>
       </div>
     </section>}
