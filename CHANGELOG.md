@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-25 — Shorter post previews
+
+- Reduced the feed post preview from 90 words to 20 words before “عرض المزيد” for a more compact reading experience, especially on mobile.
+- Updated the static regression check to assert the 20-word preview limit.
+
 ## Unreleased — one-sprint social network foundation
 
 - Added a searchable, verified-member directory and public professional profile routes, follow/unfollow actions, and follow notifications.
