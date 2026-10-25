@@ -44,7 +44,7 @@ function formatPostTime(value: string): string {
   return date.toLocaleDateString("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: elapsed > 365 * 86_400_000 ? "numeric" : undefined });
 }
 
-const POST_PREVIEW_WORD_LIMIT = 90;
+const POST_PREVIEW_WORD_LIMIT = 20;
 
 function getPostPreview(text: string): { preview: string; expandable: boolean } {
   const words = text.match(/\S+/g) ?? [];
