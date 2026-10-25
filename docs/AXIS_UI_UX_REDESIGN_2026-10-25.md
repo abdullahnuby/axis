@@ -30,7 +30,7 @@ The current implementation still renders posts under the member account identity
 
 ## Validation
 
-- **Vercel production build:** succeeded (`READY`) for the UI design layer and viewport accessibility change; later commits mainly adjust copy, test expectations, and the environment example.
+- **Vercel preview build:** completed with status `READY` for the UI and content changes at commit `9eea7cc0675ee9aed10ce6492e4b5d10eb6578b3`. Preview: https://axis-4rl21tgk1-abdullahelmassry-7339s-projects.vercel.app. Later changes are limited to documentation and CI trigger optimization.
 - **GitHub Actions:** the latest pull-request job for commit `9eea7cc0675ee9aed10ce6492e4b5d10eb6578b3` passed `npm test` and `npm run typecheck` (run `40206857659`).
 - **Static regression suite:** passed after refreshing stale copy assertions, restoring the missing `.env.example`, and adding checks for the responsive design tokens and accessible zoom.
 - **Live visual review on real desktop/iOS/Android devices:** not yet performed. Use the preview link on target devices to check spacing, fixed navigation, and auth/verification flows.
