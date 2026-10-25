@@ -8,10 +8,10 @@ import { MobileCreatePostButton } from "@/components/MobileCreatePostButton";
 
 const navItems = [
   { href: "/feed", text: "الرئيسية", icon: Home },
-  { href: "/people", text: "دليل المهندسين", icon: Users },
-  { href: "/groups", text: "المجموعات", icon: BriefcaseBusiness },
+  { href: "/people", text: "الأعضاء", icon: Users },
+  { href: "/groups", text: "الجروبات", icon: BriefcaseBusiness },
   { href: "/messages", text: "الرسائل", icon: MessageCircle },
-  { href: "/profile", text: "ملفي المهني", icon: UserRound },
+  { href: "/profile", text: "حسابي", icon: UserRound },
   { href: "/notifications", text: "الإشعارات", icon: Bell },
   { href: "/settings", text: "الإعدادات", icon: Settings },
 ];
@@ -22,11 +22,11 @@ export function AppShell({ user, children, active = "" }: { user: SessionUser; c
       <div className="user-line" style={{ padding: "7px 8px 14px" }}><UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at}/><div className="user-meta"><div className="user-name">{user.display_name}</div><div className="user-sub">@{user.username}</div></div></div>
       <hr className="divider" style={{ marginBottom: 6 }}/>
       {navItems.map(({ href, text, icon: Icon }) => <Link key={href} href={href} className={`nav-link ${active === href ? "active" : ""}`}><Icon size={18}/><span>{text}</span></Link>)}
-      <div className="muted tiny" style={{ padding: "14px 10px 5px" }}>AXIS · مجتمع المهندسين</div>
+      <div className="muted tiny" style={{ padding: "14px 10px 5px" }}>AXIS · مساحة خاصة للمهندسين</div>
     </div></aside>
     <main className="feed-column">{children}</main>
     <aside className="right-stack">
-      <div className="card event-card"><div className="between"><h2 className="section-title">اختار اللي يهمّك</h2><SlidersHorizontal size={17} className="muted"/></div><p className="small muted" style={{ margin: 0 }}>اختار تخصصك من الفلاتر علشان تتابع المشاركات الأقرب لشغلك.</p><div className="row"><BriefcaseBusiness size={16}/><span className="small">{user.specialty || "ضيف تخصصك في حسابك"}</span></div></div>
+      <div className="card event-card"><div className="between"><h2 className="section-title">مساحتك هنا</h2><SlidersHorizontal size={17} className="muted"/></div><p className="small muted" style={{ margin: 0 }}>دي مساحة للأعضاء اللي تم التحقق منهم، مش صفحة مفتوحة للجمهور. منشوراتك بتظهر باسم حسابك، فخليك حريص في التفاصيل الحساسة.</p><div className="row"><BriefcaseBusiness size={16}/><span className="small">{user.specialty || "أضف المجال اللي بتحب تتكلم عنه"}</span></div></div>
     </aside>
   </div>
   <footer className="app-legal-footer"><Link href="/privacy">الخصوصية</Link><Link href="/terms">شروط الاستخدام</Link><Link href="/community-guidelines">إرشادات المجتمع</Link></footer>
