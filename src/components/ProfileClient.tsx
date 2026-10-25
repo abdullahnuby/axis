@@ -1,4 +1,5 @@
 "use client";
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -219,7 +220,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
     } finally { setBusy(false); }
   }
 
-  return <div className="profile-page profile-in-shell">
+  return <LocalizedContent>{<div className="profile-page profile-in-shell">
       <Toast message={error} error />
       <Toast message={success} />
 
@@ -322,5 +323,5 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
           <div className="profile-privacy-note"><LockKeyhole size={18}/><div><strong>خلي بالك من خصوصيتك</strong><p>مستندات إثبات العضوية مش ظاهرة لباقي الأعضاء. حسابك وبوستاتك بيظهروا باسم حسابك؛ ما تنشرش معلومات حساسة.</p></div></div>
         </aside>
       </div>
-    </div>;
+    </div>}</LocalizedContent>;
 }
