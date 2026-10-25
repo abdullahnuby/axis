@@ -649,7 +649,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       <section className="feed-stream" aria-label="بوستات المجتمع">
         <div className="feed-stream-header feed-stream-header-filterable">
           <div className="feed-stream-heading">
-            <div><h2>آخر البوستات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p><div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div></div>
+            <div><h2>آخر المشاركات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p><div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div></div>
           </div>
           <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
             <SlidersHorizontal size={16} aria-hidden="true"/>
