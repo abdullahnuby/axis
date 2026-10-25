@@ -19,6 +19,8 @@ Give the existing AXIS product a coherent, professional visual language across t
 - `src/app/layout.tsx`: aligned the browser theme color with AXIS navy and removed viewport settings that blocked pinch-to-zoom.
 - `scripts/smoke-check.mjs`: added regression checks for the design tokens, responsive navigation, motion/accessibility styles, and zoom capability.
 - `CHANGELOG.md`: recorded the UI/UX refresh.
+- `.github/workflows/quality.yml`: added CI for `npm test` and `npm run typecheck` on the UI branch and pull requests.
+- `docs/AXIS_UI_UX_REDESIGN_2026-10-25.md`: this handoff and explicit privacy/product-scope notes.
 
 No database migration or API behavior change is intended in this pass.
 
