@@ -1,4 +1,5 @@
 "use client";
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useState } from "react";
 import { LogOut } from "lucide-react";
 
@@ -8,5 +9,5 @@ export function LogoutButton() {
     setBusy(true);
     try { await fetch("/api/auth/logout", { method: "POST" }); } finally { window.location.href = "/"; }
   }
-  return <button className="btn btn-small" type="button" onClick={logout} disabled={busy}><LogOut size={15}/>{busy ? "جارٍ الخروج…" : "خروج"}</button>;
+  return <LocalizedContent>{<button className="btn btn-small" type="button" onClick={logout} disabled={busy}><LogOut size={15}/>{busy ? "جارٍ الخروج…" : "خروج"}</button>}</LocalizedContent>;
 }

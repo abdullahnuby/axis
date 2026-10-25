@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -48,7 +49,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
     try { await fetch("/api/auth/logout", { method: "POST" }); }
     finally { window.location.href = "/"; }
   }
-  return <header className={`topbar app-topbar ${searchOpen ? "search-open" : ""}`}>
+  return <LocalizedContent>{<header className={`topbar app-topbar ${searchOpen ? "search-open" : ""}`}>
     <div className="topbar-inner">
       <Brand href="/feed" />
       <form action="/feed" className="search-box header-search" role="search">
@@ -71,5 +72,5 @@ export function AppHeader({ user }: { user: SessionUser }) {
         <button className="icon-btn" aria-label="تسجيل الخروج" onClick={logout}><LogOut size={17}/></button>
       </div>
     </div>
-  </header>;
+  </header>}</LocalizedContent>;
 }

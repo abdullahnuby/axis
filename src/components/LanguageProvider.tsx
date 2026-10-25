@@ -1,95 +1,87 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  Children,
+  cloneElement,
+  createContext,
+  isValidElement,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { translateArabicText } from "@/lib/i18n";
 
-type Locale = "ar" | "en";
+export type Locale = "ar" | "en";
 
-const SKIP_TEXT_SELECTOR = [
-  "[data-locale-switcher]",
-  "script",
-  "style",
-  "textarea",
-  "input",
-  "[contenteditable='true']",
-  ".post-body",
-  ".message-text",
-  ".message-content",
-  "[data-user-content='true']",
-].join(",");
+type LanguageContextValue = {
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  toggleLocale: () => void;
+};
 
-const originalText = new WeakMap<Text, string>();
-const lastAppliedText = new WeakMap<Text, string>();
-const originalAttributes = new WeakMap<Element, Map<string, string>>();
-let originalDocumentTitle: string | undefined;
-let lastAppliedDocumentTitle: string | undefined;
-const lastAppliedAttributes = new WeakMap<Element, Map<string, string>>();
+const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-function shouldSkip(element: Element | null): boolean {
-  return Boolean(element?.closest(SKIP_TEXT_SELECTOR));
+const USER_CONTENT_CLASS_NAMES = new Set([
+  "post-body",
+  "message-text",
+  "message-content",
+  "user-generated-content",
+  "no-translate",
+]);
+
+function hasUserContentBoundary(props: Record<string, unknown>) {
+  if (props["data-user-content"] === true || props["data-no-translate"] === true) return true;
+  const className = typeof props.className === "string" ? props.className : "";
+  return className.split(/\s+/).some((name) => USER_CONTENT_CLASS_NAMES.has(name));
 }
 
-function localizeTextNode(node: Text, locale: Locale) {
-  const current = node.nodeValue ?? "";
-  const lastApplied = lastAppliedText.get(node);
-  if (!originalText.has(node) || (lastApplied !== undefined && current !== lastApplied)) {
-    originalText.set(node, current);
+function localizeNode(node: ReactNode, locale: Locale, insideUserContent = false): ReactNode {
+  if (node === null || node === undefined || typeof node === "boolean" || typeof node === "number") {
+    return node;
   }
 
-  const source = originalText.get(node) ?? current;
-  const next = locale === "en" ? translateArabicText(source) : source;
-  if (node.nodeValue !== next) node.nodeValue = next;
-  lastAppliedText.set(node, next);
-}
-
-function localizeAttributes(element: Element, locale: Locale) {
-  if (element.closest('[data-locale-switcher], script, style, .post-body, .message-text, .message-content, [data-user-content="true"]')) return;
-  const attributes = ["placeholder", "title", "aria-label"];
-  if (element.matches('meta[name="description"], meta[property="og:description"]')) attributes.push("content");
-  let originals = originalAttributes.get(element);
-  if (!originals) {
-    originals = new Map<string, string>();
-    originalAttributes.set(element, originals);
-  }
-  let applied = lastAppliedAttributes.get(element);
-  if (!applied) {
-    applied = new Map<string, string>();
-    lastAppliedAttributes.set(element, applied);
+  if (typeof node === "string") {
+    return insideUserContent || locale === "ar" ? node : translateArabicText(node);
   }
 
-  for (const attribute of attributes) {
-    const current = element.getAttribute(attribute);
-    if (current === null) continue;
-    const last = applied.get(attribute);
-    if (!originals.has(attribute) || (last !== undefined && current !== last)) {
-      originals.set(attribute, current);
+  if (Array.isArray(node)) {
+    return node.map((child) => localizeNode(child, locale, insideUserContent));
+  }
+
+  if (!isValidElement(node)) return node;
+
+  const props = node.props as Record<string, unknown>;
+  const skipChildren = insideUserContent || hasUserContentBoundary(props);
+  if (skipChildren) return node;
+
+  const nextProps: Record<string, unknown> = {};
+  for (const attribute of ["placeholder", "title", "aria-label", "aria-description", "alt"]) {
+    const value = props[attribute];
+    if (typeof value === "string" && locale === "en") {
+      nextProps[attribute] = translateArabicText(value);
     }
-    const source = originals.get(attribute) ?? current;
-    const next = locale === "en" ? translateArabicText(source) : source;
-    if (current !== next) element.setAttribute(attribute, next);
-    applied.set(attribute, next);
   }
+
+  if (props.children !== undefined) {
+    nextProps.children = Children.map(props.children as ReactNode, (child) => localizeNode(child, locale));
+  }
+
+  return cloneElement(node, nextProps);
 }
 
-function localizeDocument(locale: Locale) {
-  document.documentElement.lang = locale;
-  document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
-  document.documentElement.dataset.locale = locale;
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
-    const textNode = node as Text;
-    if (shouldSkip(textNode.parentElement)) continue;
-    localizeTextNode(textNode, locale);
+export function LocalizedContent({ children }: Readonly<{ children: ReactNode }>) {
+  const language = useLanguage();
+  return <>{localizeNode(children, language.locale)}</>;
+}
+
+export function useLanguage() {
+  const value = useContext(LanguageContext);
+  if (!value) {
+    throw new Error("useLanguage must be used inside LanguageProvider");
   }
-  document.documentElement.querySelectorAll("*").forEach((element) => localizeAttributes(element, locale));
-  const currentTitle = document.title;
-  if (originalDocumentTitle === undefined || (lastAppliedDocumentTitle !== undefined && currentTitle !== lastAppliedDocumentTitle)) {
-    originalDocumentTitle = currentTitle;
-  }
-  const nextTitle = locale === "en" ? translateArabicText(originalDocumentTitle ?? currentTitle) : (originalDocumentTitle ?? currentTitle);
-  if (document.title !== nextTitle) document.title = nextTitle;
-  lastAppliedDocumentTitle = nextTitle;
+  return value;
 }
 
 export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>) {
@@ -97,48 +89,43 @@ export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>
 
   useEffect(() => {
     try {
-      if (window.localStorage.getItem("axis-locale") === "en") setLocale("en");
+      const savedLocale = window.localStorage.getItem("axis-locale");
+      if (savedLocale === "ar" || savedLocale === "en") setLocale(savedLocale);
     } catch {
-      // Language switching still works for this session if storage is unavailable.
+      // Keep Arabic as the default when browser storage is unavailable.
     }
   }, []);
 
   useEffect(() => {
-    localizeDocument(locale);
-    const observer = new MutationObserver(() => localizeDocument(locale));
-    observer.observe(document.documentElement, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ["placeholder", "title", "aria-label", "content"],
-    });
+    document.documentElement.lang = locale;
+    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+    document.documentElement.dataset.locale = locale;
     try {
       window.localStorage.setItem("axis-locale", locale);
     } catch {
-      // Ignore storage restrictions; the selected language remains active in memory.
+      // The current session can still switch languages when storage is restricted.
     }
-    return () => observer.disconnect();
   }, [locale]);
 
-  function toggleLocale() {
-    setLocale((current) => current === "ar" ? "en" : "ar");
-  }
+  const contextValue = useMemo<LanguageContextValue>(() => ({
+    locale,
+    setLocale,
+    toggleLocale: () => setLocale((current) => current === "ar" ? "en" : "ar"),
+  }), [locale]);
 
   return (
-    <>
-      {children}
+    <LanguageContext.Provider value={contextValue}>
+      <LocalizedContent>{children}</LocalizedContent>
       <button
         className="language-switcher"
-        data-locale-switcher="true"
         type="button"
-        onClick={toggleLocale}
+        onClick={contextValue.toggleLocale}
         aria-label={locale === "ar" ? "Switch to English" : "التبديل إلى العربية"}
         title={locale === "ar" ? "Switch to English" : "التبديل إلى العربية"}
       >
         <span aria-hidden="true">文A</span>
         {locale === "ar" ? "English" : "العربية"}
       </button>
-    </>
+    </LanguageContext.Provider>
   );
 }

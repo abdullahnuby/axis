@@ -1,5 +1,7 @@
 "use client";
 
+import { localizedConfirm } from "@/lib/i18n";
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
   BadgeCheck,
@@ -59,13 +61,13 @@ function getPostPreview(text: string): { preview: string; expandable: boolean } 
 }
 
 function PostSkeleton() {
-  return (
+  return <LocalizedContent>{(
     <article className="card post-skeleton" aria-label="جارٍ تحميل المنشورات">
       <div className="skeleton-author"><span className="skeleton-block skeleton-avatar"/><span className="skeleton-author-lines"><i className="skeleton-block"/><i className="skeleton-block"/></span></div>
       <i className="skeleton-block skeleton-line"/><i className="skeleton-block skeleton-line short"/>
       <div className="skeleton-actions"><i className="skeleton-block"/><i className="skeleton-block"/></div>
     </article>
-  );
+)}</LocalizedContent>;
 }
 
 export function FeedClient({ user }: { user: SessionUser }) {
@@ -375,7 +377,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
   async function deleteComment(postId: string, comment: FeedComment, thread: FeedComment[]) {
     if (comment.author_id !== user.id && !["admin", "moderator"].includes(user.role)) return;
-    if (busyDeleteCommentId || !window.confirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
+    if (busyDeleteCommentId || !localizedConfirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
     setBusyDeleteCommentId(comment.id);
     setError("");
     setSuccess("");
@@ -451,7 +453,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   }
 
   async function deletePost(post: FeedPost) {
-    if ((post.author_id !== user.id && !["admin", "moderator"].includes(user.role)) || busyDeletePostId || !window.confirm("متأكد إنك عايز تحذف البوست نهائيًا؟")) return;
+    if ((post.author_id !== user.id && !["admin", "moderator"].includes(user.role)) || busyDeletePostId || !localizedConfirm("متأكد إنك عايز تحذف البوست نهائيًا؟")) return;
     setBusyDeletePostId(post.id);
     setError("");
     setSuccess("");
@@ -500,7 +502,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   function renderExpandableBody(text: string, key: string, className: string): ReactNode {
     const preview = getPostPreview(text);
     const expanded = Boolean(expandedPosts[key]);
-    return (
+    return <LocalizedContent>{(
       <div className="post-expandable-text">
         <p className={className}>{preview.expandable && !expanded ? `${preview.preview}…` : text}</p>
         {preview.expandable && (
@@ -514,7 +516,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
           </button>
         )}
       </div>
-    );
+)}</LocalizedContent>;
   }
 
   async function toggleMainFeedPin(post: FeedPost) {
@@ -549,7 +551,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     const replies = thread.filter(item => item.parent_comment_id === comment.id);
     const canManageComment = comment.author_id === user.id || ["admin", "moderator"].includes(user.role);
     const isEditing = editingCommentId === comment.id;
-    return (
+    return <LocalizedContent>{(
       <div className={`comment-thread ${depth > 0 ? "comment-thread-reply" : ""}`} id={`comment-${comment.id}`} key={comment.id}>
         <div className="comment comment-professional">
           <UserAvatar userId={comment.author_id} displayName={comment.display_name} avatarColor={comment.avatar_color} hasAvatar={comment.has_avatar} className="sm comment-avatar"/>
@@ -594,10 +596,10 @@ export function FeedClient({ user }: { user: SessionUser }) {
         </div>
         {replies.length > 0 && <div className="comment-replies">{replies.map(reply => renderComment(postId, reply, thread, depth + 1))}</div>}
       </div>
-    );
+)}</LocalizedContent>;
   }
 
-  return (
+  return <LocalizedContent>{(
     <>
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
@@ -776,5 +778,5 @@ export function FeedClient({ user }: { user: SessionUser }) {
         </section>
       </div>}
     </>
-  );
+)}</LocalizedContent>;
 }

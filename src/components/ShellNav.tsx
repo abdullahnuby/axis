@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedContent } from "@/components/LanguageProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Settings, UserRound, Bell, BriefcaseBusiness, Users, MessageCircle } from "lucide-react";
@@ -21,10 +22,10 @@ function isActive(pathname: string, href: string) {
 
 export function SidebarNav() {
   const pathname = usePathname();
-  return <>{sideItems.map(({ href, text, icon: Icon }) => {
+  return <LocalizedContent>{<>{sideItems.map(({ href, text, icon: Icon }) => {
     const active = isActive(pathname, href);
     return <Link key={href} href={href} className={`nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}><Icon size={18}/><span>{text}</span></Link>;
-  })}</>;
+  })}</>}</LocalizedContent>;
 }
 
 export function MobileNav() {
@@ -33,11 +34,11 @@ export function MobileNav() {
     const active = isActive(pathname, href);
     return <Link href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}><Icon size={19}/><span>{text}</span></Link>;
   };
-  return <nav className="mobile-bottom" aria-label="التنقل الرئيسي">
+  return <LocalizedContent>{<nav className="mobile-bottom" aria-label="التنقل الرئيسي">
     {item("/feed", "الرئيسية", Home)}
     {item("/people", "المهندسين", Users)}
     <MobileCreatePostButton/>
     {item("/messages", "الرسائل", MessageCircle)}
     {item("/profile", "حسابي", UserRound)}
-  </nav>;
+  </nav>}</LocalizedContent>;
 }

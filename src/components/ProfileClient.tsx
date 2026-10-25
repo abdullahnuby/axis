@@ -1,4 +1,6 @@
 "use client";
+import { localizedConfirm } from "@/lib/i18n";
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -115,7 +117,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
   }
 
   async function deleteProfilePost(post: ProfilePostPreview) {
-    if (postActionBusyId || !window.confirm("متأكد إنك عايز تحذف المشاركة نهائيًا؟")) return;
+    if (postActionBusyId || !localizedConfirm("متأكد إنك عايز تحذف المشاركة نهائيًا؟")) return;
     setPostActionBusyId(post.id);
     setError("");
     setSuccess("");
@@ -188,7 +190,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
 
   async function removeProfileMedia(kind: "avatar" | "cover") {
     if (!user[kind === "avatar" ? "has_avatar" : "has_cover"] || mediaBusy) return;
-    if (!window.confirm(kind === "avatar" ? "تشيل صورتك الشخصية وترجع للأحرف؟" : "تشيل صورة الغلاف؟")) return;
+    if (!localizedConfirm(kind === "avatar" ? "تشيل صورتك الشخصية وترجع للأحرف؟" : "تشيل صورة الغلاف؟")) return;
     setMediaBusy(kind); setError(""); setSuccess("");
     try {
       const response = await fetch(`/api/me/media?kind=${kind}`, { method: "DELETE" });
@@ -219,7 +221,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
     } finally { setBusy(false); }
   }
 
-  return <div className="profile-page profile-in-shell">
+  return <LocalizedContent>{<div className="profile-page profile-in-shell">
       <Toast message={error} error />
       <Toast message={success} />
 
@@ -322,5 +324,5 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
           <div className="profile-privacy-note"><LockKeyhole size={18}/><div><strong>خلي بالك من خصوصيتك</strong><p>مستندات إثبات العضوية مش ظاهرة لباقي الأعضاء. حسابك وبوستاتك بيظهروا باسم حسابك؛ ما تنشرش معلومات حساسة.</p></div></div>
         </aside>
       </div>
-    </div>;
+    </div>}</LocalizedContent>;
 }

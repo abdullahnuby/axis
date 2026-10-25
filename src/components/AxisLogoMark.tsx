@@ -1,3 +1,4 @@
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useId } from "react";
 
 /** AXIS orbital mark. The small-symbol component is used in headers, app icons and subtle watermarks. */
@@ -6,7 +7,7 @@ export function AxisLogoMark({ className, title = "AXIS" }: { className?: string
   const blue = `${uid}-blue`;
   const teal = `${uid}-teal`;
   const eye = `${uid}-eye`;
-  return (
+  return <LocalizedContent>{(
     <svg className={className} viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label={title} focusable="false" fill="none">
       <defs>
         <linearGradient id={blue} x1="28" y1="30" x2="121" y2="125" gradientUnits="userSpaceOnUse"><stop stopColor="#45B7FF"/><stop offset=".48" stopColor="#007BFF"/><stop offset="1" stopColor="#075CBF"/></linearGradient>
@@ -20,5 +21,5 @@ export function AxisLogoMark({ className, title = "AXIS" }: { className?: string
       <path d="M88.7 89.6c10.7 11.8 22.5 22.8 31.4 18.1 5.8-3.1 6.1-9.2 2.2-15.2" stroke={`url(#${teal})`} strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
       <circle cx="116.9" cy="37.8" r="8.2" fill="#20CDBD"/><circle cx="114.1" cy="35.1" r="2.2" fill="#72E7D5" opacity=".86"/>
     </svg>
-  );
+)}</LocalizedContent>;
 }

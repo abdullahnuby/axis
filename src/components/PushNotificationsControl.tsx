@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useCallback, useEffect, useState } from "react";
 import { BellRing, BellOff, Smartphone } from "lucide-react";
 
@@ -114,7 +115,7 @@ export function PushNotificationsControl() {
         : status === "blocked"
           ? "الإشعارات مرفوضة من المتصفح. اسمح بها من إعدادات الموقع، ثم جرّب تاني."
           : "فعّلها علشان تعرف بنتيجة التوثيق والرسائل والتفاعلات من غير ما تفضل فاتح الموقع.";
-  return <div className="alert" style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+  return <LocalizedContent>{<div className="alert" style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
     <div style={{ paddingTop: 2 }}>{status === "enabled" ? <BellRing size={20}/> : status === "install-required" || status === "unsupported" ? <Smartphone size={20}/> : <BellOff size={20}/>}</div>
     <div style={{ flex: "1 1 220px" }}>
       <strong>{title}</strong>
@@ -123,5 +124,5 @@ export function PushNotificationsControl() {
       {error && <p className="small" role="alert" style={{ margin: "5px 0 0", color: "var(--danger)" }}>{error}</p>}
     </div>
     {status !== "loading" && status !== "unsupported" && status !== "install-required" && <button type="button" className="btn btn-small" disabled={busy} onClick={() => void toggleNotifications()}>{busy ? "جارٍ الحفظ…" : status === "enabled" ? "إيقاف الإشعارات" : "تفعيل الإشعارات"}</button>}
-  </div>;
+  </div>}</LocalizedContent>;
 }

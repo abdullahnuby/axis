@@ -1,4 +1,5 @@
 "use client";
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useState, type FormEvent } from "react";
 import { ShieldCheck, Upload, Clock3, FileCheck2, MailCheck } from "lucide-react";
 import { Toast } from "@/components/Toast";
@@ -30,7 +31,7 @@ export function VerificationClient({ initialStatus, reviewNote, legalName, submi
     } catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع."); }
     finally { setBusy(false); }
   }
-  return <div className="status-layout">
+  return <LocalizedContent>{<div className="status-layout">
     <section className="card status-card">
       <div className="row"><div className="avatar" style={{ background: "var(--gold-soft)", color: "#075E64" }}><ShieldCheck size={23}/></div><div><h1 className="section-title">خلّينا نتأكد إنك من أهل المجال</h1><div className="small muted">دي مراجعة بسيطة لبيانات عضويتك علشان نقلّل دخول حسابات من برّه المجال.</div></div></div>
       <div className="alert">المجتمع هيفتحلك بعد المراجعة. بنعمل كده علشان ما يبقاش مفتوح لأي حساب، لكن ده مش معناه إن الأعضاء مجهولين أو إن كل شخص بعيد عن الشركات والإدارة.</div>
@@ -52,5 +53,5 @@ export function VerificationClient({ initialStatus, reviewNote, legalName, submi
       </form>}
     </section>
     <aside className="card status-card"><h2 className="section-title">إيه اللي هيحصل بعد ما تبعت الطلب؟</h2><div className="stack"><div className="row"><span className="pill navy">1</span><span>فريق AXIS هيراجع اسمك ورقم العضوية، وأي مستندات إضافية ترفقها.</span></div><div className="row"><span className="pill navy">2</span><span>لو بعتّ شهادات أو إثبات خبرة، هنراجعها قبل ما تظهر شاراتك المهنية.</span></div><div className="row"><span className="pill navy">3</span><span>أول ما عضويتك تتعتمد، هتقدر تتصفح المشاركات وتعلّق وتتفاعل مع زملاءك.</span></div></div><hr className="divider"/><h3 className="section-title">إيه اللي بيظهر للناس؟</h3><p className="small muted" style={{ margin: 0 }}>رقم العضوية ومستندات المراجعة مش ظاهرة لباقي الأعضاء. بعد قبولك، البوستات والتعليقات بتظهر باسم حسابك؛ فبلاش تشارك أسرار شغل أو معلومات حساسة.</p></aside>
-  </div>;
+  </div>}</LocalizedContent>;
 }

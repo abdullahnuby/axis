@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, CircleAlert, X } from "lucide-react";
+import { LocalizedContent } from "@/components/LanguageProvider";
 
 /** Non-blocking, auto-dismiss feedback that never shifts the page layout. */
 export function Toast({ message, error = false }: { message?: string; error?: boolean }) {
@@ -18,10 +19,10 @@ export function Toast({ message, error = false }: { message?: string; error?: bo
 
   if (!mounted || !message || !visible) return null;
   return createPortal((
-    <div className={`axis-toast ${error ? "axis-toast-error" : "axis-toast-success"}`} role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"}>
+    <LocalizedContent><div className={`axis-toast ${error ? "axis-toast-error" : "axis-toast-success"}`} role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"}>
       {error ? <CircleAlert size={19} aria-hidden="true"/> : <CheckCircle2 size={19} aria-hidden="true"/>}
       <span>{message}</span>
       <button type="button" className="axis-toast-close" onClick={() => setVisible(false)} aria-label="إغلاق الرسالة"><X size={16}/></button>
-    </div>
+    </div></LocalizedContent>
   ), document.body);
 }

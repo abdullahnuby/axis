@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 type InstallPromptEvent = Event & {
@@ -77,7 +78,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   }, [promptEvent]);
 
   const value = useMemo(() => ({ canInstall: Boolean(promptEvent), isInstalled, isIOS, isSafari, install }), [promptEvent, isInstalled, isIOS, isSafari, install]);
-  return <PWAContext.Provider value={value}>{children}</PWAContext.Provider>;
+  return <LocalizedContent>{<PWAContext.Provider value={value}>{children}</PWAContext.Provider>}</LocalizedContent>;
 }
 
 export function usePWAInstall() {

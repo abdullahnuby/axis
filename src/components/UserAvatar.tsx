@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedContent } from "@/components/LanguageProvider";
 type UserAvatarProps = {
   userId?: string | null;
   displayName: string;
@@ -14,10 +15,10 @@ export function UserAvatar({ userId, displayName, avatarColor, hasAvatar, classN
   const source = hasAvatar && userId
     ? `/api/people/${encodeURIComponent(userId)}/media?kind=avatar${version != null ? `&v=${encodeURIComponent(String(version))}` : ""}`
     : null;
-  return (
+  return <LocalizedContent>{(
     <span className={`avatar axis-user-avatar ${className}`} style={{ background: avatarColor || "var(--blue)" }} aria-label={displayName} title={displayName}>
       <span className="axis-avatar-fallback" aria-hidden="true">{displayName.trim().slice(0, 1) || "م"}</span>
       {source ? <img src={source} alt="" loading="lazy" decoding="async" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
     </span>
-  );
+)}</LocalizedContent>;
 }

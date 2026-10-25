@@ -1,3 +1,4 @@
+import { LocalizedContent } from "@/components/LanguageProvider";
 import Link from "next/link";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
 
@@ -12,7 +13,7 @@ type BrandProps = {
 /** Uses the appropriate brand lockup for the context instead of repeating the full logo everywhere. */
 export function Brand({ admin = false, light = false, variant = "compact", className = "", href }: BrandProps) {
   const classes = ["brand", `brand-${variant}`, light ? "brand-inverse" : "", admin ? "brand-admin" : "", className].filter(Boolean).join(" ");
-  return (
+  return <LocalizedContent>{(
     <Link href={href || (admin ? "/admin" : "/")} className={classes} aria-label={admin ? "AXIS — لوحة الإدارة" : "AXIS — Social Media Platform"}>
       <span className="brand-mark" aria-hidden="true"><AxisLogoMark className="brand-mark-svg" title=""/></span>
       {variant !== "mark" ? <span className={`brand-copy${variant === "lockup" ? " brand-copy-lockup" : ""}`}>
@@ -21,5 +22,5 @@ export function Brand({ admin = false, light = false, variant = "compact", class
       </span> : null}
       {admin ? <span className="small brand-admin-label">لوحة الإدارة</span> : null}
     </Link>
-  );
+)}</LocalizedContent>;
 }
