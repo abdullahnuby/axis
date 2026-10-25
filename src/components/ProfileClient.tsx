@@ -238,7 +238,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
             <div className="profile-avatar-wrap"><UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={mediaRevision || user.updated_at} className="profile-avatar"/><button type="button" className="profile-avatar-edit" onClick={() => avatarInputRef.current?.click()} disabled={mediaBusy !== null} aria-label={mediaBusy === "avatar" ? "جارٍ رفع الصورة الشخصية" : "تغيير الصورة الشخصية"} title={mediaBusy === "avatar" ? "جارٍ الرفع…" : "تغيير الصورة الشخصية"}>{mediaBusy === "avatar" ? <span className="profile-media-spinner" aria-hidden="true"/> : <Camera size={15}/>}</button></div>
             <div className="profile-identity-copy">
               <div className="profile-name-row">
-                <h2>{user.display_name}</h2>
+                <h2 className="no-translate">{user.display_name}</h2>
                 {isMember && user.verification_status === "verified" ? <span className="pill green profile-member-verified"><BadgeCheck size={13}/> عضو موثّق</span> : <span className="pill navy profile-admin-pill"><ShieldCheck size={13}/> حساب إداري</span>}
               </div>
               <div className="profile-username" dir="ltr">@{user.username}</div>
@@ -278,7 +278,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
         <div className="profile-main-column">
           <section className="card profile-info-card">
             <div className="profile-section-heading"><div><h2 className="section-title">نبذة</h2><p className="small muted">تعريف مختصر عنك ومجالات اهتمامك.</p></div><UserRound size={19} className="muted"/></div>
-            {user.bio ? <p className="profile-bio-text">{user.bio}</p> : <div className="profile-empty-bio"><p>لسه ما كتبتش نبذة عنك.</p><button className="btn btn-small" onClick={() => setEditing(true)}><PencilLine size={14}/> اكتب نبذة عنك</button></div>}
+            {user.bio ? <p className="profile-bio-text no-translate">{user.bio}</p> : <div className="profile-empty-bio"><p>لسه ما كتبتش نبذة عنك.</p><button className="btn btn-small" onClick={() => setEditing(true)}><PencilLine size={14}/> اكتب نبذة عنك</button></div>}
           </section>
 
           <section className="profile-posts-section">
@@ -296,11 +296,11 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
                 <textarea id={`profile-post-edit-${post.id}`} className="field" rows={4} maxLength={5000} value={editPostBody} onChange={event => setEditPostBody(event.target.value)} />
                 <label className="form-row"><span className="label">التخصص</span><select className="field" value={editPostSpecialty} onChange={event => setEditPostSpecialty(event.target.value)}><option value="">بدون تخصص</option>{SPECIALTIES.map(item => <option key={item}>{item}</option>)}</select></label>
                 <div className="row"><button type="submit" className="btn btn-primary btn-small" disabled={postActionBusyId === post.id || (!editPostBody.trim() && !post.has_image && !post.shared_post_id)}><Save size={14}/>{postActionBusyId === post.id ? "جارٍ الحفظ…" : "حفظ التعديل"}</button><button type="button" className="btn btn-small" disabled={postActionBusyId === post.id} onClick={() => { setEditingPostId(null); setEditPostBody(""); }}>إلغاء</button></div>
-              </form> : post.body ? <p className="profile-post-body">{post.body}</p> : null}
+              </form> : post.body ? <p className="profile-post-body no-translate">{post.body}</p> : null}
               {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell profile-shared-post-shell">
                 <div className="shared-post-attribution"><Share2 size={14}/><span>شاركت منشور {post.shared_display_name}</span></div>
                 <article className="shared-post-original">
-                  <header className="shared-post-original-header"><UserAvatar userId={post.shared_author_id} displayName={post.shared_display_name} avatarColor={post.shared_avatar_color} hasAvatar={post.shared_has_avatar} className="sm"/><div className="user-meta"><strong>{post.shared_display_name}</strong><span className="small muted">{post.shared_specialty || post.shared_profile_specialty || "من مجتمع AXIS"}</span></div>{post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatDate(post.shared_created_at)}</time>}</header>
+                  <header className="shared-post-original-header"><UserAvatar userId={post.shared_author_id} displayName={post.shared_display_name} avatarColor={post.shared_avatar_color} hasAvatar={post.shared_has_avatar} className="sm"/><div className="user-meta"><strong className="no-translate">{post.shared_display_name}</strong><span className="small muted">{post.shared_specialty || post.shared_profile_specialty || "من مجتمع AXIS"}</span></div>{post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatDate(post.shared_created_at)}</time>}</header>
                   {post.shared_body && <p className="shared-post-original-body">{post.shared_body}</p>}
                   {post.shared_has_image && <a className="shared-post-original-media" href={`/api/posts/${post.shared_post_id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور الأصلي"><img src={`/api/posts/${post.shared_post_id}/image`} alt={`صورة من منشور ${post.shared_display_name}`} loading="lazy"/></a>}
                 </article>
