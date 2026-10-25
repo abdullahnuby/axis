@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-25 — Incomplete registration verification queue
+
+- The admin verification queue now includes active member accounts that have not created a verification request, so registered-but-unverified users no longer disappear from review.
+- Added a safe action to reopen the verification step; it does not approve the account. The member must still submit a request with the required syndicate membership number.
+- Added audit logging, overview counts, and a regression check for the missing-request case.
+
 ## 2026-10-25 — Optional membership card
 
 - The syndicate membership number remains required, but uploading the card image is now optional in the verification form and API.
