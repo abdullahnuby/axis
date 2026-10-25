@@ -590,7 +590,7 @@ await check("admin can pin one announcement at the top of the main feed, and lon
   assert.match(feedRoute, /ORDER BY p\.main_feed_pinned_at DESC NULLS LAST, p\.created_at DESC/);
   assert.match(feed, /تثبيت في الرئيسية/);
   assert.match(feed, /عرض المزيد/);
-  assert.match(feed, /POST_PREVIEW_WORD_LIMIT = 90/);
+  assert.match(feed, /POST_PREVIEW_WORD_LIMIT = 20/);
   assert.match(feed, /user\.role === "admin" && !post\.group_id/);
   assert.match(feed, /post\.author_id !== user\.id && !\["admin", "moderator"\]\.includes\(user\.role\)/);
   assert.match(types, /main_feed_pinned_at\?: string \| null/);
