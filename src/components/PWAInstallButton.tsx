@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedContent } from "@/components/LanguageProvider";
 import { useEffect, useState } from "react";
 import { Share, Smartphone, X, Copy, Check } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAProvider";
@@ -45,7 +46,7 @@ export function PWAInstallButton({ compact = false }: { compact?: boolean }) {
     window.setTimeout(() => setCopied(false), 2200);
   }
 
-  return <>
+  return <LocalizedContent>{<>
     <button type="button" className={`btn pwa-install-button ${compact ? "btn-small" : ""}`} onClick={() => void handleInstall()} aria-label="إضافة AXIS إلى الشاشة الرئيسية" title="إضافة AXIS إلى الشاشة الرئيسية">
       <Smartphone size={17} aria-hidden="true" />
       <span>{compact ? "تثبيت" : canInstall ? "تثبيت AXIS" : "أضف للشاشة الرئيسية"}</span>
@@ -73,5 +74,5 @@ export function PWAInstallButton({ compact = false }: { compact?: boolean }) {
         <button type="button" className="btn btn-primary" style={{ width: "100%", marginTop: 12 }} onClick={() => setShowGuide(false)}>تمام</button>
       </section>
     </div>}
-  </>;
+  </>}</LocalizedContent>;
 }
