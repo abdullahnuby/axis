@@ -1,4 +1,5 @@
 "use client";
+import { localizedConfirm } from "@/lib/i18n";
 import { LocalizedContent } from "@/components/LanguageProvider";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -98,7 +99,7 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
 
   async function toggleMember(member: Member) {
     const accountStatus = member.account_status === "suspended" ? "active" : "suspended";
-    if (accountStatus === "suspended" && !window.confirm(`متأكد إنك عايز توقف حساب ${member.display_name}؟ هيتسجل خروجه من الجلسات الحالية.`)) return;
+    if (accountStatus === "suspended" && !localizedConfirm(`متأكد إنك عايز توقف حساب ${member.display_name}؟ هيتسجل خروجه من الجلسات الحالية.`)) return;
     setError(""); setMessage("");
     try {
       const r = await fetch(`/api/admin/members/${member.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountStatus }) });
@@ -120,7 +121,7 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
   }
   async function applyReportAction(report: Report) {
     const action = report.target_type === "post" ? "حذف المنشور" : report.target_type === "comment" ? "حذف التعليق وردوده التابعة" : "إيقاف حساب العضو";
-    if (!window.confirm(`ده إجراء فعلي: ${action}. مش هينفع التراجع عنه من لوحة البلاغات. متأكد؟`)) return;
+    if (!localizedConfirm(`ده إجراء فعلي: ${action}. مش هينفع التراجع عنه من لوحة البلاغات. متأكد؟`)) return;
     setError(""); setMessage(""); setBusy(true);
     try {
       const r = await fetch(`/api/admin/reports/${report.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "actioned", applyAction: true }) });
@@ -138,7 +139,7 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
     catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ."); } finally { setBusy(false); }
   }
   async function deleteEvent(eventId: string) {
-    if (!window.confirm("متأكد إنك عايز تحذف الحدث ده؟")) return;
+    if (!localizedConfirm("متأكد إنك عايز تحذف الحدث ده؟")) return;
     setError(""); setMessage("");
     try {
       const r = await fetch(`/api/admin/events/${eventId}`, { method: "DELETE" });
