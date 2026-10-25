@@ -1210,3 +1210,12 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .profile-page.profile-in-shell { width: 100%; margin: 0; }
 .profile-in-shell .profile-content-grid { grid-template-columns: minmax(0, 1fr); }
 .profile-in-shell .profile-side-column { order: 2; }
+
+
+/* Global Arabic / English language switcher */
+.language-switcher{position:fixed;inset-inline-start:18px;bottom:20px;z-index:80;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 14px;border:1px solid #D8E4EF;border-radius:999px;background:rgba(255,255,255,.96);color:#082338;font:600 13px/1.2 system-ui,sans-serif;box-shadow:0 8px 24px rgba(8,35,56,.14);backdrop-filter:blur(12px);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.language-switcher:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(8,35,56,.18)}
+.language-switcher:focus-visible{outline:3px solid rgba(0,123,255,.35);outline-offset:3px}
+html[data-locale="en"] body{font-family:Inter,Arial,system-ui,sans-serif}
+html[data-locale="en"] .language-switcher{font-family:Inter,Arial,system-ui,sans-serif}
+@media(max-width:760px){.language-switcher{bottom:calc(88px + env(safe-area-inset-bottom));inset-inline-start:12px;min-height:40px;padding:9px 12px}}
