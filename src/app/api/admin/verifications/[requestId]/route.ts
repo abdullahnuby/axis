@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, withTransaction } from "@/lib/db";
+import { sendPushToUser } from "@/lib/push";
 import { getApiUser, cleanText, jsonError, sameOrigin } from "@/lib/http";
 import { BADGE_OPTIONS, SPECIALTIES, seniorityFromYears } from "@/lib/constants";
 export const runtime = "nodejs";
@@ -25,29 +26,40 @@ export async function PATCH(request: Request, context: Ctx) {
     if (!(SPECIALTIES as readonly string[]).includes(specialty)) return jsonError("التخصص غير صالح.");
     if (expertApproved && years < 10) return jsonError("مستوى EXP يتطلب 10 سنوات على الأقل ومراجعة المسؤوليات.");
   }
+  let pushRecipient: string | null = null;
+  let pushTitle = "";
+  let pushBody = "";
   try {
     await withTransaction(async client => {
       const requestRow = await client.query<{ user_id: string; status: string }>("SELECT user_id,status FROM verification_requests WHERE id=$1 FOR UPDATE", [requestId]);
       if (!requestRow.rows[0]) throw Object.assign(new Error("طلب التوثيق غير موجود."), { statusCode: 404 });
       const targetUser = requestRow.rows[0].user_id;
+      pushRecipient = targetUser;
       if (action === "approve") {
+        pushTitle = "تم توثيق عضويتك في AXIS";
+        pushBody = "تم اعتماد عضويتك وفتح حسابك في مجتمع AXIS.";
         const level = seniorityFromYears(years, expertApproved);
         await client.query("UPDATE verification_requests SET status='approved',review_note=$1,reviewed_by=$2,reviewed_at=now() WHERE id=$3", [note, user!.id, requestId]);
         await client.query(`UPDATE users SET verification_status='verified',approved_years=$1,seniority_code=$2,job_title=$3,specialty=$4,verified_badges=$5 WHERE id=$6`, [years, level, jobTitle, specialty, badges, targetUser]);
         await client.query("INSERT INTO notifications(user_id,actor_id,kind,message) VALUES($1,$2,'verification','تم اعتماد عضويتك وفتح حسابك في مجتمع AXIS.')", [targetUser, user!.id]);
         await client.query("INSERT INTO audit_logs(actor_id,action,target_type,target_id,metadata) VALUES($1,'verification_approved','verification_request',$2,$3::jsonb)", [user!.id, requestId, JSON.stringify({ years, level, badgeCount: badges.length })]);
       } else if (action === "reject") {
+        pushTitle = "نتيجة مراجعة عضويتك في AXIS";
+        pushBody = "تمت مراجعة طلبك. افتح AXIS لمعرفة النتيجة والتفاصيل.";
         await client.query("UPDATE verification_requests SET status='rejected',review_note=$1,reviewed_by=$2,reviewed_at=now() WHERE id=$3", [note, user!.id, requestId]);
         await client.query("UPDATE users SET verification_status='rejected' WHERE id=$1", [targetUser]);
         await client.query("INSERT INTO notifications(user_id,actor_id,kind,message) VALUES($1,$2,'verification',$3)", [targetUser, user!.id, note ? `لم يتم قبول طلب التوثيق. ملاحظة الإدارة: ${note}` : "لم يتم قبول طلب التوثيق. يمكنك مراجعة بياناتك وإعادة التقديم."]);
         await client.query("INSERT INTO audit_logs(actor_id,action,target_type,target_id,metadata) VALUES($1,'verification_rejected','verification_request',$2,$3::jsonb)", [user!.id, requestId, JSON.stringify({ hasNote: !!note })]);
       } else {
+        pushTitle = "مطلوب استكمال التوثيق في AXIS";
+        pushBody = "مطلوب استكمال بيانات التوثيق. افتح AXIS لمعرفة التفاصيل.";
         await client.query("UPDATE verification_requests SET status='needs_info',review_note=$1,reviewed_by=$2,reviewed_at=now() WHERE id=$3", [note, user!.id, requestId]);
         await client.query("UPDATE users SET verification_status='needs_info' WHERE id=$1", [targetUser]);
         await client.query("INSERT INTO notifications(user_id,actor_id,kind,message) VALUES($1,$2,'verification',$3)", [targetUser, user!.id, note ? `تحتاج بيانات التوثيق إلى استكمال: ${note}` : "تحتاج بيانات التوثيق إلى استكمال. أعد إرسال الطلب بالمعلومات المطلوبة."]);
         await client.query("INSERT INTO audit_logs(actor_id,action,target_type,target_id,metadata) VALUES($1,'verification_more_info','verification_request',$2,$3::jsonb)", [user!.id, requestId, JSON.stringify({ hasNote: !!note })]);
       }
     });
+    if (pushRecipient && pushTitle && pushBody) await sendPushToUser(pushRecipient, { title: pushTitle, body: pushBody, url: "/verification", tag: "axis-verification" });
     return NextResponse.json({ ok: true });
   } catch (error) { const status = (error as { statusCode?: number })?.statusCode; return jsonError(error instanceof Error ? error.message : "تعذر حفظ القرار.", status || 500); }
 }

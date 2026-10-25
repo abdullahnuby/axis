@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, withTransaction } from "@/lib/db";
+import { sendPushToUser } from "@/lib/push";
 import { getApiUser, cleanText, jsonError, sameOrigin } from "@/lib/http";
 import { consumeRateLimit, requestIpKey } from "@/lib/rate-limit";
 
@@ -52,6 +53,8 @@ export async function POST(request: Request, context: Ctx) {
   if (!text) return jsonError("اكتب تعليقك الأول.");
   if (await consumeRateLimit("create-comment", `${requestIpKey(request)}:${user!.id}`, { limit: 30, windowMinutes: 10, blockMinutes: 10 })) return jsonError("التعليقات كتير في وقت قصير. جرّب بعد شوية.", 429);
   if (parentCommentId && !UUID.test(parentCommentId)) return jsonError("التعليق المراد الرد عليه غير صالح.");
+  let pushRecipient: string | null = null;
+  let pushBody = "";
   try {
     const comment = await withTransaction(async client => {
       const post = await client.query<{ author_id: string }>(
@@ -82,9 +85,12 @@ export async function POST(request: Request, context: Ctx) {
           "INSERT INTO notifications(user_id,actor_id,kind,message,target_post_id,target_comment_id) VALUES($1,$2,'comment',$3,$4,$5)",
           [recipientId, user!.id, message, postId, result.rows[0].id],
         );
+        pushRecipient = recipientId;
+        pushBody = message;
       }
       return result.rows[0];
     });
+    if (pushRecipient && pushBody) await sendPushToUser(pushRecipient, { title: "تفاعل جديد على AXIS", body: pushBody, url: "/notifications" });
     return NextResponse.json({ comment: {
       ...comment,
       display_name: user!.display_name,

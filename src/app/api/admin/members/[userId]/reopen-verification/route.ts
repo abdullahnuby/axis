@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, withTransaction } from "@/lib/db";
+import { sendPushToUser } from "@/lib/push";
 import { getApiUser, jsonError, sameOrigin } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -36,10 +37,15 @@ export async function POST(request: Request, context: Ctx) {
       // Re-open the verification form on the member's next visit. Do not verify or grant access here.
       await client.query("UPDATE users SET verification_status='needs_info' WHERE id=$1", [userId]);
       await client.query(
+        "INSERT INTO notifications(user_id,actor_id,kind,message) VALUES($1,$2,'verification',$3)",
+        [userId, user!.id, "الإدارة أعادت فتح خطوة التوثيق. ادخل رقم عضوية النقابة وأرسل الطلب علشان نقدر نراجعه."],
+      );
+      await client.query(
         "INSERT INTO audit_logs(actor_id,action,target_type,target_id,metadata) VALUES($1,'verification_step_reopened','user',$2,$3::jsonb)",
         [user!.id, userId, JSON.stringify({ reason: "no_verification_request" })],
       );
     });
+    await sendPushToUser(userId, { title: "استكمل توثيق عضويتك في AXIS", body: "الإدارة أعادت فتح خطوة التوثيق. ادخل رقم عضوية النقابة وأرسل الطلب.", url: "/verification", tag: "axis-verification" });
     return NextResponse.json({
       ok: true,
       message: "تمت إعادة الحساب إلى خطوة التوثيق. لازم العضو يدخل رقم عضوية النقابة ويرسل الطلب قبل ما تقدر توافق عليه.",
