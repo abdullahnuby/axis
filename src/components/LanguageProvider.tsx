@@ -14,9 +14,8 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
-import { translateArabicText } from "@/lib/i18n";
-
-export type Locale = "ar" | "en";
+import { getLocalizedText, type Locale } from "@/lib/i18n";
+export type { Locale } from "@/lib/i18n";
 
 export type UiPreferences = {
   compactMode: boolean;
@@ -62,7 +61,7 @@ function localizeNode(node: ReactNode, locale: Locale, insideUserContent = false
   }
 
   if (typeof node === "string") {
-    return insideUserContent || locale === "ar" ? node : translateArabicText(node);
+    return insideUserContent ? node : getLocalizedText(node, locale);
   }
 
   if (Array.isArray(node)) {
@@ -77,8 +76,8 @@ function localizeNode(node: ReactNode, locale: Locale, insideUserContent = false
   const nextProps: Record<string, unknown> = {};
   for (const attribute of ["placeholder", "title", "aria-label", "aria-description", "alt"]) {
     const value = props[attribute];
-    if (typeof value === "string" && locale === "en") {
-      nextProps[attribute] = translateArabicText(value);
+    if (typeof value === "string") {
+      nextProps[attribute] = getLocalizedText(value, locale);
     }
   }
 
@@ -188,9 +187,9 @@ export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>
     }
 
     if (localeState === "en") {
-      document.title = translateArabicText(original.title);
+      document.title = getLocalizedText(original.title, localeState);
       if (descriptionMeta && original.description) {
-        descriptionMeta.content = translateArabicText(original.description);
+        descriptionMeta.content = getLocalizedText(original.description, localeState);
       }
     } else {
       document.title = original.title;
