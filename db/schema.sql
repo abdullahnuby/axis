@@ -21,12 +21,24 @@ CREATE TABLE IF NOT EXISTS users (
   cover_image_data bytea,
   cover_image_mime text CHECK (cover_image_mime IS NULL OR cover_image_mime IN ('image/jpeg','image/png','image/webp')),
   email_verified_at timestamptz,
+  preferred_locale text NOT NULL DEFAULT 'ar' CHECK (preferred_locale IN ('ar','en')),
+  ui_preferences jsonb NOT NULL DEFAULT '{"compactMode": false, "reduceMotion": false}'::jsonb CHECK (jsonb_typeof(ui_preferences) = 'object'),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS users_status_idx ON users (verification_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS users_specialty_idx ON users (specialty);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_locale text NOT NULL DEFAULT 'ar';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ui_preferences jsonb NOT NULL DEFAULT '{"compactMode": false, "reduceMotion": false}'::jsonb;
+DO $ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_preferred_locale_check') THEN
+    ALTER TABLE users ADD CONSTRAINT users_preferred_locale_check CHECK (preferred_locale IN ('ar','en'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_ui_preferences_object_check') THEN
+    ALTER TABLE users ADD CONSTRAINT users_ui_preferences_object_check CHECK (jsonb_typeof(ui_preferences) = 'object');
+  END IF;
+END $;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_image_data bytea;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_image_mime text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS cover_image_data bytea;
