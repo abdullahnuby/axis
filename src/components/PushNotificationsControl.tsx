@@ -122,6 +122,6 @@ export function PushNotificationsControl() {
       {notice && <p className="small" role="status" style={{ margin: "5px 0 0" }}>{notice}</p>}
       {error && <p className="small" role="alert" style={{ margin: "5px 0 0", color: "var(--danger)" }}>{error}</p>}
     </div>
-    {status !== "loading" && status !== "unsupported" && status !== "install-required" && <button type="button" className="btn btn-small" disabled={busy || status === "loading"} onClick={() => void toggleNotifications()}>{busy ? "جارٍ الحفظ…" : status === "enabled" ? "إيقاف الإشعارات" : "تفعيل الإشعارات"}</button>}
+    {status !== "loading" && status !== "unsupported" && status !== "install-required" && <button type="button" className="btn btn-small" disabled={busy} onClick={() => void toggleNotifications()}>{busy ? "جارٍ الحفظ…" : status === "enabled" ? "إيقاف الإشعارات" : "تفعيل الإشعارات"}</button>}
   </div>;
 }
