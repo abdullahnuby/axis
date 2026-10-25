@@ -1169,3 +1169,21 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .remember-me-option small{color:var(--muted);font-size:11px}
 .mobile-bottom .mobile-compose-link{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;padding:2px;border:0;background:transparent;color:#657286;border-radius:8px;font:inherit;font-size:9px;line-height:1.2;cursor:pointer}
 .mobile-bottom .mobile-compose-link .mobile-compose-icon{display:grid;place-items:center;width:28px;height:26px;border-radius:8px;background:#EAF4FF;color:var(--blue)}
+
+
+/* Pinned posts: visible but deliberately subtle so the content stays primary. */
+.post-pinned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 10px;
+  padding: 5px 9px;
+  border: 1px solid rgba(0, 123, 255, .18);
+  border-radius: 999px;
+  color: var(--blue, #007bff);
+  background: rgba(0, 123, 255, .06);
+  font-size: 12px;
+  font-weight: 700;
+}
