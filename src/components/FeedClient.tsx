@@ -2,7 +2,7 @@
 
 import { localizedConfirm } from "@/lib/i18n";
 import { LocalizedContent } from "@/components/LanguageProvider";
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, Fragment, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
   BadgeCheck,
   Camera,
@@ -58,6 +58,37 @@ function getPostPreview(text: string): { preview: string; expandable: boolean } 
   }
   const cutAt = starts[POST_PREVIEW_WORD_LIMIT] ?? text.length;
   return { preview: text.slice(0, cutAt).trimEnd(), expandable: true };
+}
+
+function renderPostBodyText(text: string): ReactNode {
+  // Keep the stored post untouched, but present common lightweight formatting cleanly.
+  // Extra blank lines are collapsed so pinned announcements stay readable on phones.
+  const normalized = text
+    .replace(/\\r\\n?/g, "\\n")
+    .replace(/[ \\t]+\\n/g, "\\n")
+    .replace(/\\n{2,}/g, "\\n")
+    .trim();
+
+  return normalized.split("\\n").map((line, lineIndex) => {
+    const tokens = line.split(/(\\*\\*[^*\\n]+?\\*\\*|__[^_\\n]+?__|`[^`\\n]+`)/g);
+    return (
+      <Fragment key={`line-${lineIndex}`}>
+        {lineIndex > 0 ? <br /> : null}
+        {tokens.map((token, tokenIndex) => {
+          if (/^\\*\\*.+\\*\\*$/.test(token)) {
+            return <strong key={`bold-${tokenIndex}`}>{token.slice(2, -2).trim()}</strong>;
+          }
+          if (/^__.+__$/.test(token)) {
+            return <strong key={`underscore-${tokenIndex}`}>{token.slice(2, -2).trim()}</strong>;
+          }
+          if (/^`.+`$/.test(token)) {
+            return <code key={`code-${tokenIndex}`}>{token.slice(1, -1)}</code>;
+          }
+          return token;
+        })}
+      </Fragment>
+    );
+  });
 }
 
 function PostSkeleton() {
@@ -504,7 +535,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     const expanded = Boolean(expandedPosts[key]);
     return <LocalizedContent>{(
       <div className="post-expandable-text">
-        <p className={`${className} no-translate`}>{preview.expandable && !expanded ? `${preview.preview}…` : text}</p>
+        <p className={`${className} no-translate`}>{renderPostBodyText(preview.expandable && !expanded ? `${preview.preview}…` : text)}</p>
         {preview.expandable && (
           <button
             type="button"
