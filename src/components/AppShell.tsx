@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   Home, Settings, UserRound, Bell, BriefcaseBusiness, Users, MessageCircle,
-  ShieldCheck, LockKeyhole, BookOpenText, ArrowLeft, CheckCircle2, Circle,
+  ShieldCheck, LockKeyhole, BookOpenText, ArrowLeft, CheckCircle2,
   Network, Sparkles,
 } from "lucide-react";
 import type { SessionUser } from "@/lib/types";
@@ -102,7 +102,6 @@ export function AppShell({ user, children, active = "" }: { user: SessionUser; c
                     <Link key={href} href={href} aria-current={active === href ? "page" : undefined} className={`nav-link ${active === href ? "active" : ""}`}>
                       <span className="rail-nav-icon"><Icon size={18}/></span>
                       <span className="rail-nav-text">{text}</span>
-                      {href === "/notifications" && <span className="rail-nav-suffix" aria-hidden="true"><span/></span>}
                       {active === href && <span className="rail-nav-active-mark" aria-hidden="true"/>}
                     </Link>
                   ))}
