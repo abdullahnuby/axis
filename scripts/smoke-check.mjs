@@ -361,17 +361,17 @@ await check("AXIS logo is integrated into the bespoke landing blueprint and cont
   const profile = await read("src/components/ProfileClient.tsx");
   const admin = await read("src/components/AdminClient.tsx");
   const styles = await read("src/app/globals.css");
-  assert.match(brand, /"compact" \\| "lockup" \\| "mark"/);
-  assert.match(homepage, /<CommunityBlueprint\\/>/);
-  assert.match(blueprint, /ENGINEERING COMMUNITY/);
-  assert.match(blueprint, /blueprint-stage/);
-  assert.match(shell, /rail-welcome-orbit/);
-  assert.match(header, /<Brand href="\\/feed" \\/>/);
-  assert.match(profile, /AxisLogoMark className="profile-cover-mark"/);
-  assert.match(admin, /<Brand admin light \\/>/);
-  assert.match(styles, /--axis-blue:#1768E8/);
-  assert.match(styles, /--axis-cyan:#26D1C1/);
-  assert.doesNotMatch(homepage + header + profile + admin, /<img[^>]+axis-logo\\.png/);
+  assert.ok(brand.includes('"compact" | "lockup" | "mark"'));
+  assert.ok(homepage.includes("<CommunityBlueprint/>"));
+  assert.ok(blueprint.includes("ENGINEERING COMMUNITY"));
+  assert.ok(blueprint.includes("blueprint-stage"));
+  assert.ok(shell.includes("rail-welcome-orbit"));
+  assert.ok(header.includes('<Brand href="/feed" />'));
+  assert.ok(profile.includes('AxisLogoMark className="profile-cover-mark"'));
+  assert.ok(admin.includes("<Brand admin light />"));
+  assert.ok(styles.includes("--axis-blue:#1768E8"));
+  assert.ok(styles.includes("--axis-cyan:#26D1C1"));
+  assert.doesNotMatch(homepage + header + profile + admin, /<img[^>]+axis-logo\.png/);
 });
 await check("secrets stay out of git", async () => {
   const gitignore = await read(".gitignore");
