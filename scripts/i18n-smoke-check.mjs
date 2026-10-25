@@ -32,15 +32,15 @@ assert.equal(rawKeys.length, new Set(rawKeys).size, "duplicate locale keys are n
 assert.equal(dictionary["ليه AXIS؟"], "Why AXIS?");
 assert.equal(dictionary["مساحة خاصة للمهندسين"], "A community built for engineers");
 assert.equal(dictionary["AXIS — مجتمع المهندسين"], "AXIS — Engineering Community");
-assert.ok(dictionary["مساحة للمهندسين لتبادل الخبرات والأسئلة وتجارب مواقع العمل داخل مجتمع بعضوية موثّقة."], "the public description needs a professional English version");
+assert.equal(dictionary["مساحة للمهندسين لتبادل الخبرات والأسئلة وتجارب مواقع العمل داخل مجتمع بعضوية موثّقة."], "A verified-membership community for engineers to share experience, questions, and site-work insights.");
 assert.ok(Object.values(dictionary).every((value) => typeof value === "string"), "all locale entries must have string values");
 assert.ok(Object.values(dictionary).every((value) => !/[\u0600-\u06FF]/u.test(value)), "English locale values must not contain Arabic script");
 
 assert.match(languageProvider, /document\.documentElement\.lang = locale/);
 assert.match(languageProvider, /usePathname/);
-assert.match(languageProvider, /document\\.title = translateArabicText\\(original\\.title\\)/);
-assert.match(languageProvider, /descriptionMeta\\.content = translateArabicText\\(original\\.description\\)/);
-assert.match(landing, /<LocalizedContent>\\{<main/);
+assert.match(languageProvider, /document\.title = translateArabicText\(original\.title\)/);
+assert.match(languageProvider, /descriptionMeta\.content = translateArabicText\(original\.description\)/);
+assert.match(landing, /<LocalizedContent>\{<main/);
 assert.doesNotMatch(legalPage, /<main className="legal-page" dir="rtl">/);
 assert.match(languageProvider, /document\.documentElement\.dir = locale === "ar" \? "rtl" : "ltr"/);
 assert.match(languageProvider, /localStorage\.getItem\("axis-locale"\)/);
