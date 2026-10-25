@@ -20,7 +20,7 @@ export function getLocalizedText(value: string, locale: Locale): string {
   // of being mangled or translated heuristically.
   if (locale === "ar") return value;
 
-  let match = trimmed.match(/^(.+?)(?: \\| AXIS)+$/);
+  let match = trimmed.match(/^(.+?)(?: \| AXIS)+$/);
   if (match && EN_MESSAGES[match[1]]) {
     return value.replace(trimmed, EN_MESSAGES[match[1]] + " | AXIS");
   }
@@ -49,28 +49,28 @@ export function getLocalizedText(value: string, locale: Locale): string {
   match = trimmed.match(/^مشاركات (.+)$/);
   if (match) return value.replace(trimmed, "Posts by " + match[1]);
 
-  match = trimmed.match(/^منذ (\\d+)\\s*د$/);
+  match = trimmed.match(/^منذ (\d+)\s*د$/);
   if (match) return value.replace(trimmed, match[1] + " min ago");
 
-  match = trimmed.match(/^منذ (\\d+)\\s*س$/);
+  match = trimmed.match(/^منذ (\d+)\s*س$/);
   if (match) return value.replace(trimmed, match[1] + " hr ago");
 
-  match = trimmed.match(/^منذ (\\d+)\\s*يوم$/);
+  match = trimmed.match(/^منذ (\d+)\s*يوم$/);
   if (match) return value.replace(trimmed, match[1] + " days ago");
 
-  match = trimmed.match(/^(\\d+)\\s+أحرف على الأقل$/);
+  match = trimmed.match(/^(\d+)\s+أحرف على الأقل$/);
   if (match) return value.replace(trimmed, match[1] + " characters minimum");
 
   match = trimmed.match(/^حساب @(.+)$/);
   if (match) return value.replace(trimmed, "Account @" + match[1]);
 
-  match = trimmed.match(/^التعليقات\\s*·\\s*(.*)$/);
+  match = trimmed.match(/^التعليقات\s*·\s*(.*)$/);
   if (match) return value.replace(trimmed, "Comments · " + match[1]);
 
-  match = trimmed.match(/^متأكد إنك عايز توقف حساب (.+)؟ هيتسجل خروجه من الجلسات الحالية\\.?$/);
+  match = trimmed.match(/^متأكد إنك عايز توقف حساب (.+)؟ هيتسجل خروجه من الجلسات الحالية\.?$/);
   if (match) return value.replace(trimmed, "Suspend " + match[1] + "? They'll be signed out of all active sessions.");
 
-  match = trimmed.match(/^ده إجراء فعلي: (.+)\\. مش هينفع التراجع عنه من لوحة البلاغات\\. متأكد؟$/);
+  match = trimmed.match(/^ده إجراء فعلي: (.+)\. مش هينفع التراجع عنه من لوحة البلاغات\. متأكد؟$/);
   if (match) return value.replace(
     trimmed,
     "You're about to " + getLocalizedText(match[1], "en").toLowerCase() + ". This can't be undone from the report panel. Continue?",
