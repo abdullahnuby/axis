@@ -4,7 +4,7 @@ import { LocalizedContent } from "@/components/LanguageProvider";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search, LogOut, X, ShieldCheck } from "lucide-react";
+import { Bell, Search, LogOut, X, ShieldCheck, Settings as SettingsIcon } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import type { SessionUser } from "@/lib/types";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
@@ -62,6 +62,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
         <button type="button" className="icon-btn mobile-search-toggle" aria-label={searchOpen ? "إغلاق البحث" : "فتح البحث"} onClick={() => setSearchOpen(open => !open)}>
           {searchOpen ? <X size={18}/> : <Search size={18}/>}
         </button>
+        <Link className="icon-btn header-settings" aria-label="الإعدادات" title="الإعدادات" href="/settings"><SettingsIcon size={18}/></Link>
         <Link className="icon-btn header-notification" aria-label={unreadCount > 0 ? `الإشعارات، ${unreadCount} غير مقروء` : "الإشعارات"} href="/notifications" title="الإشعارات">
           <Bell size={18}/>
           {unreadCount > 0 && <span className="notification-count-badge" aria-label={`${unreadCount} إشعارات غير مقروءة`}>{unreadCount > 99 ? "99+" : unreadCount.toLocaleString("ar-EG-u-nu-latn")}</span>}
