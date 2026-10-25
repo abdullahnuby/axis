@@ -18,7 +18,8 @@ async function loadCurrentUser(): Promise<SessionUser | null> {
     `SELECT u.id, u.email, u.username, u.display_name, u.role, u.verification_status,
             u.account_status, u.specialty, u.bio, u.job_title, u.approved_years,
             u.seniority_code, u.verified_badges, u.avatar_color, u.avatar_image_mime IS NOT NULL AS has_avatar,
-            u.cover_image_mime IS NOT NULL AS has_cover, u.created_at, u.updated_at, u.email_verified_at
+            u.cover_image_mime IS NOT NULL AS has_cover, u.created_at, u.updated_at, u.email_verified_at,
+            u.preferred_locale, u.ui_preferences
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = $1 AND s.expires_at > now()
       LIMIT 1`,
