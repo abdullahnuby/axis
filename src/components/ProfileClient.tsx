@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, CalendarDays,
   GraduationCap, LockKeyhole, MessageCircle, PencilLine, Save, ShieldCheck,
-  ThumbsUp, UserRound, X, Share2,
+  ThumbsUp, UserRound, X, Share2, Trash2,
 } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
@@ -52,13 +52,76 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
   const [displayName, setDisplayName] = useState(initialUser.display_name);
   const [specialty, setSpecialty] = useState(initialUser.specialty || "");
   const [bio, setBio] = useState(initialUser.bio || "");
-  const [posts] = useState(initialPosts);
+  const [posts, setPosts] = useState(initialPosts);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editPostBody, setEditPostBody] = useState("");
+  const [editPostSpecialty, setEditPostSpecialty] = useState("");
+  const [postActionBusyId, setPostActionBusyId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
   const isMember = user.role === "member";
   const approvedBadges = isMember ? user.verified_badges.filter((code) => badgeLabels.has(code)) : [];
+
+  function beginPostEdit(post: ProfilePostPreview) {
+    setEditingPostId(post.id);
+    setEditPostBody(post.body || "");
+    setEditPostSpecialty(post.specialty || "");
+    setError("");
+    setSuccess("");
+  }
+
+  async function savePostEdit(event: FormEvent<HTMLFormElement>, post: ProfilePostPreview) {
+    event.preventDefault();
+    if (postActionBusyId) return;
+    const body = editPostBody.trim();
+    if (!body && !post.has_image && !post.shared_post_id) {
+      setError("اكتب محتوى قبل ما تحفظ التعديل.");
+      return;
+    }
+    setPostActionBusyId(post.id);
+    setError("");
+    setSuccess("");
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body, specialty: editPostSpecialty }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ما قدرناش نحفظ تعديل المشاركة.");
+      setPosts(old => old.map(item => item.id === post.id
+        ? { ...item, body: data.post.body, specialty: data.post.specialty }
+        : item));
+      setEditingPostId(null);
+      setEditPostBody("");
+      setSuccess("اتحفظ تعديل المشاركة.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نحفظ تعديل المشاركة.");
+    } finally {
+      setPostActionBusyId(null);
+    }
+  }
+
+  async function deleteProfilePost(post: ProfilePostPreview) {
+    if (postActionBusyId || !window.confirm("متأكد إنك عايز تحذف المشاركة نهائيًا؟")) return;
+    setPostActionBusyId(post.id);
+    setError("");
+    setSuccess("");
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ما قدرناش نحذف المشاركة.");
+      setPosts(old => old.filter(item => item.id !== post.id));
+      if (editingPostId === post.id) setEditingPostId(null);
+      setSuccess("اتحذفت المشاركة.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف المشاركة.");
+    } finally {
+      setPostActionBusyId(null);
+    }
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); setSuccess(""); setBusy(true);
@@ -140,7 +203,16 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
             <div className="profile-section-heading profile-posts-heading"><div><h2 className="section-title">مشاركاتي</h2><p className="small muted">كل اللي شاركته مع زملائك هتلاقيه هنا.</p></div><span className="pill navy">{formatCount(posts.length)} منشور</span></div>
             {posts.length ? <div className="profile-post-list">{posts.map((post) => <article key={post.id} className="card profile-post-card">
               <div className="profile-post-meta"><span>{post.specialty || user.specialty || "هندسة"}</span><span>·</span><time dateTime={post.created_at}>{formatDate(post.created_at)}</time></div>
-              {post.body ? <p className="profile-post-body">{post.body}</p> : null}
+              <div className="profile-post-manage-actions">
+                {editingPostId !== post.id && <button type="button" className="btn btn-small" onClick={() => beginPostEdit(post)} disabled={Boolean(postActionBusyId)}><PencilLine size={14}/> تعديل</button>}
+                <button type="button" className="btn btn-small btn-danger" onClick={() => void deleteProfilePost(post)} disabled={postActionBusyId === post.id}><Trash2 size={14}/>{postActionBusyId === post.id ? "جارٍ الحذف…" : "حذف"}</button>
+              </div>
+              {editingPostId === post.id ? <form className="profile-post-edit-form" onSubmit={event => void savePostEdit(event, post)}>
+                <label className="sr-only" htmlFor={`profile-post-edit-${post.id}`}>تعديل نص المشاركة</label>
+                <textarea id={`profile-post-edit-${post.id}`} className="field" rows={4} maxLength={5000} value={editPostBody} onChange={event => setEditPostBody(event.target.value)} />
+                <label className="form-row"><span className="label">التخصص</span><select className="field" value={editPostSpecialty} onChange={event => setEditPostSpecialty(event.target.value)}><option value="">بدون تخصص</option>{SPECIALTIES.map(item => <option key={item}>{item}</option>)}</select></label>
+                <div className="row"><button type="submit" className="btn btn-primary btn-small" disabled={postActionBusyId === post.id || (!editPostBody.trim() && !post.has_image && !post.shared_post_id)}><Save size={14}/>{postActionBusyId === post.id ? "جارٍ الحفظ…" : "حفظ التعديل"}</button><button type="button" className="btn btn-small" disabled={postActionBusyId === post.id} onClick={() => { setEditingPostId(null); setEditPostBody(""); }}>إلغاء</button></div>
+              </form> : post.body ? <p className="profile-post-body">{post.body}</p> : null}
               {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell profile-shared-post-shell">
                 <div className="shared-post-attribution"><Share2 size={14}/><span>شاركت منشور {post.shared_display_name}</span></div>
                 <article className="shared-post-original">
@@ -150,7 +222,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
                 </article>
               </div>}
               {post.has_image ? <a className="profile-post-image-link" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور"><img className="profile-post-image" src={`/api/posts/${post.id}/image`} alt="صورة مرفقة بالمنشور" loading="lazy"/></a> : null}
-              <div className="profile-post-stats"><span><ThumbsUp size={14}/>{formatCount(post.like_count)} إعجاب</span><span><MessageCircle size={14}/>{formatCount(post.comment_count)} تعليق</span></div>
+              <div className="profile-post-stats"><span><ThumbsUp size={14}/>{formatCount(post.like_count)} إعجاب</span><span><MessageCircle size={14}/>{formatCount(post.comment_count)} تعليق</span><Link className="btn btn-small" href={`/feed?post=${encodeURIComponent(post.id)}`}>عرض النقاش</Link></div>
             </article>)}</div> : <div className="card profile-empty-posts"><div className="profile-empty-icon"><MessageCircle size={22}/></div><h3>لسه ما شاركتش حاجة</h3><p className="small muted">ابدأ بسؤال من الشغل أو احكيلنا عن تجربة ممكن تفيد زملاءك.</p><Link href="/feed#compose" className="btn btn-primary btn-small">أول مشاركة ليك</Link></div>}
           </section>
         </div>

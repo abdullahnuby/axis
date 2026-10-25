@@ -10,8 +10,8 @@ export function AppHeader({ user }: { user: SessionUser }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const isStaff = ["admin", "reviewer", "moderator"].includes(user.role);
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    try { await fetch("/api/auth/logout", { method: "POST" }); }
+    finally { window.location.href = "/"; }
   }
   return <header className={`topbar app-topbar ${searchOpen ? "search-open" : ""}`}>
     <div className="topbar-inner">

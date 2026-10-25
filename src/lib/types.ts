@@ -69,6 +69,7 @@ export interface FeedComment {
   verified_badges: string[];
   body: string;
   created_at: string;
+  edited_at?: string | null;
   like_count: number;
   has_liked: boolean;
 }

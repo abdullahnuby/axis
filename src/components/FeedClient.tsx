@@ -75,10 +75,18 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [commentBusy, setCommentBusy] = useState(false);
   const [busyLikePostId, setBusyLikePostId] = useState<string | null>(null);
   const [busyLikeCommentId, setBusyLikeCommentId] = useState<string | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentBody, setEditCommentBody] = useState("");
+  const [busyEditCommentId, setBusyEditCommentId] = useState<string | null>(null);
+  const [busyDeleteCommentId, setBusyDeleteCommentId] = useState<string | null>(null);
+  const [busyDeletePostId, setBusyDeletePostId] = useState<string | null>(null);
   const [replyTargets, setReplyTargets] = useState<Record<string, FeedComment | null>>({});
   const [openMenuPost, setOpenMenuPost] = useState<string | null>(null);
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [commentReportReason, setCommentReportReason] = useState("");
+  const [busyReportCommentId, setBusyReportCommentId] = useState<string | null>(null);
   const [sharingPost, setSharingPost] = useState<FeedPost | null>(null);
   const [shareCaption, setShareCaption] = useState("");
   const [shareBusy, setShareBusy] = useState(false);
@@ -282,9 +290,47 @@ export function FeedClient({ user }: { user: SessionUser }) {
     }
   }
 
+  function beginCommentEdit(comment: FeedComment) {
+    setEditingCommentId(comment.id);
+    setEditCommentBody(comment.body);
+    setError("");
+  }
+
+  async function saveCommentEdit(postId: string, comment: FeedComment, event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const body = editCommentBody.trim();
+    if (!body || body.length > 1200 || busyEditCommentId) return;
+    setBusyEditCommentId(comment.id);
+    setError("");
+    try {
+      const response = await fetch(`/api/comments/${comment.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نحفظ تعديل التعليق. جرّب تاني.");
+      setComments(old => ({
+        ...old,
+        [postId]: (old[postId] || []).map(item => item.id === comment.id
+          ? { ...item, body: payload.comment.body, edited_at: payload.comment.edited_at }
+          : item),
+      }));
+      setEditingCommentId(null);
+      setEditCommentBody("");
+      setSuccess("اتحفظ تعديل التعليق.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نحفظ تعديل التعليق. جرّب تاني.");
+    } finally {
+      setBusyEditCommentId(null);
+    }
+  }
+
   async function deleteComment(postId: string, comment: FeedComment, thread: FeedComment[]) {
-    if (comment.author_id !== user.id && user.role !== "admin") return;
-    if (!window.confirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
+    if (comment.author_id !== user.id && !["admin", "moderator"].includes(user.role)) return;
+    if (busyDeleteCommentId || !window.confirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
+    setBusyDeleteCommentId(comment.id);
+    setError("");
     try {
       const response = await fetch(`/api/comments/${comment.id}`, { method: "DELETE" });
       const payload = await response.json();
@@ -300,10 +346,16 @@ export function FeedClient({ user }: { user: SessionUser }) {
           }
         }
       }
+      const removedCount = Math.max(1, Number(payload.removedCount) || removedIds.size);
       setComments(old => ({ ...old, [postId]: (old[postId] || []).filter(item => !removedIds.has(item.id)) }));
-      setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: Math.max(0, post.comment_count - removedIds.size) } : post));
-      setSuccess("اتحذف التعليق والردود التابعة له.");
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف التعليق دلوقتي. جرّب تاني."); }
+      setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: Math.max(0, post.comment_count - removedCount) } : post));
+      if (editingCommentId && removedIds.has(editingCommentId)) { setEditingCommentId(null); setEditCommentBody(""); }
+      setSuccess(removedCount > 1 ? `اتحذف التعليق و${(removedCount - 1).toLocaleString("ar-EG")} من الردود التابعة له.` : "اتحذف التعليق.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف التعليق دلوقتي. جرّب تاني.");
+    } finally {
+      setBusyDeleteCommentId(null);
+    }
   }
 
   async function reportPost(postId: string) {
@@ -316,6 +368,20 @@ export function FeedClient({ user }: { user: SessionUser }) {
       if (!response.ok) throw new Error(payload.error || "البلاغ ما اتبعتش. جرّب تاني.");
       setReportingPostId(null); setReportReason(""); setSuccess("وصل بلاغك لفريق AXIS، وهيتراجع.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "البلاغ ما اتبعتش. جرّب تاني."); }
+  }
+
+  async function reportComment(comment: FeedComment) {
+    const reason = commentReportReason.trim();
+    if (reason.length < 3) { setError("احكيلنا إيه المشكلة في التعليق."); return; }
+    setBusyReportCommentId(comment.id); setError(""); setSuccess("");
+    try {
+      const response = await fetch(`/api/comments/${comment.id}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "البلاغ ما اتبعتش. جرّب تاني.");
+      setReportingCommentId(null); setCommentReportReason(""); setSuccess("وصل بلاغك لفريق AXIS، وهيتراجع.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "البلاغ ما اتبعتش. جرّب تاني.");
+    } finally { setBusyReportCommentId(null); }
   }
 
   function beginPostEdit(post: FeedPost) {
@@ -336,7 +402,9 @@ export function FeedClient({ user }: { user: SessionUser }) {
   }
 
   async function deletePost(post: FeedPost) {
-    if (post.author_id !== user.id || !window.confirm("متأكد إنك عايز تحذف المنشور نهائيًا؟")) return;
+    if (post.author_id !== user.id || busyDeletePostId || !window.confirm("متأكد إنك عايز تحذف المنشور نهائيًا؟")) return;
+    setBusyDeletePostId(post.id);
+    setError("");
     try {
       const response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
       const payload = await response.json();
@@ -344,33 +412,58 @@ export function FeedClient({ user }: { user: SessionUser }) {
       setPosts(old => old.filter(item => item.id !== post.id));
       setOpenMenuPost(null);
       setSuccess("اتحذف المنشور.");
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف المنشور دلوقتي. جرّب تاني."); }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف المنشور دلوقتي. جرّب تاني.");
+    } finally {
+      setBusyDeletePostId(null);
+    }
   }
 
   function renderComment(postId: string, comment: FeedComment, thread: FeedComment[], depth = 0): ReactNode {
     const replies = thread.filter(item => item.parent_comment_id === comment.id);
+    const canManageComment = comment.author_id === user.id || ["admin", "moderator"].includes(user.role);
+    const isEditing = editingCommentId === comment.id;
     return (
       <div className={`comment-thread ${depth > 0 ? "comment-thread-reply" : ""}`} id={`comment-${comment.id}`} key={comment.id}>
         <div className="comment comment-professional">
           <div className="avatar sm comment-avatar" style={{ background: comment.avatar_color || "var(--blue)" }}>{comment.display_name.slice(0, 1)}</div>
           <div className="comment-content">
             <div className="comment-body comment-bubble">
-              <div className="comment-author-line">
-                <Link href={`/people/${encodeURIComponent(comment.username)}`}><strong>{comment.display_name}</strong></Link>
-                {comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}
-                <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG")}>{formatPostTime(comment.created_at)}</time>
-              </div>
-              <p>{comment.body}</p>
+              {isEditing ? (
+                <form className="comment-edit-form" onSubmit={event => void saveCommentEdit(postId, comment, event)}>
+                  <label className="sr-only" htmlFor={`edit-comment-${comment.id}`}>تعديل التعليق</label>
+                  <textarea id={`edit-comment-${comment.id}`} className="field" rows={3} maxLength={1200} value={editCommentBody} onChange={event => setEditCommentBody(event.target.value)} autoFocus />
+                  <div className="comment-edit-actions">
+                    <button type="submit" className="btn btn-primary btn-small" disabled={busyEditCommentId === comment.id || !editCommentBody.trim()}>{busyEditCommentId === comment.id ? "جارٍ الحفظ…" : "حفظ"}</button>
+                    <button type="button" className="btn btn-small" disabled={busyEditCommentId === comment.id} onClick={() => { setEditingCommentId(null); setEditCommentBody(""); }}>إلغاء</button>
+                  </div>
+                </form>
+              ) : <>
+                <div className="comment-author-line">
+                  <Link href={`/people/${encodeURIComponent(comment.username)}`}><strong>{comment.display_name}</strong></Link>
+                  {comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}
+                  <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG")}>{formatPostTime(comment.created_at)}</time>
+                </div>
+                <p>{comment.body}</p>
+                {comment.edited_at ? <span className="comment-edited-label">تم التعديل</span> : null}
+              </>}
             </div>
-            <div className="comment-action-row">
+            {!isEditing && <div className="comment-action-row">
               <button type="button" className={`comment-action ${comment.has_liked ? "liked" : ""}`} onClick={() => void toggleLikeComment(postId, comment)} disabled={busyLikeCommentId === comment.id} aria-pressed={comment.has_liked}>
                 <Heart size={13} fill={comment.has_liked ? "currentColor" : "none"}/><span>{comment.has_liked ? "أعجبك" : "إعجاب"}</span>{comment.like_count > 0 ? <b>{comment.like_count.toLocaleString("ar-EG")}</b> : null}
               </button>
               <button type="button" className="comment-action" onClick={() => setReplyTargets(old => ({ ...old, [postId]: comment }))}>
                 <CornerDownLeft size={13}/><span>رد</span>
               </button>
-              {(comment.author_id === user.id || user.role === "admin") && <button type="button" className="comment-action comment-delete-action" onClick={() => void deleteComment(postId, comment, thread)}><Trash2 size={13}/><span>حذف</span></button>}
-            </div>
+              {canManageComment && <button type="button" className="comment-action" onClick={() => beginCommentEdit(comment)}><Edit3 size={13}/><span>تعديل</span></button>}
+              {canManageComment && <button type="button" className="comment-action comment-delete-action" onClick={() => void deleteComment(postId, comment, thread)} disabled={busyDeleteCommentId === comment.id}><Trash2 size={13}/><span>{busyDeleteCommentId === comment.id ? "جارٍ الحذف…" : "حذف"}</span></button>}
+              {!canManageComment && <button type="button" className="comment-action" onClick={() => { setReportingCommentId(comment.id); setCommentReportReason(""); setError(""); }}><Flag size={13}/><span>إبلاغ</span></button>}
+            </div>}
+            {reportingCommentId === comment.id && <form className="post-report-panel comment-report-panel" onSubmit={event => { event.preventDefault(); void reportComment(comment); }}>
+              <label className="label" htmlFor={`report-comment-${comment.id}`}>إيه المشكلة في التعليق ده؟</label>
+              <textarea id={`report-comment-${comment.id}`} className="field" rows={2} maxLength={1000} value={commentReportReason} onChange={event => setCommentReportReason(event.target.value)} placeholder="وضح السبب باختصار…" />
+              <div className="row"><button type="button" className="btn btn-small" onClick={() => { setReportingCommentId(null); setCommentReportReason(""); }} disabled={busyReportCommentId === comment.id}>إلغاء</button><button type="submit" className="btn btn-danger btn-small" disabled={busyReportCommentId === comment.id || commentReportReason.trim().length < 3}><Flag size={13}/>{busyReportCommentId === comment.id ? "جارٍ الإرسال…" : "إرسال البلاغ"}</button></div>
+            </form>}
           </div>
         </div>
         {replies.length > 0 && <div className="comment-replies">{replies.map(reply => renderComment(postId, reply, thread, depth + 1))}</div>}
@@ -488,7 +581,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
               <div className="post-menu-anchor">
                 <button type="button" className="icon-btn post-menu-trigger" aria-label="خيارات المنشور" aria-expanded={openMenuPost === post.id} onClick={() => setOpenMenuPost(openMenuPost === post.id ? null : post.id)}><MoreHorizontal size={20}/></button>
                 {openMenuPost === post.id && <div className="post-menu" role="menu">
-                  {post.author_id === user.id ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل المنشور</button><button type="button" role="menuitem" onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> حذف المنشور</button></> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
+                  {post.author_id === user.id ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل المنشور</button><button type="button" role="menuitem" disabled={busyDeletePostId === post.id} onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> {busyDeletePostId === post.id ? "جارٍ الحذف…" : "حذف المنشور"}</button></> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
                   <button type="button" role="menuitem" onClick={() => setOpenMenuPost(null)}><X size={15}/> إغلاق</button>
                 </div>}
               </div>

@@ -83,18 +83,56 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
   }
   async function toggleMember(member: Member) {
     const accountStatus = member.account_status === "suspended" ? "active" : "suspended";
-    const r = await fetch(`/api/admin/members/${member.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountStatus }) }); const d = await r.json();
-    if (r.ok) { setMembers(old => old.map(m => m.id === member.id ? { ...m, account_status: accountStatus } : m)); setMessage(accountStatus === "suspended" ? "تم إيقاف الحساب." : "تم إعادة تفعيل الحساب."); } else setError(d.error || "تعذر تعديل الحساب.");
+    if (accountStatus === "suspended" && !window.confirm(`متأكد إنك عايز توقف حساب ${member.display_name}؟ هيتسجل خروجه من الجلسات الحالية.`)) return;
+    setError(""); setMessage("");
+    try {
+      const r = await fetch(`/api/admin/members/${member.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountStatus }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "تعذر تعديل الحساب.");
+      setMembers(old => old.map(m => m.id === member.id ? { ...m, account_status: accountStatus } : m));
+      setMessage(accountStatus === "suspended" ? "تم إيقاف الحساب وإنهاء جلساته." : "تم إعادة تفعيل الحساب.");
+    } catch (e) { setError(e instanceof Error ? e.message : "تعذر تعديل الحساب."); }
   }
-  async function resolveReport(report: Report, status: "reviewed" | "dismissed" | "actioned") {
-    const r = await fetch(`/api/admin/reports/${report.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }); const d = await r.json(); if (r.ok) { setReports(old => old.map(x => x.id === report.id ? { ...x, status } : x)); setMessage("تم تحديث حالة البلاغ."); } else setError(d.error || "تعذر تحديث البلاغ.");
+  async function resolveReport(report: Report, status: "reviewed" | "dismissed") {
+    setError(""); setMessage("");
+    try {
+      const r = await fetch(`/api/admin/reports/${report.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "تعذر تحديث حالة البلاغ.");
+      setReports(old => old.map(x => x.id === report.id ? { ...x, status } : x));
+      setMessage("تم تحديث حالة البلاغ.");
+    } catch (e) { setError(e instanceof Error ? e.message : "تعذر تحديث حالة البلاغ."); }
+  }
+  async function applyReportAction(report: Report) {
+    const action = report.target_type === "post" ? "حذف المنشور" : report.target_type === "comment" ? "حذف التعليق وردوده التابعة" : "إيقاف حساب العضو";
+    if (!window.confirm(`ده إجراء فعلي: ${action}. مش هينفع التراجع عنه من لوحة البلاغات. متأكد؟`)) return;
+    setError(""); setMessage(""); setBusy(true);
+    try {
+      const r = await fetch(`/api/admin/reports/${report.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "actioned", applyAction: true }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "ما قدرناش ننفذ الإجراء.");
+      setReports(old => old.map(x => x.id === report.id ? { ...x, status: "actioned" } : x));
+      setMessage(d.message || "تم تنفيذ الإجراء وإغلاق البلاغ.");
+      await loadOverview();
+    } catch (e) { setError(e instanceof Error ? e.message : "ما قدرناش ننفذ الإجراء."); }
+    finally { setBusy(false); }
   }
   async function createEvent(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true); setError("");
     try { const r = await fetch("/api/admin/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(eventForm) }); const d = await r.json(); if (!r.ok) throw new Error(d.error || "تعذر إنشاء الحدث."); setEvents(old => [d.event, ...old]); setEventForm({ title: "", description: "", location: "", event_url: "", starts_at: "" }); setMessage("تمت إضافة الحدث."); }
     catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ."); } finally { setBusy(false); }
   }
-  async function deleteEvent(eventId: string) { if (!window.confirm("حذف هذا الحدث؟")) return; const r = await fetch(`/api/admin/events/${eventId}`, { method: "DELETE" }); const d = await r.json(); if (r.ok) setEvents(old => old.filter(e => e.id !== eventId)); else setError(d.error || "تعذر حذف الحدث."); }
+  async function deleteEvent(eventId: string) {
+    if (!window.confirm("متأكد إنك عايز تحذف الحدث ده؟")) return;
+    setError(""); setMessage("");
+    try {
+      const r = await fetch(`/api/admin/events/${eventId}`, { method: "DELETE" });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "تعذر حذف الحدث.");
+      setEvents(old => old.filter(e => e.id !== eventId));
+      setMessage("اتحذف الحدث.");
+    } catch (e) { setError(e instanceof Error ? e.message : "تعذر حذف الحدث."); }
+  }
   async function logout() { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/admin/login"; }
 
   return <div className="admin-layout"><aside className="admin-sidebar">
@@ -147,7 +185,7 @@ export function AdminClient({ admin }: { admin: SessionUser }) {
 
     {tab === "members" && <section className="stack"><h2 className="section-title">إدارة الأعضاء</h2><div className="table-wrap"><table><thead><tr><th>العضو</th><th>الحالة</th><th>المستوى</th><th>تاريخ التسجيل</th><th>الإجراء</th></tr></thead><tbody>{members.map(m => <tr key={m.id}><td><strong>{m.display_name}</strong><div className="tiny muted">@{m.username} · {m.email}</div></td><td><span className={`pill ${m.verification_status === "verified" ? "green" : "gold"}`}>{m.verification_status}</span><div className="tiny muted">{m.account_status}</div></td><td>{m.seniority_code} {m.approved_years != null ? `· ${m.approved_years} سنة` : ""}</td><td className="small">{new Date(m.created_at).toLocaleDateString("ar-EG")}</td><td><button className={`btn btn-small ${m.account_status === "suspended" ? "btn-primary" : "btn-danger"}`} disabled={m.id === admin.id} onClick={() => toggleMember(m)}>{m.account_status === "suspended" ? "إعادة تفعيل" : "إيقاف الحساب"}</button></td></tr>)}</tbody></table>{!members.length && <div className="empty-state">لا يوجد أعضاء لعرضهم.</div>}</div></section>}
 
-    {tab === "reports" && <section className="stack"><h2 className="section-title">البلاغات</h2>{reports.map(report => <div className="request-item" key={report.id}><div className="between"><strong>{report.target_type} · {report.reporter}</strong><span className={`pill ${report.status === "open" ? "gold" : "green"}`}>{report.status}</span></div><p style={{ margin: "8px 0" }}>{report.reason}</p><p className="small muted">{report.target_summary || `العنصر: ${report.target_id}`} · {new Date(report.created_at).toLocaleString("ar-EG")}</p>{report.status === "open" && <div className="row" style={{ flexWrap: "wrap" }}><button className="btn btn-small" onClick={() => resolveReport(report,"reviewed")}>تمت المراجعة</button><button className="btn btn-small" onClick={() => resolveReport(report,"dismissed")}>استبعاد البلاغ</button><button className="btn btn-small btn-danger" onClick={() => resolveReport(report,"actioned")}>اتخاذ إجراء</button></div>}</div>)}{!reports.length && <div className="empty-state">لا توجد بلاغات.</div>}</section>}
+    {tab === "reports" && <section className="stack"><h2 className="section-title">البلاغات</h2>{reports.map(report => <div className="request-item" key={report.id}><div className="between"><strong>{report.target_type} · {report.reporter}</strong><span className={`pill ${report.status === "open" ? "gold" : "green"}`}>{report.status}</span></div><p style={{ margin: "8px 0" }}>{report.reason}</p><p className="small muted">{report.target_summary || `العنصر: ${report.target_id}`} · {new Date(report.created_at).toLocaleString("ar-EG")}</p>{report.status === "open" && <div className="row" style={{ flexWrap: "wrap" }}><button className="btn btn-small" disabled={busy} onClick={() => resolveReport(report,"reviewed")}>تمت المراجعة</button><button className="btn btn-small" disabled={busy} onClick={() => resolveReport(report,"dismissed")}>استبعاد البلاغ</button><button className="btn btn-small btn-danger" disabled={busy || (report.target_type === "user" && admin.role !== "admin")} title={report.target_type === "user" && admin.role !== "admin" ? "إيقاف الحسابات متاح لمدير النظام فقط" : undefined} onClick={() => void applyReportAction(report)}>{report.target_type === "post" ? "حذف المنشور وإغلاق البلاغ" : report.target_type === "comment" ? "حذف التعليق وإغلاق البلاغ" : admin.role === "admin" ? "إيقاف الحساب وإغلاق البلاغ" : "إيقاف الحساب (للمدير فقط)"}</button></div>}</div>)}{!reports.length && <div className="empty-state">لا توجد بلاغات.</div>}</section>}
 
     {tab === "events" && <section className="stack"><h2 className="section-title">إدارة الفعاليات</h2><form className="card card-pad form-stack" onSubmit={createEvent}><h3 className="section-title">إضافة حدث</h3><div className="form-row"><label className="label">عنوان الحدث</label><input className="field" value={eventForm.title} onChange={e => setEventForm({...eventForm,title:e.target.value})} maxLength={160} required/></div><div className="form-grid"><div className="form-row"><label className="label">المكان</label><input className="field" value={eventForm.location} onChange={e => setEventForm({...eventForm,location:e.target.value})} maxLength={200}/></div><div className="form-row"><label className="label">الرابط (اختياري)</label><input className="field" type="url" value={eventForm.event_url} onChange={e => setEventForm({...eventForm,event_url:e.target.value})} placeholder="https://…"/></div></div><div className="form-row"><label className="label">التاريخ والوقت</label><input className="field" type="datetime-local" value={eventForm.starts_at} onChange={e => setEventForm({...eventForm,starts_at:e.target.value})}/></div><div className="form-row"><label className="label">وصف مختصر</label><textarea className="field" value={eventForm.description} onChange={e => setEventForm({...eventForm,description:e.target.value})} maxLength={1000}/></div><button className="btn btn-primary" disabled={busy}>إضافة الحدث</button></form>{events.map(event => <div className="request-item" key={event.id}><div className="between"><strong>{event.title}</strong><button className="btn btn-small btn-danger" onClick={() => deleteEvent(event.id)}>حذف</button></div><p className="small muted" style={{ margin: "5px 0 0" }}>{event.starts_at ? new Date(event.starts_at).toLocaleString("ar-EG") : "بدون موعد محدد"}{event.location ? ` · ${event.location}` : ""}</p>{event.description && <p className="small">{event.description}</p>}</div>)}</section>}
 

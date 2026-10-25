@@ -40,8 +40,9 @@ export async function createSession(userId: string): Promise<void> {
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (token) await query("DELETE FROM sessions WHERE token_hash = $1", [hashToken(token)]);
+  // Clear the browser credential first so a database outage cannot leave this device signed in.
   cookieStore.set(SESSION_COOKIE, "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 0 });
+  if (token) await query("DELETE FROM sessions WHERE token_hash = $1", [hashToken(token)]);
 }
 
 export async function requireVerifiedPage(): Promise<SessionUser> {
