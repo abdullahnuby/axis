@@ -148,10 +148,10 @@ export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>
       .then(async (response) => response.ok ? response.json() : null)
       .then((payload: { locale?: unknown; preferences?: unknown } | null) => {
         if (!active || !payload) return;
-        if (!localeTouched.current && (payload.locale === "ar" || payload.locale === "en")) {
+        if (payload.locale === "ar" || payload.locale === "en") {
           setLocaleState(payload.locale);
         }
-        if (!preferencesTouched.current && payload.preferences) {
+        if (payload.preferences) {
           setPreferencesState(normalizePreferences(payload.preferences));
         }
       })
@@ -160,7 +160,7 @@ export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>
       });
 
     return () => { active = false; };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     document.documentElement.lang = localeState;
