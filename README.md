@@ -134,3 +134,8 @@ npm run build
 ```
 
 `npm test` اختبار بنيوي ثابت لوجود بوابات التوثيق والإدارة الأساسية؛ ليس بديلًا لاختبار تكاملي على Neon أو اختبار نشر حقيقي.
+
+
+### Mobile push notifications
+
+AXIS supports opt-in Web Push for installed browsers and mobile web apps. Set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT in the deployment environment. Users explicitly enable notifications in Settings; members waiting for verification can enable them on the verification screen. On iPhone, users must add AXIS to the Home Screen and open the installed app before requesting push permission. Push notifications supplement the in-app notification center; browser/platform delivery is not guaranteed.

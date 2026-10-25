@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { ShieldCheck, Upload, Clock3, FileCheck2, MailCheck } from "lucide-react";
 import { Toast } from "@/components/Toast";
 import { SPECIALTIES } from "@/lib/constants";
+import { PushNotificationsControl } from "@/components/PushNotificationsControl";
 
 export function VerificationClient({ initialStatus, reviewNote, legalName, submittedAt }: { initialStatus: string; reviewNote?: string | null; legalName?: string | null; submittedAt?: string | null }) {
   const [status, setStatus] = useState(initialStatus);
@@ -38,6 +39,7 @@ export function VerificationClient({ initialStatus, reviewNote, legalName, submi
         <div><strong>تأكيد البريد الإلكتروني</strong><p className="small" style={{ margin: "3px 0 0" }}>هنبعتلك رابط على بريدك لو خدمة البريد مفعّلة في AXIS.</p>{emailStatus && <p className="small" role="status" style={{ margin: "4px 0 0" }}>{emailStatus}</p>}{emailError && <p className="small" role="alert" style={{ margin: "4px 0 0", color: "var(--danger)" }}>{emailError}</p>}</div>
         <button className="btn btn-small" type="button" disabled={emailBusy} onClick={async () => { setEmailBusy(true); setEmailStatus(""); setEmailError(""); try { const r = await fetch("/api/auth/resend-verification", { method: "POST" }); const d = await r.json(); if (!r.ok) throw new Error(d.error || "ما قدرناش نبعت رسالة التأكيد."); setEmailStatus(d.message || "راجع بريدك الإلكتروني."); } catch (e) { setEmailError(e instanceof Error ? e.message : "حصلت مشكلة."); } finally { setEmailBusy(false); } }}><MailCheck size={15}/>{emailBusy ? "جارٍ الإرسال…" : "إرسال رابط التأكيد"}</button>
       </div>
+      <PushNotificationsControl/>
       {status === "verified" ? <div className="alert success"><FileCheck2 size={18} style={{ verticalAlign: "middle", marginLeft: 7 }}/> تم اعتماد عضويتك! تقدر دلوقتي تدخل AXIS وتشوف المشاركات وتشارك زملاءك.</div> : status === "pending" ? <div className="stack"><span className="status-pill"><Clock3 size={15}/> طلبك عندنا للمراجعة</span><p style={{ margin: 0 }}>تم إرسال الطلب للمراجعة {submittedAt ? `في ${new Date(submittedAt).toLocaleDateString("ar-EG-u-nu-latn")}` : ""}. ستتغير حالة الحساب بعد قرار الإدارة.</p><p className="small muted" style={{ margin: 0 }}>لو فيه معلومة ناقصة، هنوضح لك إيه المطلوب استكماله هنا.</p></div> : <form className="form-stack" onSubmit={submit}>
         {status === "rejected" && <div className="alert error">المستندات اللي اتبعتت محتاجة تتراجع. تقدر تبعت الطلب تاني بمستندات أوضح. {reviewNote ? `ملاحظة الإدارة: ${reviewNote}` : ""}</div>}
         {status === "needs_info" && <div className="alert">محتاجين منك تكمل شوية معلومات. {reviewNote || "أرسل البيانات المطلوبة مرة أخرى."}</div>}

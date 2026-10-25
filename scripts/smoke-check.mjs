@@ -309,6 +309,27 @@ await check("registered members without verification requests appear in the admi
   assert.ok(admin.includes("إعادة فتح خطوة التوثيق"));
   assert.ok(admin.includes("لا يمكن اعتماد العضوية من هذه الشاشة قبل أن يدخل العضو رقم النقابة ويرسل الطلب"));
 });
+
+await check("mobile push subscriptions and service-worker notifications are opt-in and secure", async () => {
+  const push = await read("src/lib/push.ts");
+  const subscribeApi = await read("src/app/api/push/subscription/route.ts");
+  const keyApi = await read("src/app/api/push/public-key/route.ts");
+  const worker = await read("public/sw.js");
+  const control = await read("src/components/PushNotificationsControl.tsx");
+  const migration = await read("db/migrations/20261025_web_push_notifications.sql");
+  assert.ok(push.includes("Content-Encoding: aes128gcm") || push.includes('"Content-Encoding": "aes128gcm"'));
+  assert.ok(push.includes("createVapidAuthorization"));
+  assert.ok(subscribeApi.includes("sameOrigin(request)"));
+  assert.ok(subscribeApi.includes("ON CONFLICT(endpoint)"));
+  assert.ok(subscribeApi.includes("WHERE push_subscriptions.user_id=EXCLUDED.user_id"));
+  assert.ok(keyApi.includes("getVapidPublicKey"));
+  assert.ok(worker.includes('self.addEventListener("push"'));
+  assert.ok(worker.includes('self.addEventListener("notificationclick"'));
+  assert.ok(control.includes("Notification.requestPermission()"));
+  assert.ok(control.includes("install-required"));
+  assert.ok(migration.includes("CREATE TABLE IF NOT EXISTS public.push_subscriptions"));
+});
+
 await check("admin login is separate and rate limited", async () => {
   const page = await read("src/app/admin/login/page.tsx");
   const api = await read("src/app/api/admin/login/route.ts");

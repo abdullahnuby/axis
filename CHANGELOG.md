@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-25 — Opt-in mobile push notifications
+
+- Added opt-in Web Push subscriptions for phones and installed AXIS web apps, including members who are waiting for verification.
+- Added encrypted Web Push delivery for verification decisions, new messages, comment/post likes, comments, follows, post shares, and group-join approval notices; expired subscriptions are pruned.
+- Added a settings control, a pre-verification setup control, and service-worker notification display/click-through behavior. iPhone users must add AXIS to the Home Screen before enabling push notifications.
+
 ## 2026-10-25 — Fix admin API route collision
 
 - Matched the new verification route parameter to the existing member route (`[userId]`) so Next.js can register both paths without a dynamic-segment conflict.
