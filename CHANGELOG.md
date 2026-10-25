@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-25 — Crafted AXIS product experience redesign
+
+- Replaced the sparse public hero with a complete editorial landing experience: bespoke SVG/CSS community blueprint, member-review principles, a truthful 3-step onboarding walkthrough, an explicit privacy-status disclosure, and a refined final call to action.
+- Rebuilt the authenticated workspace framing with a structured member profile card, grouped navigation, calculated profile-readiness indicator, designed AXIS welcome module, and contextual community/privacy guidance.
+- Added purpose-built screen compositions for the professional directory, engineering groups, private inbox, activity center, membership review journey, and account settings; count and membership status labels are derived from actual user state instead of fabricated metrics.
+- Deepened feed card hierarchy, metadata, author treatment, interaction surfaces, and responsive spacing while retaining existing API-backed behaviors.
+- Split the new screen-composition layer into `src/app/axis-experience.css` and load it after the foundational `globals.css` styles to make the custom visual layer easier to maintain.
+- No database or API contract changes. The existing privacy disclosure remains explicit: posts currently display the account identity; anonymous publishing is not yet available in the current implementation.
+
 ## 2026-10-25 — AXIS UI/UX design system refresh
 
 - Added a cohesive visual layer across the landing page, community shell, feed, directory, groups, profiles, conversations, notifications, verification, settings, authentication and admin surfaces.
