@@ -21,6 +21,8 @@ const SKIP_TEXT_SELECTOR = [
 const originalText = new WeakMap<Text, string>();
 const lastAppliedText = new WeakMap<Text, string>();
 const originalAttributes = new WeakMap<Element, Map<string, string>>();
+let originalDocumentTitle: string | undefined;
+let lastAppliedDocumentTitle: string | undefined;
 const lastAppliedAttributes = new WeakMap<Element, Map<string, string>>();
 
 function shouldSkip(element: Element | null): boolean {
@@ -43,6 +45,7 @@ function localizeTextNode(node: Text, locale: Locale) {
 function localizeAttributes(element: Element, locale: Locale) {
   if (shouldSkip(element)) return;
   const attributes = ["placeholder", "title", "aria-label"];
+  if (element.matches('meta[name="description"], meta[property="og:description"]')) attributes.push("content");
   let originals = originalAttributes.get(element);
   if (!originals) {
     originals = new Map<string, string>();
@@ -79,12 +82,14 @@ function localizeDocument(locale: Locale) {
     if (shouldSkip(textNode.parentElement)) continue;
     localizeTextNode(textNode, locale);
   }
-  document.body.querySelectorAll("*").forEach((element) => localizeAttributes(element, locale));
-  if (locale === "en" && document.title === "AXIS — مجتمع المهندسين") {
-    document.title = "AXIS — Engineering Community";
-  } else if (locale === "ar" && document.title === "AXIS — Engineering Community") {
-    document.title = "AXIS — مجتمع المهندسين";
+  document.documentElement.querySelectorAll("*").forEach((element) => localizeAttributes(element, locale));
+  const currentTitle = document.title;
+  if (originalDocumentTitle === undefined || (lastAppliedDocumentTitle !== undefined && currentTitle !== lastAppliedDocumentTitle)) {
+    originalDocumentTitle = currentTitle;
   }
+  const nextTitle = locale === "en" ? translateArabicText(originalDocumentTitle ?? currentTitle) : (originalDocumentTitle ?? currentTitle);
+  if (document.title !== nextTitle) document.title = nextTitle;
+  lastAppliedDocumentTitle = nextTitle;
 }
 
 export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>) {
@@ -101,12 +106,12 @@ export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>
   useEffect(() => {
     localizeDocument(locale);
     const observer = new MutationObserver(() => localizeDocument(locale));
-    observer.observe(document.body, {
+    observer.observe(document.documentElement, {
       subtree: true,
       childList: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["placeholder", "title", "aria-label"],
+      attributeFilter: ["placeholder", "title", "aria-label", "content"],
     });
     try {
       window.localStorage.setItem("axis-locale", locale);
