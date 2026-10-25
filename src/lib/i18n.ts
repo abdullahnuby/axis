@@ -685,6 +685,9 @@ export const AR_TO_EN: Record<string, string> = {
   "جارٍ التأكيد…": "Verifying…",
   "تأكيد البريد": "Verify email",
   "العودة إلى AXIS": "Back to AXIS",
+  "AXIS — مجتمع المهندسين": "AXIS — Engineering Community",
+  "مساحة للمهندسين لتبادل الخبرات والأسئلة وتجارب مواقع العمل داخل مجتمع بعضوية موثّقة.": "A verified-membership community for engineers to share experience, questions, and site-work insights.",
+  "بعد إنشاء حسابك، ابعت إثبات العضوية علشان نقلّل دخول حسابات من برّه المجال. خليك عارف إن البوستات والتعليقات بتظهر باسم حسابك داخل AXIS، فبلاش تشارك أسرار شغل أو بيانات حساسة.": "After creating your account, submit proof of membership to help keep unrelated accounts out. Posts and comments appear under your AXIS account name, so do not share work secrets or sensitive information.",
 };
 
 export function translateArabicText(value: string): string {
@@ -693,7 +696,7 @@ export function translateArabicText(value: string): string {
   const direct = AR_TO_EN[trimmed];
   if (direct) return value.replace(trimmed, direct);
 
-  let metaTitleMatch = trimmed.match(/^(.+?)(?: \\| AXIS)+$/);
+  let metaTitleMatch = trimmed.match(/^(.+?)(?: \| AXIS)+$/);
   if (metaTitleMatch && AR_TO_EN[metaTitleMatch[1]]) {
     return value.replace(trimmed, AR_TO_EN[metaTitleMatch[1]] + " | AXIS");
   }
@@ -720,9 +723,11 @@ export function translateArabicText(value: string): string {
   if (match) return value.replace(trimmed, match[1] + " hr ago");
   match = trimmed.match(/^منذ (\d+)\s*يوم$/);
   if (match) return value.replace(trimmed, match[1] + " days ago");
+  match = trimmed.match(/^(\\d+)\\s+أحرف على الأقل$/);
+  if (match) return value.replace(trimmed, match[1] + " characters minimum");
   match = trimmed.match(/^حساب @(.+)$/);
   if (match) return value.replace(trimmed, "Account @" + match[1]);
-  match = trimmed.match(/^التعليقات · (.+)$/);
+  match = trimmed.match(/^التعليقات\\s*·\\s*(.*)$/);
   if (match) return value.replace(trimmed, "Comments · " + match[1]);
   return value;
 }
