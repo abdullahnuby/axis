@@ -2,6 +2,11 @@ export type VerificationStatus = "unverified" | "pending" | "needs_info" | "reje
 export type UserRole = "member" | "admin" | "reviewer" | "moderator";
 export type SeniorityCode = "JNR" | "MID" | "SNR" | "EXP";
 
+export interface UiPreferences {
+  compactMode: boolean;
+  reduceMotion: boolean;
+}
+
 export interface SessionUser {
   [key: string]: any;
   id: string;
@@ -23,6 +28,8 @@ export interface SessionUser {
   updated_at?: string;
   created_at?: string;
   email_verified_at?: string | null;
+  preferred_locale?: "ar" | "en";
+  ui_preferences?: UiPreferences;
 }
 
 export interface FeedPost {
