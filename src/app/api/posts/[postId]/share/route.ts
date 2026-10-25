@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { sendPushToUser } from "@/lib/push";
 import { cleanText, getApiUser, jsonError, sameOrigin } from "@/lib/http";
 import { consumeRateLimit, requestIpKey } from "@/lib/rate-limit";
 
@@ -47,6 +48,7 @@ export async function POST(request: Request, context: Ctx) {
     const originalAuthor = await query<{author_id:string}>("SELECT author_id FROM posts WHERE id=$1",[source.rows[0].source_id]);
     if (originalAuthor.rows[0]?.author_id && originalAuthor.rows[0].author_id !== user!.id) {
       await query("INSERT INTO notifications(user_id,actor_id,kind,message,target_post_id) VALUES($1,$2,'share',$3,$4)", [originalAuthor.rows[0].author_id,user!.id,`${user!.display_name} أعاد مشاركة منشورك.`,source.rows[0].source_id]);
+      await sendPushToUser(originalAuthor.rows[0].author_id, { title: "منشورك اتشارك على AXIS", body: "أحد المهندسين أعاد مشاركة منشورك.", url: "/notifications" });
     }
     return NextResponse.json({ ok: true, postId: created.rows[0].id, redirect: "/feed", destination: "profile-and-feed" }, { status: 201 });
   } catch (error) {

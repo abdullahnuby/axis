@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, withTransaction } from "@/lib/db";
+import { sendPushToUser } from "@/lib/push";
 import { getApiUser, jsonError, sameOrigin } from "@/lib/http";
 import { consumeRateLimit, requestIpKey } from "@/lib/rate-limit";
 
@@ -12,6 +13,7 @@ export async function POST(request: Request, context: Ctx) {
   if (response) return response;
   const { commentId } = await context.params;
   if (await consumeRateLimit("like-comment", `${requestIpKey(request)}:${user!.id}`, { limit: 160, windowMinutes: 10, blockMinutes: 5 })) return jsonError("التفاعل سريع جدًا. استنى شوية.", 429);
+  let pushRecipient: string | null = null;
   try {
     const liked = await withTransaction(async client => {
       const comment = await client.query<{ author_id: string; post_id: string }>(
@@ -27,16 +29,20 @@ export async function POST(request: Request, context: Ctx) {
         [commentId, user!.id],
       );
       if (inserted.rows.length) {
-        if (comment.rows[0].author_id !== user!.id) await client.query(
+        if (comment.rows[0].author_id !== user!.id) {
+          pushRecipient = comment.rows[0].author_id;
+          await client.query(
           "INSERT INTO notifications(user_id,actor_id,kind,message,target_post_id,target_comment_id) VALUES($1,$2,'like',$3,$4,$5)",
           [comment.rows[0].author_id,user!.id,`${user!.display_name} أعجب بتعليقك.`,comment.rows[0].post_id,commentId],
         );
+        }
         return true;
       }
       await client.query("DELETE FROM comment_likes WHERE comment_id=$1 AND user_id=$2", [commentId, user!.id]);
       return false;
     });
-    const counts = await query<{ count: number; has_liked: boolean }>(
+    if (pushRecipient) await sendPushToUser(pushRecipient, { title: "إعجاب جديد على تعليقك", body: "فيه حد أعجب بتعليقك على AXIS.", url: "/notifications" });
+    const counts = await query<{ count: number; has_liked: boolean }>
       `SELECT COUNT(*)::int AS count,
               EXISTS(SELECT 1 FROM comment_likes WHERE comment_id=$1 AND user_id=$2) AS has_liked
          FROM comment_likes WHERE comment_id=$1`,
