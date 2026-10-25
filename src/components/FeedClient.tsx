@@ -61,28 +61,25 @@ function getPostPreview(text: string): { preview: string; expandable: boolean } 
 }
 
 function renderPostBodyText(text: string): ReactNode {
-  // Keep the stored post untouched, but present common lightweight formatting cleanly.
-  // Extra blank lines are collapsed so pinned announcements stay readable on phones.
+  // Keep stored content intact while presenting common lightweight emphasis cleanly.
+  // Collapse repeated blank lines so announcements remain readable on mobile screens.
   const normalized = text
-    .replace(/\\r\\n?/g, "\\n")
-    .replace(/[ \\t]+\\n/g, "\\n")
-    .replace(/\\n{2,}/g, "\\n")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{2,}/g, "\n")
     .trim();
 
-  return normalized.split("\\n").map((line, lineIndex) => {
-    const tokens = line.split(/(\\*\\*[^*\\n]+?\\*\\*|__[^_\\n]+?__|`[^`\\n]+`)/g);
+  return normalized.split("\n").map((line, lineIndex) => {
+    const tokens = line.split(/(\*\*[^*\n]+?\*\*|__[^_\n]+?__)/g);
     return (
-      <Fragment key={`line-${lineIndex}`}>
+      <Fragment key={"line-" + lineIndex}>
         {lineIndex > 0 ? <br /> : null}
         {tokens.map((token, tokenIndex) => {
-          if (/^\\*\\*.+\\*\\*$/.test(token)) {
-            return <strong key={`bold-${tokenIndex}`}>{token.slice(2, -2).trim()}</strong>;
+          if (/^\*\*.+\*\*$/.test(token)) {
+            return <strong key={"bold-" + tokenIndex}>{token.slice(2, -2).trim()}</strong>;
           }
           if (/^__.+__$/.test(token)) {
-            return <strong key={`underscore-${tokenIndex}`}>{token.slice(2, -2).trim()}</strong>;
-          }
-          if (/^`.+`$/.test(token)) {
-            return <code key={`code-${tokenIndex}`}>{token.slice(1, -1)}</code>;
+            return <strong key={"underscore-" + tokenIndex}>{token.slice(2, -2).trim()}</strong>;
           }
           return token;
         })}
