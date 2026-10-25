@@ -11,8 +11,6 @@ const SKIP_TEXT_SELECTOR = [
   "style",
   "textarea",
   "input",
-  "select",
-  "option",
   "[contenteditable='true']",
   ".post-body",
   ".message-text",
