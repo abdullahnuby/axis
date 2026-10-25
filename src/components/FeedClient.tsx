@@ -22,6 +22,8 @@ import {
   Trash2,
   X,
   UserRound,
+  BriefcaseBusiness,
+  LockKeyhole,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -591,6 +593,34 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
   return (
     <AppShell user={user} active="/feed">
+      <section className="workspace-welcome" aria-label="مرحبًا بك في مجتمع AXIS">
+        <div className="workspace-welcome-copy">
+          <div className="workspace-welcome-kicker"><span className="workspace-kicker-dot"/><span>AXIS / MEMBER SPACE</span><span className="workspace-kicker-divider"/><span>مساحة الأعضاء</span></div>
+          <h1>أهلًا بيك في مساحتك المهنية.</h1>
+          <p>هنا تقدر تسأل، تشارك تجربة، وتسمع وجهات نظر مهندسين من واقع الشغل. خليك واضح في طرحك، وحافظ على سرية بياناتك وبيانات غيرك.</p>
+          <div className="workspace-welcome-tags">
+            <span><CheckCircle2 size={14}/> عضويتك تم التحقق منها</span>
+            {user.specialty && <span><BriefcaseBusiness size={14}/>{user.specialty}</span>}
+            <span><LockKeyhole size={14}/> مستندات التحقق غير معروضة للأعضاء</span>
+          </div>
+        </div>
+        <div className="workspace-welcome-art" aria-hidden="true">
+          <div className="workspace-art-grid"/>
+          <div className="workspace-art-ring workspace-ring-one"/>
+          <div className="workspace-art-ring workspace-ring-two"/>
+          <div className="workspace-art-core"><AxisLogoMark title=""/></div>
+          <span className="workspace-art-node node-a"/>
+          <span className="workspace-art-node node-b"/>
+          <span className="workspace-art-node node-c"/>
+          <div className="workspace-art-data">
+            <span className="workspace-data-label">ENGINEERING</span>
+            <strong>01 <i/> COMMUNITY</strong>
+            <span className="workspace-data-rule"/>
+            <span className="workspace-data-caption">INSIGHT / EXPERIENCE / DISCUSSION</span>
+          </div>
+          <div className="workspace-art-chip"><span/><span>MEMBERSHIP REVIEWED</span></div>
+        </div>
+      </section>
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
       <form id="compose" className={`card compose compose-professional ${composerExpanded ? "compose-is-expanded" : ""}`} onSubmit={createPost}>
