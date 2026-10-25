@@ -48,6 +48,21 @@ assert.match(languageProvider, /localStorage\.setItem\("axis-locale", locale\)/)
 assert.match(languageProvider, /hasUserContentBoundary/);
 assert.match(languageProvider, /no-translate/);
 assert.doesNotMatch(languageProvider, /MutationObserver|document\.body\.innerText|querySelectorAll\(/);
+assert.doesNotMatch(languageProvider, /language-switcher|toggleLocale/, "the language control belongs in account settings, not as a floating button");
+assert.equal(stylesheet.includes(".language-switcher"), false, "floating language-switcher styles must be removed");
+assert.ok(appHeader.includes('href="/settings"'), "settings must be reachable from the app header");
+assert.ok(settingsClient.includes("settings-tabs"));
+assert.ok(settingsClient.includes("/api/me/password"));
+assert.ok(settingsClient.includes("/api/me/preferences"));
+assert.ok(settingsClient.includes('method: "PATCH"'));
+assert.ok(settingsClient.includes("value={user.email} readOnly"));
+assert.ok(preferencesRoute.includes("preferred_locale"));
+assert.ok(preferencesRoute.includes("ui_preferences"));
+assert.ok(passwordRoute.includes("verifyPassword(currentPassword, currentHash)"));
+assert.ok(passwordRoute.includes("hashPassword(newPassword)"));
+assert.ok(passwordRoute.includes("DELETE FROM sessions WHERE user_id=$1 AND token_hash<>$2"));
+assert.ok(schema.includes("preferred_locale text NOT NULL DEFAULT 'ar'"));
+assert.ok(schema.includes("ui_preferences jsonb NOT NULL DEFAULT"));
 
 assert.match(feed, /className=\{\x60\$\{className\} no-translate\x60\}/, "post bodies must not be run through UI localization");
 assert.match(feed, /<p className="no-translate">\{comment\.body\}<\/p>/);
