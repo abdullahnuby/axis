@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
 import { UserAvatar } from "@/components/UserAvatar";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
@@ -87,6 +86,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [success, setSuccess] = useState("");
   const [openComments, setOpenComments] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, FeedComment[]>>({});
+  const [commentsFailed, setCommentsFailed] = useState<Record<string, boolean>>({});
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [commentBusy, setCommentBusy] = useState(false);
   const [busyLikePostId, setBusyLikePostId] = useState<string | null>(null);
@@ -247,17 +247,25 @@ export function FeedClient({ user }: { user: SessionUser }) {
     finally { setBusyLikePostId(null); }
   }
 
+  async function loadComments(postId: string) {
+    setCommentsFailed(old => ({ ...old, [postId]: false }));
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "التعليقات مش ظاهرة دلوقتي. جرّب تفتحها تاني.");
+      setComments(old => ({ ...old, [postId]: Array.isArray(payload.comments) ? payload.comments : [] }));
+    } catch (caught) {
+      setCommentsFailed(old => ({ ...old, [postId]: true }));
+      setError(caught instanceof Error ? caught.message : "التعليقات مش ظاهرة دلوقتي. جرّب تفتحها تاني.");
+    }
+  }
+
   async function toggleComments(post: FeedPost) {
     setError("");
     if (openComments === post.id) { setOpenComments(null); return; }
     setOpenComments(post.id);
     if (comments[post.id]) return;
-    try {
-      const response = await fetch(`/api/posts/${post.id}/comments`, { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "التعليقات مش ظاهرة دلوقتي. جرّب تفتحها تاني.");
-      setComments(old => ({ ...old, [post.id]: Array.isArray(payload.comments) ? payload.comments : [] }));
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "التعليقات مش ظاهرة دلوقتي. جرّب تفتحها تاني."); }
+    await loadComments(post.id);
   }
 
   async function addComment(postId: string, event?: FormEvent<HTMLFormElement>) {
@@ -590,7 +598,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   }
 
   return (
-    <AppShell user={user} active="/feed">
+    <>
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
       <form id="compose" className={`card compose compose-professional ${composerExpanded ? "compose-is-expanded" : ""}`} onSubmit={createPost}>
@@ -742,7 +750,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
             {openComments === post.id && <section className="comments comments-professional" aria-label="تعليقات المنشور">
               <div className="comments-heading"><div><h3>التعليقات</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG-u-nu-latn")} تعليقات وردود</span></div></div>
-              {!comments[post.id] ? <div className="comments-loading">بنحمّل التعليقات…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
+              {!comments[post.id] ? (commentsFailed[post.id] ? <div className="comments-error" role="alert"><span>مقدرناش نحمّل التعليقات.</span><button type="button" onClick={() => void loadComments(post.id)}>حاول تاني</button></div> : <div className="comments-loading">بنحمّل التعليقات…</div>) : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
               {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء <X size={13}/></button></div>}
               <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>
                 <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="sm comment-current-avatar"/>
@@ -767,6 +775,6 @@ export function FeedClient({ user }: { user: SessionUser }) {
           <footer className="feed-share-dialog-actions"><button type="button" className="btn" disabled={shareBusy} onClick={() => setSharingPost(null)}>إلغاء</button><button type="button" className="btn btn-primary" disabled={shareBusy} onClick={() => void confirmInternalShare()}><Share2 size={16}/>{shareBusy ? "جارٍ المشاركة…" : "مشاركة على حسابي"}</button></footer>
         </section>
       </div>}
-    </AppShell>
+    </>
   );
 }

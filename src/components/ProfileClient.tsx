@@ -1,12 +1,12 @@
 "use client";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, Camera, CalendarDays, Pin,
+  BadgeCheck, BriefcaseBusiness, Camera, CalendarDays, Pin,
   GraduationCap, LockKeyhole, MessageCircle, PencilLine, Save, ShieldCheck,
   ThumbsUp, UserRound, X, Share2, Trash2,
 } from "lucide-react";
-import { Brand } from "@/components/Brand";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
 import type { SessionUser } from "@/lib/types";
 import { BADGE_OPTIONS, GLOSSARY, SPECIALTIES } from "@/lib/constants";
@@ -53,6 +53,7 @@ function formatCount(value: number) {
 }
 
 export function ProfileClient({ initialUser, initialPosts }: { initialUser: SessionUser; initialPosts: ProfilePostPreview[] }) {
+  const router = useRouter();
   const [user, setUser] = useState(initialUser);
   const [displayName, setDisplayName] = useState(initialUser.display_name);
   const [specialty, setSpecialty] = useState(initialUser.specialty || "");
@@ -176,6 +177,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
       if (!response.ok) throw new Error(payload.error || "ما قدرناش نحفظ الصورة. جرّب تاني.");
       setUser(old => ({ ...old, has_avatar: Boolean(payload.has_avatar), has_cover: Boolean(payload.has_cover), updated_at: payload.updated_at || new Date().toISOString() }));
       setMediaRevision(Date.now());
+      router.refresh();
       setSuccess(kind === "avatar" ? "صورتك الشخصية اتحدّثت بنجاح." : "صورة الغلاف اتحدّثت بنجاح.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ما قدرناش نحفظ الصورة. جرّب تاني.");
@@ -194,6 +196,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
       if (!response.ok) throw new Error(payload.error || "ما قدرناش نشيل الصورة. جرّب تاني.");
       setUser(old => ({ ...old, has_avatar: Boolean(payload.has_avatar), has_cover: Boolean(payload.has_cover), updated_at: payload.updated_at || new Date().toISOString() }));
       setMediaRevision(Date.now());
+      router.refresh();
       setSuccess(kind === "avatar" ? "اتشالت صورتك الشخصية." : "اتشالت صورة الغلاف.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ما قدرناش نشيل الصورة. جرّب تاني.");
@@ -210,21 +213,13 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ما قدرناش نحفظ التعديلات. جرّب تاني.");
-      setUser(data.user); setSuccess("اتحدّث حسابك بنجاح."); setEditing(false);
+      setUser(data.user); setSuccess("اتحدّث حسابك بنجاح."); setEditing(false); router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "حصلت مشكلة وإحنا بنحفظ التعديلات.");
     } finally { setBusy(false); }
   }
 
-  return <div className="profile-app">
-    <header className="topbar profile-topbar">
-      <div className="topbar-inner">
-        <Link href="/feed" className="btn btn-small profile-back-link"><ArrowRight size={15}/> العودة للرئيسية</Link>
-        <Brand />
-      </div>
-    </header>
-
-    <main className="profile-page">
+  return <div className="profile-page profile-in-shell">
       <Toast message={error} error />
       <Toast message={success} />
 
@@ -327,8 +322,5 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
           <div className="profile-privacy-note"><LockKeyhole size={18}/><div><strong>خلي بالك من خصوصيتك</strong><p>مستندات إثبات العضوية مش ظاهرة لباقي الأعضاء. حسابك وبوستاتك بيظهروا باسم حسابك؛ ما تنشرش معلومات حساسة.</p></div></div>
         </aside>
       </div>
-    </main>
-
-    <nav className="mobile-bottom profile-mobile-nav" aria-label="التنقل"><Link href="/feed"><UserRound size={17}/><span>الرئيسية</span></Link><Link href="/feed#compose" className="mobile-compose-link"><span className="profile-mobile-plus">+</span><span>منشور</span></Link><Link href="/notifications"><Bell size={17}/><span>الإشعارات</span></Link><Link href="/profile" className="active" aria-current="page"><UserRound size={17}/><span>حسابي</span></Link></nav>
-  </div>;
+    </div>;
 }

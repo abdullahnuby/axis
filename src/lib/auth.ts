@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { query } from "@/lib/db";
@@ -9,7 +10,7 @@ export const SESSION_COOKIE = "axis_session";
 const REMEMBER_SESSION_DAYS = 30;
 const BROWSER_SESSION_HOURS = 24;
 
-export async function getCurrentUser(): Promise<SessionUser | null> {
+async function loadCurrentUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
@@ -25,6 +26,9 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   );
   return result.rows[0] ?? null;
 }
+
+/** Memoised per request, so the shared layout and the page itself cost one session lookup, not two. */
+export const getCurrentUser = cache(loadCurrentUser);
 
 export async function createSession(userId: string, rememberMe = false): Promise<void> {
   const token = randomToken();

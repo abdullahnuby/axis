@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, Search, LogOut, X, ShieldCheck } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import type { SessionUser } from "@/lib/types";
@@ -11,6 +12,13 @@ import { UserAvatar } from "@/components/UserAvatar";
 export function AppHeader({ user }: { user: SessionUser }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const pathname = usePathname();
+  // The header now lives in a shared layout, so it must react to navigation itself:
+  // close the mobile search drawer and re-check unread notifications on every page change.
+  useEffect(() => {
+    setSearchOpen(false);
+    window.dispatchEvent(new Event("axis-notifications-updated"));
+  }, [pathname]);
   useEffect(() => {
     let active = true;
     async function loadUnreadCount() {

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getApiUser, jsonError } from "@/lib/http";
@@ -29,15 +30,18 @@ export async function GET(request: Request, context: Ctx) {
     if (!media) return jsonError("الصورة مش موجودة.", 404);
     const body = new Uint8Array(media.image_data.byteLength);
     body.set(media.image_data);
-    return new NextResponse(body.buffer, {
-      headers: {
-        "Content-Type": media.image_mime,
-        "Content-Length": String(media.image_data.byteLength),
-        "Cache-Control": "private, no-store, max-age=0",
-        "X-Content-Type-Options": "nosniff",
-        "Content-Disposition": "inline",
-      },
-    });
+    // Requests that carry a version (?v=...) are keyed to that exact upload, so they are safe to keep
+    // for a year. Requests without one (other members' avatars in the feed) revalidate via ETag.
+    const versioned = new URL(request.url).searchParams.has("v");
+    const etag = `"${createHash("sha1").update(media.image_data).digest("base64url")}"`;
+    const headers = {
+      "Cache-Control": versioned ? "private, max-age=31536000, immutable" : "private, max-age=300, stale-while-revalidate=86400",
+      ETag: etag,
+      "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": "inline",
+    };
+    if (request.headers.get("if-none-match") === etag) return new NextResponse(null, { status: 304, headers });
+    return new NextResponse(body.buffer, { headers: { ...headers, "Content-Type": media.image_mime, "Content-Length": String(media.image_data.byteLength) } });
   } catch (error) {
     console.error("AXIS profile media read error", (error as { code?: string })?.code || "database_error");
     return jsonError("مش قادرين نعرض الصورة دلوقتي.", 500);
