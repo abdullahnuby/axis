@@ -188,7 +188,7 @@ await check("post sharing is an in-platform repost to profile and feed, not an e
   const profilePage = await read("src/app/profile/page.tsx");
   const profileClient = await read("src/components/ProfileClient.tsx");
   assert.doesNotMatch(feed, /navigator\.share|clipboard\.writeText/);
-  assert.match(feed, /مشاركة داخل AXIS/);
+  assert.match(feed, /إعادة نشر داخل AXIS/);
   assert.match(feed, /confirmInternalShare/);
   assert.match(feed, /api\/posts\/\$\{sharingPost\.id\}\/share/);
   assert.match(feed, /shared-post-original/);
@@ -199,11 +199,12 @@ await check("post sharing is an in-platform repost to profile and feed, not an e
   assert.match(profilePage, /LEFT JOIN posts sp ON sp\.id=p\.shared_post_id/);
   assert.match(profileClient, /profile-shared-post-shell/);
 });
-await check("mobile zoom is disabled and form controls stay at 16px", async () => {
+await check("mobile zoom remains accessible and mobile controls avoid iOS focus zoom", async () => {
   const layout = await read("src/app/layout.tsx");
   const styles = await read("src/app/globals.css");
-  assert.match(layout, /maximumScale: 1/);
-  assert.match(layout, /userScalable: false/);
+  assert.doesNotMatch(layout, /maximumScale: 1/);
+  assert.doesNotMatch(layout, /userScalable: false/);
+  assert.match(layout, /themeColor: "#0B2236"/);
   assert.match(styles, /touch-action: manipulation/);
   assert.match(styles, /font-size: 16px !important/);
 });
