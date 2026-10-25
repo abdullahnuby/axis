@@ -22,10 +22,10 @@ Give the existing AXIS product a coherent, professional visual language across t
 - `src/components/PeopleClient.tsx`, `GroupsClient.tsx`, `MessagesClient.tsx`, `NotificationsClient.tsx`: purpose-built directory, group, inbox, and activity-center headers with real state/counts.
 - `src/components/VerificationClient.tsx`: state-aware visual journey through membership data, review, and access.
 - `src/components/SettingsClient.tsx`: account-control introduction with actual email verification state.
-- `src/app/globals.css`: keeps the foundational design tokens and shared responsive styles.
-- `src/app/axis-experience.css`: separates bespoke screen compositions from the base stylesheet and is loaded after `globals.css`.
-- `src/app/layout.tsx`: loads the experience stylesheet, aligns browser theme color with AXIS navy, and keeps pinch-to-zoom enabled.
-- `scripts/smoke-check.mjs`: checks custom screen compositions, responsive styles, and zoom/accessibility behavior.
+- `src/app/globals.css`: foundational tokens and shared responsive styles.
+- `src/app/axis-experience.css`: bespoke screen compositions loaded after `globals.css`.
+- `src/app/layout.tsx`: loads the experience layer, sets AXIS navy browser theme, and keeps pinch-to-zoom enabled.
+- `scripts/smoke-check.mjs`: checks custom compositions and accessibility behavior.
 - `CHANGELOG.md`: recorded the UI/UX refresh.
 - `.github/workflows/quality.yml`: added CI for `npm test` and `npm run typecheck` on the UI branch and pull requests.
 - `docs/AXIS_UI_UX_REDESIGN_2026-10-25.md`: this handoff and explicit privacy/product-scope notes.
@@ -38,8 +38,8 @@ The current implementation still renders posts under the member account identity
 
 ## Validation
 
-- **Current branch:** `ui/axis-design-system-2026-10`; review PR: https://github.com/abdullahnuby/axis/pull/1.
-- **Static regression suite:** the latest run for commit `68b40412fb0b973c27444d37bd466d330e9502b9` passed `npm test`; `npm run typecheck` was still running when this handoff was last checked.
-- **Vercel preview:** the current commit has a build in progress at https://axis-6b709wcah-abdullahelmassry-7339s-projects.vercel.app; confirm it reaches `READY` before treating this as a usable visual preview.
-- **Visual review on real desktop/iOS/Android devices:** not yet performed. Check directory card wrapping, group hero balance, message/notification count panels, verification progress steps, and fixed mobile navigation.
+- **Current branch:** `ui/axis-design-system-2026-10`; draft review PR: https://github.com/abdullahnuby/axis/pull/1.
+- **Static regression suite and TypeScript:** both `npm test` and `npm run typecheck` passed for code commit `68b40412fb0b973c27444d37bd466d330e9502b9` in GitHub Actions run https://github.com/abdullahnuby/axis/actions/runs/40208829180.
+- **Vercel preview:** Ready for the tested code commit at https://axis-6b709wcah-abdullahelmassry-7339s-projects.vercel.app.
+- **Visual review on real desktop/iOS/Android devices:** not yet performed. Review directory card wrapping, group hero balance, message/notification count panels, verification progress steps, and fixed mobile navigation before merging.
 - **Production alias:** intentionally untouched. These changes remain isolated from production.
