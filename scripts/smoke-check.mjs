@@ -360,7 +360,7 @@ await check("AXIS logo is integrated into the bespoke landing blueprint and cont
   const header = await read("src/components/AppHeader.tsx");
   const profile = await read("src/components/ProfileClient.tsx");
   const admin = await read("src/components/AdminClient.tsx");
-  const styles = await read("src/app/globals.css");
+  const styles = await read("src/app/axis-experience.css");
   assert.ok(brand.includes('"compact" | "lockup" | "mark"'));
   assert.ok(homepage.includes("<CommunityBlueprint/>"));
   assert.ok(blueprint.includes("ENGINEERING COMMUNITY"));
@@ -657,6 +657,7 @@ await check("admin can pin one announcement at the top of the main feed, and lon
 
 await check("AXIS UI refresh includes accessible responsive tokens and retains page zoom", async () => {
   const css = await read("src/app/globals.css");
+  const experience = await read("src/app/axis-experience.css");
   const layout = await read("src/app/layout.tsx");
   const shell = await read("src/components/AppShell.tsx");
   assert.match(css, /--navy:#0B2236/);
@@ -666,6 +667,14 @@ await check("AXIS UI refresh includes accessible responsive tokens and retains p
   assert.match(css, /calc\(8px \+ var\(--safe-bottom\)\)/);
   assert.match(css, /@media \(max-width:760px\)/);
   assert.match(shell, /<nav className="mobile-bottom"/);
+  assert.match(layout, /import ".\\/axis-experience.css"/);
+  assert.match(experience, /\\.community-blueprint/);
+  assert.match(experience, /\\.workspace-welcome/);
+  assert.match(experience, /\\.directory-hero/);
+  assert.match(experience, /\\.messages-page-hero/);
+  assert.match(experience, /\\.notifications-page-hero/);
+  assert.match(experience, /\\.verification-journey/);
+  assert.match(experience, /\\.settings-page-hero/);
   assert.doesNotMatch(layout, /userScalable:\s*false/);
   assert.doesNotMatch(layout, /maximumScale:/);
 });
