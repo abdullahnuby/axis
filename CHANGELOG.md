@@ -141,3 +141,11 @@
 - Changed the PWA start URL to `/` so session-aware routing can choose the welcome page or feed, and bumped the service-worker cache to v5.
 - Added five regression checks covering home redirect, remembered sessions, the create-post action, event-strip removal, and Latin digits.
 - Validation: `npm test` (50 static checks) and `npm run pwa:check` (13 checks) pass; TypeScript syntax transpilation passes for 104 TS/TSX files. A full `tsc --noEmit` and Next production build were not run because project dependencies are not installed in this workspace.
+
+## 2026-10-25 — Arabic/English interface support
+
+- Added a persistent language switcher available across public, authentication, community, profile, messaging, and administration screens.
+- Added an Arabic-to-English UI dictionary for common navigation, forms, feed actions, profiles, groups, messages, notifications, settings, verification, and administration text.
+- Selecting English changes the document language and direction to LTR; Arabic remains the default RTL language.
+- Language preference is saved in local storage. User-authored post and message body content is intentionally not machine-translated.
+- Validation note: repository writes were committed through GitHub. A local TypeScript/build run was not available through this editing session; check the Vercel deployment and CI result after the commit.
