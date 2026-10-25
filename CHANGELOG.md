@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-25 — AXIS UI/UX design system refresh
+
+- Added a cohesive visual layer across the landing page, community shell, feed, directory, groups, profiles, conversations, notifications, verification, settings, authentication and admin surfaces.
+- Unified palette, type scale, spacing, card treatment, actions, fields, alerts, focus states and interactive feedback around AXIS navy/blue/teal.
+- Refined responsive desktop/tablet/mobile layouts, safer-area aware bottom navigation, and smaller-screen form/card spacing without changing API or database behavior.
+- Added reduced-motion support and restored browser zoom for accessibility.
+- Documented that anonymous posting is a core product gap not delivered by this visual-only pass; existing publish behavior/copy was deliberately not represented as anonymous.
+
 ## 2026-10-25 — Opt-in mobile push notifications
 
 - Added opt-in Web Push subscriptions for phones and installed AXIS web apps, including members who are waiting for verification.
