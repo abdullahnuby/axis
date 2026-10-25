@@ -28,8 +28,8 @@ The current implementation still renders posts under the member account identity
 
 ## Validation
 
-Update this section before merging:
-- Static smoke tests: pending execution.
-- Production build/typecheck: pending preview deployment result.
-- Live visual review on real desktop/iOS/Android devices: not yet performed.
-- Production alias is intentionally untouched; changes are isolated to branch `ui/axis-design-system-2026-10`.
+- **Vercel production build:** succeeded (`READY`) for commit `b912224082a7d77a88ec5cae57f12ed7248d91d4`, which contains the design CSS, viewport accessibility change, changelog and regression assertions. The latest documentation/CI commits do not change application runtime code.
+- **Static smoke suite:** the new assertion was reviewed against the authored source, but an executed `npm test` result has not yet been observed in GitHub Actions.
+- **TypeScript:** the Next.js production build completed successfully; standalone `npm run typecheck` has not yet been observed in CI.
+- **Live visual review on real desktop/iOS/Android devices:** not yet performed. Use the preview link on target devices to check spacing, fixed navigation, and auth/verification flows.
+- **Production alias:** intentionally untouched. Changes are isolated to branch `ui/axis-design-system-2026-10`.
