@@ -30,8 +30,8 @@ The current implementation still renders posts under the member account identity
 
 ## Validation
 
-- **Vercel production build:** succeeded (`READY`) for commit `b912224082a7d77a88ec5cae57f12ed7248d91d4`, which contains the design CSS, viewport accessibility change, changelog and regression assertions. The latest documentation/CI commits do not change application runtime code.
-- **Static smoke suite:** the new assertion was reviewed against the authored source, but an executed `npm test` result has not yet been observed in GitHub Actions.
-- **TypeScript:** the Next.js production build completed successfully; standalone `npm run typecheck` has not yet been observed in CI.
+- **Vercel production build:** succeeded (`READY`) for the UI design layer and viewport accessibility change; later commits mainly adjust copy, test expectations, and the environment example.
+- **GitHub Actions:** the latest pull-request job for commit `9eea7cc0675ee9aed10ce6492e4b5d10eb6578b3` passed `npm test` and `npm run typecheck` (run `40206857659`).
+- **Static regression suite:** passed after refreshing stale copy assertions, restoring the missing `.env.example`, and adding checks for the responsive design tokens and accessible zoom.
 - **Live visual review on real desktop/iOS/Android devices:** not yet performed. Use the preview link on target devices to check spacing, fixed navigation, and auth/verification flows.
 - **Production alias:** intentionally untouched. Changes are isolated to branch `ui/axis-design-system-2026-10`.
