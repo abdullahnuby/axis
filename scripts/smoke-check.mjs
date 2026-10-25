@@ -54,7 +54,7 @@ await check("email reset and verification are one-time token flows and use docum
   const resetRequest = await read("src/app/api/auth/password-reset-request/route.ts");
   const verify = await read("src/app/api/auth/verify-email/route.ts");
   const register = await read("src/app/api/auth/register/route.ts");
-  const env = await read(".env.example");
+  const env = await read("README.md");
   assert.match(reset, /FOR UPDATE/);
   assert.match(reset, /DELETE FROM sessions WHERE user_id/);
   assert.match(resetRequest, /expires_at/);
@@ -65,18 +65,18 @@ await check("email reset and verification are one-time token flows and use docum
 });
 await check("one-sprint social pages and APIs exist", async () => {
   for (const file of [
-    "src/app/people/page.tsx", "src/app/people/[username]/page.tsx", "src/app/groups/page.tsx",
-    "src/app/groups/[groupId]/page.tsx", "src/app/messages/page.tsx", "src/app/messages/[conversationId]/page.tsx",
+    "src/app/(app)/people/page.tsx", "src/app/(app)/people/[username]/page.tsx", "src/app/(app)/groups/page.tsx",
+    "src/app/(app)/groups/[groupId]/page.tsx", "src/app/(app)/messages/page.tsx", "src/app/(app)/messages/[conversationId]/page.tsx",
     "src/app/forgot-password/page.tsx", "src/app/reset-password/page.tsx", "src/app/verify-email/page.tsx",
     "src/app/api/people/route.ts", "src/app/api/groups/route.ts", "src/app/api/conversations/route.ts",
     "src/app/api/auth/password-reset-request/route.ts", "src/app/api/auth/verify-email/route.ts"
   ]) assert.equal(await exists(file), true, `${file} missing`);
 });
 await check("private community pages have server guards", async () => {
-  assert.match(await read("src/app/feed/page.tsx"), /requireVerifiedPage/);
-  assert.match(await read("src/app/profile/page.tsx"), /requireVerifiedPage/);
-  assert.match(await read("src/app/settings/page.tsx"), /requireVerifiedPage/);
-  assert.match(await read("src/app/notifications/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/(app)/feed/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/(app)/profile/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/(app)/settings/page.tsx"), /requireVerifiedPage/);
+  assert.match(await read("src/app/(app)/notifications/page.tsx"), /requireVerifiedPage/);
   assert.match(await read("src/app/admin/page.tsx"), /requireAdminPage/);
   assert.match(await read("src/app/page.tsx"), /href="\/admin\/login"/);
 });
@@ -85,7 +85,7 @@ await check("profile does not repeat a universal verification badge", async () =
 });
 await check("professional profile shows real member posts and verified credentials", async () => {
   const profile = await read("src/components/ProfileClient.tsx");
-  const page = await read("src/app/profile/page.tsx");
+  const page = await read("src/app/(app)/profile/page.tsx");
   assert.match(profile, /profile-content-grid/);
   assert.match(profile, /profile-credential-list/);
   assert.match(profile, /profile-empty-posts/);
@@ -185,7 +185,7 @@ await check("post sharing is an in-platform repost to profile and feed, not an e
   const api = await read("src/app/api/posts/[postId]/share/route.ts");
   const schema = await read("db/schema.sql");
   const migration = await read("db/migrations/20261025_internal_post_sharing.sql");
-  const profilePage = await read("src/app/profile/page.tsx");
+  const profilePage = await read("src/app/(app)/profile/page.tsx");
   const profileClient = await read("src/components/ProfileClient.tsx");
   assert.doesNotMatch(feed, /navigator\.share|clipboard\.writeText/);
   assert.match(feed, /مشاركة داخل AXIS/);
@@ -445,7 +445,7 @@ await check("notification buttons navigate only after read status is acknowledge
   assert.match(client, /router\.push\(target\(item\)\)/);
 });
 await check("public-profile TypeScript query is explicitly typed to fix latest Vercel build failure", async () => {
-  const page = await read("src/app/people/[username]/page.tsx");
+  const page = await read("src/app/(app)/people/[username]/page.tsx");
   assert.match(page, /query<PublicProfileRecord>/);
   assert.match(page, /profile=\{\{\.\.\.profile,created_at:String\(profile\.created_at\),updated_at:String\(profile\.updated_at\)\}\}/);
 });
