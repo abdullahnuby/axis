@@ -7,14 +7,38 @@ export function jsonError(message: string, status = 400) {
 }
 
 export function sameOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
   try {
-    const originUrl = new URL(origin);
-    const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-    if (host && originUrl.host.toLowerCase() === host.toLowerCase()) return true;
-    if (process.env.APP_URL) return originUrl.origin === new URL(process.env.APP_URL).origin;
-    return false;
+    const trustedOrigins = new Set<string>();
+    const addOrigin = (value: string | null | undefined) => {
+      if (!value) return;
+      try {
+        const parsed = new URL(value.includes("://") ? value : `https://${value}`);
+        trustedOrigins.add(parsed.origin.toLowerCase());
+      } catch {
+        // Ignore malformed proxy/config values and keep checking known origins.
+      }
+    };
+
+    // Stable Vercel aliases and proxy headers can differ. Match any trusted
+    // origin instead of rejecting a legitimate mutation on one of our aliases.
+    addOrigin(process.env.APP_URL);
+    addOrigin(new URL(request.url).origin);
+    const requestProtocol = (request.headers.get("x-forwarded-proto") ||
+      new URL(request.url).protocol.replace(":", "")).split(",")[0].trim();
+    for (const hostHeader of [request.headers.get("x-forwarded-host"), request.headers.get("host")]) {
+      for (const host of (hostHeader || "").split(",")) {
+        const normalizedHost = host.trim();
+        if (normalizedHost) addOrigin(`${requestProtocol}://${normalizedHost}`);
+      }
+    }
+
+    const origin = request.headers.get("origin");
+    if (origin) return trustedOrigins.has(new URL(origin).origin.toLowerCase());
+
+    // Some mobile browser contexts omit Origin. Only accept a matching Referer
+    // as a fallback; do not allow state-changing requests with neither header.
+    const referer = request.headers.get("referer");
+    return referer ? trustedOrigins.has(new URL(referer).origin.toLowerCase()) : false;
   } catch {
     return false;
   }
