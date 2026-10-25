@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
-const [dictionarySource, languageProvider, feed, messages, groupDetail, groupComments, groups, people, profile, publicProfile, avatar, landing, legalPage] =
+const [dictionarySource, languageProvider, feed, messages, groupDetail, groupComments, groups, people, profile, publicProfile, avatar, landing, legalPage, settingsClient, preferencesRoute, passwordRoute, stylesheet, appHeader, schema] =
   await Promise.all([
     read("../src/lib/i18n.ts"),
     read("../src/components/LanguageProvider.tsx"),
@@ -17,6 +17,12 @@ const [dictionarySource, languageProvider, feed, messages, groupDetail, groupCom
     read("../src/components/UserAvatar.tsx"),
     read("../src/app/page.tsx"),
     read("../src/components/LegalPage.tsx"),
+    read("../src/components/SettingsClient.tsx"),
+    read("../src/app/api/me/preferences/route.ts"),
+    read("../src/app/api/me/password/route.ts"),
+    read("../src/app/globals.css"),
+    read("../src/components/AppHeader.tsx"),
+    read("../db/schema.sql"),
   ]);
 
 const dictionaryMatch = dictionarySource.match(
