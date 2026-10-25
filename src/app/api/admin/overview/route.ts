@@ -6,7 +6,7 @@ export async function GET() {
   const { response } = await getApiUser({ admin: true }); if (response) return response;
   try {
     const result = await query<{ pending: number; needs_info: number; verified: number; members: number; open_reports: number; posts: number }>(`SELECT
-      (SELECT count(*)::int FROM verification_requests WHERE status='pending') AS pending,
+      ((SELECT count(*)::int FROM verification_requests WHERE status='pending') + (SELECT count(*)::int FROM users u WHERE u.role='member' AND u.account_status='active' AND u.verification_status <> 'verified' AND NOT EXISTS (SELECT 1 FROM verification_requests vr WHERE vr.user_id=u.id))) AS pending,
       (SELECT count(*)::int FROM verification_requests WHERE status='needs_info') AS needs_info,
       (SELECT count(*)::int FROM users WHERE verification_status='verified' AND role='member') AS verified,
       (SELECT count(*)::int FROM users WHERE role='member') AS members,
