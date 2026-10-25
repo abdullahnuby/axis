@@ -49,7 +49,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
     try { await fetch("/api/auth/logout", { method: "POST" }); }
     finally { window.location.href = "/"; }
   }
-  return <LocalizedContent>{header className={`topbar app-topbar ${searchOpen ? "search-open" : ""}`}>
+  return <LocalizedContent>{<header className={`topbar app-topbar ${searchOpen ? "search-open" : ""}`}>
     <div className="topbar-inner">
       <Brand href="/feed" />
       <form action="/feed" className="search-box header-search" role="search">
@@ -71,6 +71,6 @@ export function AppHeader({ user }: { user: SessionUser }) {
         </Link>
         <button className="icon-btn" aria-label="تسجيل الخروج" onClick={logout}><LogOut size={17}/></button>
       </div>
-    </div>}</LocalizedContent>
-  </header>;
+    </div>
+  </header>}</LocalizedContent>;
 }
