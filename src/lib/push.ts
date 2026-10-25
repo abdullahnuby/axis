@@ -77,6 +77,12 @@ function encryptPayload(subscription: PushSubscriptionRow, payload: PushPayload)
   return Buffer.concat([header, ciphertext]);
 }
 
+function toArrayBuffer(bytes: Buffer): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
+}
+
 function allowedPushEndpoint(endpoint: string): boolean {
   try {
     const url = new URL(endpoint);
@@ -103,7 +109,7 @@ async function sendOne(subscription: PushSubscriptionRow, payload: PushPayload, 
       TTL: "86400",
       Urgency: "normal",
     },
-    body: encryptPayload(subscription, payload),
+    body: toArrayBuffer(encryptPayload(subscription, payload)),
     signal: AbortSignal.timeout(5000),
   });
   if (response.status === 404 || response.status === 410) {
