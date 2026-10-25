@@ -667,14 +667,10 @@ await check("AXIS UI refresh includes accessible responsive tokens and retains p
   assert.match(css, /calc\(8px \+ var\(--safe-bottom\)\)/);
   assert.match(css, /@media \(max-width:760px\)/);
   assert.match(shell, /<nav className="mobile-bottom"/);
-  assert.match(layout, /import ".\\/axis-experience.css"/);
-  assert.match(experience, /\\.community-blueprint/);
-  assert.match(experience, /\\.workspace-welcome/);
-  assert.match(experience, /\\.directory-hero/);
-  assert.match(experience, /\\.messages-page-hero/);
-  assert.match(experience, /\\.notifications-page-hero/);
-  assert.match(experience, /\\.verification-journey/);
-  assert.match(experience, /\\.settings-page-hero/);
+  assert.ok(layout.includes('import "./axis-experience.css"'));
+  for (const selector of [".community-blueprint", ".workspace-welcome", ".directory-hero", ".messages-page-hero", ".notifications-page-hero", ".verification-journey", ".settings-page-hero"]) {
+    assert.ok(experience.includes(selector), `Missing crafted screen style: ${selector}`);
+  }
   assert.doesNotMatch(layout, /userScalable:\s*false/);
   assert.doesNotMatch(layout, /maximumScale:/);
 });
