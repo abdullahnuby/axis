@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowLeft, ArrowUpLeft, ChevronLeft, LockKeyhole, MessagesSquare,
+  ArrowLeft, ArrowUpLeft, ChevronLeft, CheckCircle2, LockKeyhole, MessagesSquare,
   ShieldCheck, Workflow, FileCheck2, Fingerprint, EyeOff,
 } from "lucide-react";
 import { Brand } from "@/components/Brand";
