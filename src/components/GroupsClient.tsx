@@ -1,7 +1,7 @@
 "use client";
 import { useCallback,useEffect,useState } from "react";
 import Link from "next/link";
-import { Users, Plus, Search, LockKeyhole, Globe2, ArrowLeft, Check, Network, MessagesSquare, Layers3 } from "lucide-react";
+import { Users, Plus, Search, LockKeyhole, Globe2, ArrowLeft, Check, MessagesSquare, Layers3 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Toast } from "@/components/Toast";
 import { SPECIALTIES } from "@/lib/constants";
