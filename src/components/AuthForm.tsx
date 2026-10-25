@@ -26,7 +26,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" | "admin" }) {
     } catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع."); }
     finally { setLoading(false); }
   }
-  return <LocalizedContent>{div className="auth-bg"><div className="narrow"><div className="card auth-card">
+  return <LocalizedContent>{<div className="auth-bg"><div className="narrow"><div className="card auth-card">
     <div className="between" style={{ marginBottom: 25 }}><Brand/><span className="pill navy">{isAdmin ? "ADMIN" : "مجتمع خاص للمهندسين"}</span></div>
     <h1 className="auth-title">{isAdmin ? "دخول الإدارة" : isRegister ? "إنشاء حساب AXIS" : "تسجيل الدخول"}</h1>
     <p className="muted" style={{ marginTop: 0, marginBottom: 22 }}>{isAdmin ? "دخول خاص بفريق إدارة AXIS." : isRegister ? "اعمل حسابك. هنراجع عضويتك علشان المجتمع يفضل للمهندسين، وبعد الموافقة تقدر تدخل وتشارك." : "أهلًا بيك تاني. سجّل دخولك وارجع للمجتمع وكمل كلامك."}</p>
@@ -41,5 +41,5 @@ export function AuthForm({ mode }: { mode: "login" | "register" | "admin" }) {
     {!isAdmin && <div className="small muted" style={{ textAlign: "center", marginTop: 20 }}>{isRegister ? <>عندك حساب بالفعل؟ <Link href="/login" style={{ color: "var(--blue)", fontWeight: 700 }}>سجّل الدخول</Link></> : <><Link href="/forgot-password" style={{ color: "var(--blue)", fontWeight: 700 }}>نسيت كلمة المرور؟</Link><span> · </span>ليس لديك حساب؟ <Link href="/register" style={{ color: "var(--blue)", fontWeight: 700 }}>أنشئ حسابًا</Link></>}</div>}
     {isAdmin && <div className="small muted" style={{ textAlign: "center", marginTop: 20 }}><Link href="/" style={{ color: "var(--blue)" }}>العودة إلى صفحة AXIS</Link></div>}
     {isRegister && <div className="alert" style={{ marginTop: 18 }}>بعد إنشاء حسابك، ابعت إثبات العضوية علشان نقلّل دخول حسابات من برّه المجال. خليك عارف إن البوستات والتعليقات بتظهر باسم حسابك داخل AXIS، فبلاش أسرار شغل أو بيانات حساسة.</div>}
-  </div></div>}</LocalizedContent></div>;
+  </div></div></div>}</LocalizedContent>;
 }
