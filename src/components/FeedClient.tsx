@@ -197,7 +197,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       if (!response.ok) throw new Error(payload.error || "ما قدرناش ننشر المشاركة. جرّب تاني.");
       setBody(""); setImage(null); setSpecialty(""); setComposerExpanded(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
-      setSuccess("اتنشرت مشاركتك بنجاح 🙌");
+      setSuccess("البوست نزل 🙌");
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ما قدرناش ننشر المشاركة. اتأكد من اتصالك وجرّب تاني.");
@@ -418,25 +418,25 @@ export function FeedClient({ user }: { user: SessionUser }) {
       if (!response.ok) throw new Error(payload.error || "ما قدرناش نحفظ التعديل.");
       setPosts(old => old.map(post => post.id === editingPost.id ? { ...post, body: payload.post.body, specialty: payload.post.specialty } : post));
       setEditingPost(null);
-      setSuccess("اتحفظ تعديل المنشور.");
+      setSuccess("التعديل اتحفظ.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "ما قدرناش نحفظ التعديل."); }
     finally { setEditBusy(false); }
   }
 
   async function deletePost(post: FeedPost) {
-    if (post.author_id !== user.id || busyDeletePostId || !window.confirm("متأكد إنك عايز تحذف المنشور نهائيًا؟")) return;
+    if (post.author_id !== user.id || busyDeletePostId || !window.confirm("متأكد إنك عايز تحذف البوست نهائيًا؟")) return;
     setBusyDeletePostId(post.id);
     setError("");
     setSuccess("");
     try {
       const response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "ما قدرناش نحذف المنشور دلوقتي. جرّب تاني.");
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نحذف البوست دلوقتي. جرّب تاني.");
       setPosts(old => old.filter(item => item.id !== post.id));
       setOpenMenuPost(null);
-      setSuccess("اتحذف المنشور.");
+      setSuccess("البوست اتحذف.");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف المنشور دلوقتي. جرّب تاني.");
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف البوست دلوقتي. جرّب تاني.");
     } finally {
       setBusyDeletePostId(null);
     }
@@ -502,28 +502,28 @@ export function FeedClient({ user }: { user: SessionUser }) {
         <input ref={imageInputRef} className="hidden" type="file" id="post-image" accept="image/jpeg,image/png,image/webp" onChange={chooseImage}/>
         <div className="compose-compact-bar">
           <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="compose-compact-avatar"/>
-          <button type="button" className="compose-compact-trigger" onClick={() => setComposerExpanded(true)} aria-label="فتح كتابة مشاركة جديدة">
-            {body.trim() ? body.trim().slice(0, 74) : "إيه اللي حابب تشاركه مع زملائك؟"}
+          <button type="button" className="compose-compact-trigger" onClick={() => setComposerExpanded(true)} aria-label="فتح كتابة بوست جديد">
+            {body.trim() ? body.trim().slice(0, 74) : "إيه اللي على بالك؟ احكي موقف، اسأل سؤال، أو افتح موضوع للنقاش…"}
           </button>
           <label className="compose-compact-photo" htmlFor="post-image" aria-label="إضافة صورة للمنشور" title="إضافة صورة"><ImagePlus size={20}/></label>
         </div>
 
         <div className={`compose-expanded-content ${composerExpanded ? "is-open" : ""}`}>
-          <div className="compose-mobile-expanded-heading"><strong>مشاركة جديدة</strong><button type="button" className="compose-collapse-button" onClick={() => setComposerExpanded(false)} aria-label="تصغير مربع المشاركة"><X size={16}/><span>تصغير</span></button></div>
+          <div className="compose-mobile-expanded-heading"><strong>بوست جديد</strong><button type="button" className="compose-collapse-button" onClick={() => setComposerExpanded(false)} aria-label="تصغير مربع المشاركة"><X size={16}/><span>تصغير</span></button></div>
           <div className="compose-heading">
             <div className="user-line compose-user-line">
               <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at}/>
               <div className="user-meta">
                 <div className="user-name compose-display-name">{user.display_name}{user.role === "member" ? <ProfessionalBadges level={user.seniority_code} badges={user.verified_badges} compact/> : <span className="pill navy">فريق AXIS</span>}</div>
-                <div className="user-sub">خبرتك ممكن تفيد زميلك — شاركها معانا</div>
+                <div className="user-sub">قول اللي عندك — سؤال أو موقف أو موضوع على بالك</div>
               </div>
             </div>
-            <span className="compose-private"><BadgeCheck size={15}/> مساحة للمهندسين المعتمدين</span>
+            <span className="compose-private"><BadgeCheck size={15}/> مجتمع للأعضاء المقبولين · البوست بيظهر باسم حسابك</span>
           </div>
           <div className="compose-input-row">
             <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="compose-mobile-avatar"/>
             <label className="sr-only" htmlFor="feed-post-body">نص المشاركة</label>
-            <textarea id="feed-post-body" className="field compose-textarea" value={body} onFocus={() => setComposerExpanded(true)} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="إيه اللي حابب تشاركه مع زملائك؟" aria-label="نص المشاركة" />
+            <textarea id="feed-post-body" className="field compose-textarea" value={body} onFocus={() => setComposerExpanded(true)} onChange={event => setBody(event.target.value)} maxLength={5000} placeholder="إيه اللي على بالك؟ احكي موقف، اسأل سؤال، أو افتح موضوع للنقاش…" aria-label="نص البوست" />
           </div>
 
           {image && <div className="compose-attachment">
@@ -551,10 +551,10 @@ export function FeedClient({ user }: { user: SessionUser }) {
       </form>
 
 
-      <section className="feed-stream" aria-label="منشورات المهندسين">
+      <section className="feed-stream" aria-label="بوستات المجتمع">
         <div className="feed-stream-header feed-stream-header-filterable">
           <div className="feed-stream-heading">
-            <div><h2>آخر المشاركات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "مشاركات المهندسين اللي بتتابعهم" : filter ? `مشاركات زملائك في تخصص ${filter}` : "شوف جديد زملائك وأسئلتهم وتجاربهم"}</p><div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div></div>
+            <div><h2>آخر البوستات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p><div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div></div>
           </div>
           <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
             <SlidersHorizontal size={16} aria-hidden="true"/>
@@ -571,8 +571,8 @@ export function FeedClient({ user }: { user: SessionUser }) {
           <div className="empty-state feed-empty-state">
             <div className="feed-empty-icon"><Search size={26}/></div>
             <h2>{q || filter ? "ملقيناش مشاركات مناسبة" : "ابدأها بمشاركة منك"}</h2>
-            <p>{q || filter ? "جرّب كلمة بحث تانية أو اختار تخصص مختلف." : "لسه مفيش مشاركات هنا. احكيلنا عن موقف من الشغل، أو اسأل سؤال ممكن يفيد زملاءك."}</p>
-            {(q || filter) && <button className="btn btn-primary" type="button" onClick={() => { setFilter(""); if (q) window.location.href = "/feed"; }}>عرض كل المشاركات</button>}
+            <p>{q || filter ? "جرّب كلمة بحث تانية أو اختار تخصص مختلف." : "لسه مفيش بوستات هنا. ابدأ الكلام بسؤال، موقف حصل معاك، أو موضوع نفسك تسمع رأي الناس فيه."}</p>
+            {(q || filter) && <button className="btn btn-primary" type="button" onClick={() => { setFilter(""); if (q) window.location.href = "/feed"; }}>عرض كل البوستات</button>}
           </div>
         ) : posts.map(post => (
           <article className="card post post-professional" id={`post-${post.id}`} key={post.id} tabIndex={-1}>
@@ -596,13 +596,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
               <div className="post-menu-anchor">
                 <button type="button" className="icon-btn post-menu-trigger" aria-label="خيارات المنشور" aria-expanded={openMenuPost === post.id} onClick={() => setOpenMenuPost(openMenuPost === post.id ? null : post.id)}><MoreHorizontal size={20}/></button>
                 {openMenuPost === post.id && <div className="post-menu" role="menu">
-                  {post.author_id === user.id ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل المنشور</button><button type="button" role="menuitem" disabled={busyDeletePostId === post.id} onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> {busyDeletePostId === post.id ? "جارٍ الحذف…" : "حذف المنشور"}</button></> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
+                  {post.author_id === user.id ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل البوست</button><button type="button" role="menuitem" disabled={busyDeletePostId === post.id} onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> {busyDeletePostId === post.id ? "جارٍ الحذف…" : "حذف البوست"}</button></> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
                   <button type="button" role="menuitem" onClick={() => setOpenMenuPost(null)}><X size={15}/> إغلاق</button>
                 </div>}
               </div>
             </header>
 
-            {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">من الشغل</span></div>}
+            {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">موضوع النقاش</span></div>}
             {editingPost?.id === post.id ? <form className="post-edit-form" onSubmit={savePostEdit}><label className="sr-only" htmlFor={`edit-post-${post.id}`}>تعديل نص المنشور</label><textarea id={`edit-post-${post.id}`} className="field" maxLength={5000} rows={4} value={editBody} onChange={event=>setEditBody(event.target.value)} placeholder="اكتب تحديثك…"/><label className="post-edit-specialty"><span>التخصص</span><select className="field" value={editSpecialty} onChange={event=>setEditSpecialty(event.target.value)}><option value="">بدون تخصص</option>{SPECIALTIES.map(item=><option key={item}>{item}</option>)}</select></label><div className="row"><button className="btn btn-primary btn-small" disabled={editBusy||!editBody.trim()&&!post.has_image&&!post.shared_post_id}>{editBusy?"جارٍ الحفظ…":"حفظ التعديل"}</button><button className="btn btn-small" type="button" disabled={editBusy} onClick={()=>setEditingPost(null)}>إلغاء</button></div></form> : post.body && <p className="post-body post-professional-body">{post.body}</p>}
             {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell">
               <div className="shared-post-attribution"><Share2 size={14}/><span>{post.display_name} شارك المنشور ده</span></div>
@@ -637,7 +637,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
             {reportingPostId === post.id && <div className="post-report-panel">
               <div className="between"><strong>إبلاغ عن المنشور</strong><button type="button" className="icon-btn" aria-label="إغلاق الإبلاغ" onClick={() => setReportingPostId(null)}><X size={16}/></button></div>
-              <p>قول لنا إيه اللي محتاج مراجعة، وفريق AXIS هيتابع البلاغ.</p>
+              <p>قول لنا إيه المشكلة، وفريق AXIS هيراجع البلاغ.</p>
               <textarea className="field" rows={3} maxLength={1000} value={reportReason} onChange={event => setReportReason(event.target.value)} placeholder="احكي لنا إيه المشكلة…"/>
               <div className="row"><button type="button" className="btn btn-small" onClick={() => setReportingPostId(null)}>إلغاء</button><button type="button" className="btn btn-danger btn-small" disabled={reportReason.trim().length < 3} onClick={() => void reportPost(post.id)}><Flag size={14}/> إرسال البلاغ</button></div>
             </div>}
@@ -657,15 +657,15 @@ export function FeedClient({ user }: { user: SessionUser }) {
         ))}
         {nextCursor && !isLoading && <div className="feed-load-more-wrap"><button type="button" className="btn feed-load-more" onClick={()=>void loadMore()} disabled={isLoadingMore}>{isLoadingMore?<RefreshCw size={15} className="spin-icon"/>:null}{isLoadingMore?"بنحمّل كمان…":"عرض مشاركات أقدم"}</button></div>}
       </section>
-      <div className="feed-footer-note"><BadgeCheck size={15}/> AXIS مساحة للمهندسين أصحاب العضوية المعتمدة — شارك خبرتك واحترم خبرات غيرك.</div>
+      <div className="feed-footer-note"><BadgeCheck size={15}/> AXIS مساحة خاصة للأعضاء — اتكلم باحترام، وما تشاركش أسرار شغل أو بيانات شخصية. البوستات بتظهر باسم حسابك.</div>
       {sharingPost && <div className="feed-share-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !shareBusy) setSharingPost(null); }}>
         <section className="feed-share-dialog" role="dialog" aria-modal="true" aria-labelledby="feed-share-dialog-title">
-          <header className="feed-share-dialog-header"><div><h2 id="feed-share-dialog-title">مشاركة داخل AXIS</h2><p>خلّي زملاءك يشوفوا المنشور على حسابك.</p></div><button type="button" className="icon-btn" aria-label="إغلاق نافذة المشاركة" disabled={shareBusy} onClick={() => setSharingPost(null)}><X size={18}/></button></header>
-          <div className="feed-share-destination"><span className="feed-share-destination-icon"><UserRound size={19}/></span><div><strong>ملفك الشخصي والرئيسية</strong><p>هيظهر المنشور باسمك مع الاحتفاظ باسم صاحبه الأصلي.</p></div><CheckCircle2 size={18} className="feed-share-destination-check"/></div>
+          <header className="feed-share-dialog-header"><div><h2 id="feed-share-dialog-title">إعادة نشر داخل AXIS</h2><p>خلّي باقي الأعضاء يشوفوا البوست على حسابك.</p></div><button type="button" className="icon-btn" aria-label="إغلاق نافذة المشاركة" disabled={shareBusy} onClick={() => setSharingPost(null)}><X size={18}/></button></header>
+          <div className="feed-share-destination"><span className="feed-share-destination-icon"><UserRound size={19}/></span><div><strong>حسابك والصفحة الرئيسية</strong><p>إعادة النشر بتظهر باسم حسابك، واسم صاحب البوست الأصلي بيفضل موجود.</p></div><CheckCircle2 size={18} className="feed-share-destination-check"/></div>
           <label className="feed-share-caption-label" htmlFor="feed-share-caption">تحب تضيف تعليق مع المشاركة؟ <span>(اختياري)</span></label>
           <textarea id="feed-share-caption" className="field feed-share-caption" value={shareCaption} onChange={event => setShareCaption(event.target.value)} maxLength={5000} placeholder="اكتب رأيك أو قول لزملائك إيه اللي لفت نظرك في المنشور…" disabled={shareBusy}/>
           <div className="feed-share-source"><span className="avatar sm" style={{ background: sharingPost.shared_avatar_color || sharingPost.avatar_color || "var(--blue)" }}>{(sharingPost.shared_display_name || sharingPost.display_name).slice(0, 1)}</span><div><strong>{sharingPost.shared_display_name || sharingPost.display_name}</strong><p>{sharingPost.shared_body || sharingPost.body || "منشور من مجتمع AXIS"}</p></div></div>
-          <p className="feed-share-groups-note">المشاركة في المجموعات هتكون متاحة لما نضيف المجموعات للمنصة.</p>
+          <p className="feed-share-groups-note">إعادة النشر دي هتظهر على حسابك داخل المجتمع.</p>
           <footer className="feed-share-dialog-actions"><button type="button" className="btn" disabled={shareBusy} onClick={() => setSharingPost(null)}>إلغاء</button><button type="button" className="btn btn-primary" disabled={shareBusy} onClick={() => void confirmInternalShare()}><Share2 size={16}/>{shareBusy ? "جارٍ المشاركة…" : "مشاركة على حسابي"}</button></footer>
         </section>
       </div>}

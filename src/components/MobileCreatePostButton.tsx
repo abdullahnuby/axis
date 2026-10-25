@@ -13,5 +13,5 @@ export function MobileCreatePostButton() {
     }
     router.push("/feed?compose=1");
   }
-  return <button type="button" className="mobile-compose-link" aria-label="إنشاء مشاركة جديدة" onClick={openComposer}><span className="mobile-compose-icon"><Plus size={21}/></span><span>إنشاء</span></button>;
+  return <button type="button" className="mobile-compose-link" aria-label="كتابة بوست جديد" onClick={openComposer}><span className="mobile-compose-icon"><Plus size={21}/></span><span>بوست</span></button>;
 }
