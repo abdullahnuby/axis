@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const membershipNumber = String(form.get("membershipNumber") || "").trim().slice(0, 80);
   const specialty = String(form.get("specialty") || "").trim();
   const applicantNote = String(form.get("applicantNote") || "").trim().slice(0, 1000) || null;
-  if (legalName.length < 3) return jsonError("اكتب الاسم الحقيقي كما يظهر في إثبات العضوية.");
+  if (legalName.length < 3) return jsonError("اكتب الاسم الحقيقي كما هو مسجل لدى النقابة.");
   if (membershipNumber.replace(/[\s-]/g, "").length < 4) return jsonError("رقم العضوية غير مكتمل.");
   if (!(SPECIALTIES as readonly string[]).includes(specialty)) return jsonError("اختر تخصصًا هندسيًا صالحًا.");
   let membershipProof, experienceProof, degreeProof, certificateProof;
@@ -33,8 +33,8 @@ export async function POST(request: Request) {
     degreeProof = await parseSafeUpload(form.get("degreeProof"), { allowPdf: true, maxBytes: 2_500_000 });
     certificateProof = await parseSafeUpload(form.get("certificateProof"), { allowPdf: true, maxBytes: 2_500_000 });
   } catch (error) { return jsonError(error instanceof Error ? error.message : "نوع ملف غير مسموح."); }
-  if (!membershipProof) return jsonError("إثبات العضوية النقابية إلزامي.");
-  const files: { category: string; file: SafeUpload }[] = [{ category: "membership", file: membershipProof }];
+  const files: { category: string; file: SafeUpload }[] = [];
+  if (membershipProof) files.push({ category: "membership", file: membershipProof });
   if (experienceProof) files.push({ category: "experience", file: experienceProof });
   if (degreeProof) files.push({ category: "degree", file: degreeProof });
   if (certificateProof) files.push({ category: "certificate", file: certificateProof });
