@@ -1,5 +1,6 @@
 "use client";
 
+import { localizedConfirm } from "@/lib/i18n";
 import { LocalizedContent } from "@/components/LanguageProvider";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
@@ -376,7 +377,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
   async function deleteComment(postId: string, comment: FeedComment, thread: FeedComment[]) {
     if (comment.author_id !== user.id && !["admin", "moderator"].includes(user.role)) return;
-    if (busyDeleteCommentId || !window.confirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
+    if (busyDeleteCommentId || !localizedConfirm("تحب تحذف التعليق ده وكل الردود اللي تحته؟")) return;
     setBusyDeleteCommentId(comment.id);
     setError("");
     setSuccess("");
@@ -452,7 +453,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   }
 
   async function deletePost(post: FeedPost) {
-    if ((post.author_id !== user.id && !["admin", "moderator"].includes(user.role)) || busyDeletePostId || !window.confirm("متأكد إنك عايز تحذف البوست نهائيًا؟")) return;
+    if ((post.author_id !== user.id && !["admin", "moderator"].includes(user.role)) || busyDeletePostId || !localizedConfirm("متأكد إنك عايز تحذف البوست نهائيًا؟")) return;
     setBusyDeletePostId(post.id);
     setError("");
     setSuccess("");
