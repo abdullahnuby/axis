@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { PWAProvider } from "@/components/PWAProvider";
 import "./globals.css";
+import "./axis-experience.css";
 
 export const metadata: Metadata = {
   title: { default: "AXIS — مجتمع المهندسين", template: "%s | AXIS" },
