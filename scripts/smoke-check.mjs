@@ -278,6 +278,22 @@ await check("membership is encrypted and duplicate checked", async () => {
   assert.match(verify, /membership_number_encrypted/);
   assert.match(verify, /membership_fingerprint/);
 });
+await check("membership number is required while the membership card image is optional", async () => {
+  const verification = await read("src/components/VerificationClient.tsx");
+  const api = await read("src/app/api/verification/route.ts");
+  const upload = await read("src/lib/upload.ts");
+  const admin = await read("src/components/AdminClient.tsx");
+  const numberInput = verification.match(/<input id="membershipNumber"[^>]*>/)?.[0] ?? "";
+  const cardInput = verification.match(/<input className="field" id="membershipProof"[^>]*>/)?.[0] ?? "";
+  assert.ok(numberInput.includes("required"), "membership number should stay required");
+  assert.ok(!cardInput.includes("required"), "membership card image should be optional");
+  assert.ok(verification.includes("صورة كارنيه النقابة (اختياري)"));
+  assert.ok(api.includes('if (membershipProof) files.push({ category: "membership", file: membershipProof });'));
+  assert.ok(!api.includes('if (!membershipProof) return jsonError'), "API must accept a request without the card image");
+  assert.ok(api.includes("membershipNumber.replace"), "membership number validation must remain");
+  assert.ok(upload.includes('if (file.size === 0 && file.name === "") return null'));
+  assert.ok(admin.includes("لم تُرفق صورة كارنيه النقابة"));
+});
 await check("admin login is separate and rate limited", async () => {
   const page = await read("src/app/admin/login/page.tsx");
   const api = await read("src/app/api/admin/login/route.ts");
