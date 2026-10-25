@@ -723,11 +723,11 @@ export function translateArabicText(value: string): string {
   if (match) return value.replace(trimmed, match[1] + " hr ago");
   match = trimmed.match(/^منذ (\d+)\s*يوم$/);
   if (match) return value.replace(trimmed, match[1] + " days ago");
-  match = trimmed.match(/^(\\d+)\\s+أحرف على الأقل$/);
+  match = trimmed.match(/^(\d+)\s+أحرف على الأقل$/);
   if (match) return value.replace(trimmed, match[1] + " characters minimum");
   match = trimmed.match(/^حساب @(.+)$/);
   if (match) return value.replace(trimmed, "Account @" + match[1]);
-  match = trimmed.match(/^التعليقات\\s*·\\s*(.*)$/);
+  match = trimmed.match(/^التعليقات\s*·\s*(.*)$/);
   if (match) return value.replace(trimmed, "Comments · " + match[1]);
   return value;
 }
