@@ -578,5 +578,24 @@ await check("mobile same-origin fallback accepts browser Fetch Metadata only whe
   assert.match(http, /trustedOrigins\.has\(new URL\(request\.url\)\.origin\.toLowerCase\(\)\)/);
 });
 
+await check("admin can pin one announcement at the top of the main feed, and long posts offer read-more", async () => {
+  const pinRoute = await read("src/app/api/posts/[postId]/main-pin/route.ts");
+  const feedRoute = await read("src/app/api/feed/route.ts");
+  const feed = await read("src/components/FeedClient.tsx");
+  const types = await read("src/lib/types.ts");
+  const migration = await read("db/migrations/20261025_main_feed_pin.sql");
+  assert.match(pinRoute, /user!\.role !== "admin"/);
+  assert.match(pinRoute, /main_feed_pinned_at/);
+  assert.match(feedRoute, /p\.main_feed_pinned_at/);
+  assert.match(feedRoute, /ORDER BY p\.main_feed_pinned_at DESC NULLS LAST, p\.created_at DESC/);
+  assert.match(feed, /تثبيت في الرئيسية/);
+  assert.match(feed, /عرض المزيد/);
+  assert.match(feed, /POST_PREVIEW_WORD_LIMIT = 90/);
+  assert.match(feed, /user\.role === "admin" && !post\.group_id/);
+  assert.match(feed, /post\.author_id !== user\.id && !\["admin", "moderator"\]\.includes\(user\.role\)/);
+  assert.match(types, /main_feed_pinned_at\?: string \| null/);
+  assert.match(migration, /posts_single_main_feed_pin_idx/);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);

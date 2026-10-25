@@ -47,6 +47,8 @@ export interface FeedPost {
   shared_post_id: string | null;
   group_id?: string | null;
   pinned_at?: string | null;
+  main_feed_pinned_at?: string | null;
+  main_feed_pinned_by?: string | null;
   shared_body?: string | null;
   shared_created_at?: string | null;
   shared_has_image?: boolean | null;

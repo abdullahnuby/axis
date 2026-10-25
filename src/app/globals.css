@@ -258,6 +258,11 @@ img,video,canvas,svg{max-width:100%}
 .post-topic-chip{display:inline-flex;align-items:center;min-height:23px;padding:3px 8px;border-radius:6px;background:#EEF3FA;color:#315782;font-size:10px;font-weight:700}
 .post-topic-caption{font-size:10px;color:#8893A3}
 .post-professional-body{margin:0;padding:2px 18px 16px;font-size:14px;line-height:1.95;color:#29384C;white-space:pre-wrap;overflow-wrap:anywhere}
+.post-expandable-text{display:block;min-width:0}
+.post-read-more-button{border:0;background:transparent;color:var(--blue);font-size:13px;font-weight:700;padding:5px 18px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.post-read-more-button:hover{text-decoration:underline}
+.post-pinned-badge{display:flex;align-items:center;gap:7px;margin:0 18px;padding:8px 10px;border-radius:9px;background:#FFF6D9;border:1px solid #F3D98C;color:#775A00;font-size:12px;font-weight:700}
+.post-pinned-badge.main-feed-pinned{background:#E8F5FF;border-color:#A9D5FF;color:#075CBF}
 .post-media-frame{display:block;margin:0 0 0;overflow:hidden;background:#F3F5F8;border-top:1px solid #E7EBF0;border-bottom:1px solid #E7EBF0;max-height:560px}
 .post-professional-image{width:100%;max-height:560px;display:block;object-fit:contain;border:0;border-radius:0;background:#F3F5F8}
 .post-engagement-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 17px 9px;color:#778398;font-size:11px}

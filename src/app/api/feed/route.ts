@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   if (sharedPostId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sharedPostId)) return jsonError("رابط المنشور غير صالح.", 400);
   try {
     const result = await query(`SELECT p.id,p.author_id,u.username,u.display_name,u.role AS author_role,u.seniority_code,u.job_title,u.specialty AS profile_specialty,
-      u.verified_badges,u.avatar_color,(u.avatar_image_mime IS NOT NULL) AS has_avatar,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,p.shared_post_id,p.group_id,p.pinned_at,
+      u.verified_badges,u.avatar_color,(u.avatar_image_mime IS NOT NULL) AS has_avatar,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,p.shared_post_id,p.group_id,p.pinned_at,p.main_feed_pinned_at,p.main_feed_pinned_by,
       sp.body AS shared_body,sp.author_id AS shared_author_id,sp.specialty AS shared_specialty,sp.created_at AS shared_created_at,
       sp.image_data IS NOT NULL AS shared_has_image,sp.image_mime AS shared_image_mime,
       su.username AS shared_username,su.display_name AS shared_display_name,su.role AS shared_author_role,
@@ -38,8 +38,8 @@ export async function GET(request: Request) {
              OR sp.body ILIKE '%'||$3||'%' OR su.display_name ILIKE '%'||$3||'%' OR su.username ILIKE '%'||$3||'%')
         AND ($4::uuid IS NULL OR p.id=$4::uuid)
         AND (NOT $5::boolean OR EXISTS(SELECT 1 FROM user_follows f WHERE f.follower_id=$1 AND f.following_id=p.author_id))
-        AND ($6::timestamptz IS NULL OR p.created_at < $6::timestamptz)
-      ORDER BY p.created_at DESC LIMIT 31`, [user!.id, specialty, q, sharedPostId || null, followingOnly, before]);
+        AND ($6::timestamptz IS NULL OR (p.main_feed_pinned_at IS NULL AND p.created_at < $6::timestamptz))
+      ORDER BY p.main_feed_pinned_at DESC NULLS LAST, p.created_at DESC LIMIT 31`, [user!.id, specialty, q, sharedPostId || null, followingOnly, before]);
     const hasMore = result.rows.length > 30;
     const pageRows = hasMore ? result.rows.slice(0,30) : result.rows;
     const nextCursor = hasMore && pageRows.length ? new Date(pageRows[pageRows.length-1].created_at as string).toISOString() : null;

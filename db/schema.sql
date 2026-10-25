@@ -164,6 +164,8 @@ CREATE TABLE IF NOT EXISTS posts (
   shared_post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
   group_id uuid REFERENCES engineering_groups(id) ON DELETE CASCADE,
   pinned_at timestamptz,
+  main_feed_pinned_at timestamptz,
+  main_feed_pinned_by uuid REFERENCES users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT posts_content_check CHECK (char_length(body) > 0 OR image_data IS NOT NULL OR shared_post_id IS NOT NULL)
@@ -172,6 +174,8 @@ CREATE TABLE IF NOT EXISTS posts (
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS shared_post_id uuid REFERENCES posts(id) ON DELETE CASCADE;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES engineering_groups(id) ON DELETE CASCADE;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at timestamptz;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS main_feed_pinned_at timestamptz;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS main_feed_pinned_by uuid REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE posts ALTER COLUMN body SET DEFAULT '';
 ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_check;
 ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_content_check;
@@ -183,6 +187,8 @@ CREATE INDEX IF NOT EXISTS posts_shared_post_idx ON posts (shared_post_id) WHERE
 CREATE INDEX IF NOT EXISTS posts_group_feed_idx ON posts (group_id, created_at DESC) WHERE group_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS posts_one_pinned_personal_per_author_idx ON posts (author_id) WHERE pinned_at IS NOT NULL AND group_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS posts_one_pinned_group_idx ON posts (group_id) WHERE pinned_at IS NOT NULL AND group_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS posts_main_feed_pin_idx ON posts (main_feed_pinned_at DESC) WHERE main_feed_pinned_at IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS posts_single_main_feed_pin_idx ON posts ((1)) WHERE main_feed_pinned_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS post_likes (
   post_id uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
