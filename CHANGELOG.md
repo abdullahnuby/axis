@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-25 — Fix admin API route collision
+
+- Matched the new verification route parameter to the existing member route (`[userId]`) so Next.js can register both paths without a dynamic-segment conflict.
+- Fixed the production runtime failure that prevented admin members, verification requests, and overview APIs from loading. The account record was not deleted.
+
 ## 2026-10-25 — Incomplete registration verification queue
 
 - The admin verification queue now includes active member accounts that have not created a verification request, so registered-but-unverified users no longer disappear from review.

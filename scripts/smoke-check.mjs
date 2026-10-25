@@ -296,7 +296,7 @@ await check("membership number is required while the membership card image is op
 });
 await check("registered members without verification requests appear in the admin queue but cannot be approved prematurely", async () => {
   const listApi = await read("src/app/api/admin/verifications/route.ts");
-  const reopenApi = await read("src/app/api/admin/members/[memberId]/reopen-verification/route.ts");
+  const reopenApi = await read("src/app/api/admin/members/[userId]/reopen-verification/route.ts");
   const overviewApi = await read("src/app/api/admin/overview/route.ts");
   const admin = await read("src/components/AdminClient.tsx");
   assert.ok(listApi.includes("not_submitted"));
