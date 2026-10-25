@@ -16,7 +16,7 @@ export function UserAvatar({ userId, displayName, avatarColor, hasAvatar, classN
     ? `/api/people/${encodeURIComponent(userId)}/media?kind=avatar${version != null ? `&v=${encodeURIComponent(String(version))}` : ""}`
     : null;
   return <LocalizedContent>{(
-    <span className={`avatar axis-user-avatar ${className}`} style={{ background: avatarColor || "var(--blue)" }} aria-label={displayName} title={displayName}>
+    <span className={`avatar axis-user-avatar ${className}`} data-user-content={true} style={{ background: avatarColor || "var(--blue)" }} aria-label={displayName} title={displayName}>
       <span className="axis-avatar-fallback" aria-hidden="true">{displayName.trim().slice(0, 1) || "م"}</span>
       {source ? <img src={source} alt="" loading="lazy" decoding="async" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
     </span>

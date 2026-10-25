@@ -32,7 +32,7 @@ const USER_CONTENT_CLASS_NAMES = new Set([
 ]);
 
 function hasUserContentBoundary(props: Record<string, unknown>) {
-  if (props["data-user-content"] === true || props["data-no-translate"] === true) return true;
+  if (props["data-user-content"] === true || props["data-user-content"] === "true" || props["data-no-translate"] === true || props["data-no-translate"] === "true") return true;
   const className = typeof props.className === "string" ? props.className : "";
   return className.split(/\s+/).some((name) => USER_CONTENT_CLASS_NAMES.has(name));
 }

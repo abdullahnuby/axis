@@ -504,7 +504,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     const expanded = Boolean(expandedPosts[key]);
     return <LocalizedContent>{(
       <div className="post-expandable-text">
-        <p className={className}>{preview.expandable && !expanded ? `${preview.preview}…` : text}</p>
+        <p className={`${className} no-translate`}>{preview.expandable && !expanded ? `${preview.preview}…` : text}</p>
         {preview.expandable && (
           <button
             type="button"
@@ -568,11 +568,11 @@ export function FeedClient({ user }: { user: SessionUser }) {
                 </form>
               ) : <>
                 <div className="comment-author-line">
-                  <Link href={`/people/${encodeURIComponent(comment.username)}`}><strong>{comment.display_name}</strong></Link>
+                  <Link href={`/people/${encodeURIComponent(comment.username)}`}><strong className="no-translate">{comment.display_name}</strong></Link>
                   {comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}
                   <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG-u-nu-latn")}>{formatPostTime(comment.created_at)}</time>
                 </div>
-                <p>{comment.body}</p>
+                <p className="no-translate">{comment.body}</p>
                 {comment.edited_at ? <span className="comment-edited-label">تم التعديل</span> : null}
               </>}
             </div>
@@ -686,7 +686,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                 <UserAvatar userId={post.author_id} displayName={post.display_name} avatarColor={post.avatar_color} hasAvatar={post.has_avatar} className="post-avatar"/>
                 <div className="user-meta post-author-meta">
                   <div className="post-author-name-row">
-                    <Link className="post-author-name" href={`/people/${encodeURIComponent(post.username)}`}>{post.display_name}</Link>
+                    <Link className="post-author-name no-translate" href={`/people/${encodeURIComponent(post.username)}`}>{post.display_name}</Link>
                     {post.author_role === "member" ? <CheckCircle2 size={15} className="post-verified-icon" aria-label="عضو موثّق"/> : <span className="post-team-label">فريق AXIS</span>}
                     {post.author_role === "member" && <ProfessionalBadges level={post.seniority_code} badges={post.verified_badges} compact/>}
                   </div>
@@ -717,7 +717,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
               <article className="shared-post-original">
                 <header className="shared-post-original-header">
                   <UserAvatar userId={post.shared_author_id} displayName={post.shared_display_name} avatarColor={post.shared_avatar_color} hasAvatar={post.shared_has_avatar} className="sm"/>
-                  <div className="user-meta"><Link href={`/people/${encodeURIComponent(post.shared_username || "")}`}><strong>{post.shared_display_name}</strong></Link><span className="small muted">{post.shared_job_title || (post.shared_specialty ? `تخصص ${post.shared_specialty}` : "من مجتمع AXIS")}</span></div>
+                  <div className="user-meta"><Link href={`/people/${encodeURIComponent(post.shared_username || "")}`}><strong className="no-translate">{post.shared_display_name}</strong></Link><span className="small muted">{post.shared_job_title || (post.shared_specialty ? `تخصص ${post.shared_specialty}` : "من مجتمع AXIS")}</span></div>
                   {post.shared_created_at && <time className="tiny muted" dateTime={post.shared_created_at}>{formatPostTime(post.shared_created_at)}</time>}
                 </header>
                 {post.shared_body && renderExpandableBody(post.shared_body, `shared:${post.id}`, "shared-post-original-body")}
