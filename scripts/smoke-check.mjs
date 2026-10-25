@@ -649,5 +649,20 @@ await check("admin can pin one announcement at the top of the main feed, and lon
   assert.match(migration, /posts_single_main_feed_pin_idx/);
 });
 
+await check("AXIS UI refresh includes accessible responsive tokens and retains page zoom", async () => {
+  const css = await read("src/app/globals.css");
+  const layout = await read("src/app/layout.tsx");
+  const shell = await read("src/components/AppShell.tsx");
+  assert.match(css, /--navy:#0B2236/);
+  assert.match(css, /--teal:#17B8B0/);
+  assert.match(css, /:where\(a,button,input,textarea,select,\[tabindex\]\):focus-visible/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(css, /calc\(8px \+ var\(--safe-bottom\)\)/);
+  assert.match(css, /@media \(max-width:760px\)/);
+  assert.match(shell, /<nav className="mobile-bottom"/);
+  assert.doesNotMatch(layout, /userScalable:\s*false/);
+  assert.doesNotMatch(layout, /maximumScale:/);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);
