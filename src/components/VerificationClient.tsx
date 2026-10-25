@@ -32,7 +32,30 @@ export function VerificationClient({ initialStatus, reviewNote, legalName, submi
   }
   return <div className="status-layout">
     <section className="card status-card">
-      <div className="row"><div className="avatar" style={{ background: "var(--gold-soft)", color: "#075E64" }}><ShieldCheck size={23}/></div><div><h1 className="section-title">خلّينا نتأكد إنك من أهل المجال</h1><div className="small muted">دي مراجعة بسيطة لبيانات عضويتك علشان نقلّل دخول حسابات من برّه المجال.</div></div></div>
+      <div className="verification-heading-row">
+        <div className="verification-heading-icon"><ShieldCheck size={24}/><span/></div>
+        <div className="verification-heading-copy"><div className="verification-eyebrow">AXIS / MEMBERSHIP REVIEW</div><h1 className="section-title">خلّينا نتأكد إنك من أهل المجال.</h1><p>دي مراجعة بسيطة لبيانات العضوية النقابية علشان مجتمع AXIS يفضل مخصص للمهندسين.</p></div>
+        <span className={`verification-current-status ${status === "pending" ? "pending" : status === "rejected" || status === "needs_info" ? "attention" : status === "verified" ? "approved" : "new"}`}>{status === "pending" ? "قيد المراجعة" : status === "needs_info" ? "مطلوب استكمال" : status === "rejected" ? "محتاج إعادة تقديم" : status === "verified" ? "تم الاعتماد" : "خطوة 01"}</span>
+      </div>
+      <div className={`verification-journey ${status === "pending" ? "journey-pending" : status === "needs_info" || status === "rejected" ? "journey-attention" : status === "verified" ? "journey-approved" : "journey-start"}`}>
+        <div className="verification-journey-head"><span>مسار الانضمام</span><span>MEMBERSHIP / 3 STEPS</span></div>
+        <div className="verification-journey-steps">
+          <div className={`verification-journey-step ${status === "unverified" ? "current" : "complete"}`}>
+            <span className="verification-step-icon">{status === "unverified" ? <Upload size={16}/> : <FileCheck2 size={16}/>}</span>
+            <div><strong>بيانات العضوية</strong><small>{status === "unverified" ? "استكمال البيانات المطلوبة" : "تم استلام البيانات"}</small></div>
+          </div>
+          <span className="verification-step-connector"/>
+          <div className={`verification-journey-step ${status === "pending" ? "current" : status === "needs_info" || status === "rejected" ? "attention" : status === "verified" ? "complete" : "upcoming"}`}>
+            <span className="verification-step-icon"><Clock3 size={16}/></span>
+            <div><strong>مراجعة العضوية</strong><small>{status === "pending" ? "فريق AXIS بيراجع الطلب" : status === "needs_info" ? "في معلومات محتاجة استكمال" : status === "rejected" ? "راجع الملاحظة وقدّم الطلب تاني" : status === "verified" ? "اكتملت المراجعة" : "بعد إرسال الطلب"}</small></div>
+          </div>
+          <span className="verification-step-connector"/>
+          <div className={`verification-journey-step ${status === "verified" ? "complete" : "upcoming"}`}>
+            <span className="verification-step-icon"><ShieldCheck size={16}/></span>
+            <div><strong>الدخول للمجتمع</strong><small>{status === "verified" ? "تقدر تدخل وتشارك" : "بعد اعتماد العضوية"}</small></div>
+          </div>
+        </div>
+      </div>
       <div className="alert">المجتمع هيفتحلك بعد المراجعة. بنعمل كده علشان ما يبقاش مفتوح لأي حساب، لكن ده مش معناه إن الأعضاء مجهولين أو إن كل شخص بعيد عن الشركات والإدارة.</div>
       <Toast message={error} error/><Toast message={success}/>
       <div className="alert" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
