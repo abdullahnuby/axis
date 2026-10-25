@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-25 — Optional membership card
+
+- The syndicate membership number remains required, but uploading the card image is now optional in the verification form and API.
+- The admin review panel explains when no card image was attached.
+- Added regression checks for this flow.
+
 ## 2026-10-25 — Shorter post previews
 
 - Reduced the feed post preview from 90 words to 20 words before “عرض المزيد” for a more compact reading experience, especially on mobile.
