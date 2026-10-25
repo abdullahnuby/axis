@@ -2,7 +2,7 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, Camera, CalendarDays,
+  ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, Camera, CalendarDays, Pin,
   GraduationCap, LockKeyhole, MessageCircle, PencilLine, Save, ShieldCheck,
   ThumbsUp, UserRound, X, Share2, Trash2,
 } from "lucide-react";
@@ -23,6 +23,8 @@ export type ProfilePostPreview = {
   like_count: number;
   comment_count: number;
   shared_post_id: string | null;
+  group_id?: string | null;
+  pinned_at?: string | null;
   shared_body?: string | null;
   shared_created_at?: string | null;
   shared_has_image?: boolean | null;
@@ -125,6 +127,33 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
       setSuccess("اتحذفت المشاركة.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف المشاركة.");
+    } finally {
+      setPostActionBusyId(null);
+    }
+  }
+
+  async function toggleProfilePin(post: ProfilePostPreview) {
+    if (postActionBusyId || post.group_id) return;
+    const nextPinned = !post.pinned_at;
+    setPostActionBusyId(post.id);
+    setError("");
+    setSuccess("");
+    try {
+      const response = await fetch(`/api/posts/${post.id}/pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned: nextPinned }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نثبت البوست. جرّب تاني.");
+      setPosts(old => old.map(item => {
+        if (item.id === post.id) return { ...item, pinned_at: payload.pinned_at || null };
+        if (payload.pinned && !item.group_id) return { ...item, pinned_at: null };
+        return item;
+      }).sort((a, b) => Number(Boolean(b.pinned_at && !b.group_id)) - Number(Boolean(a.pinned_at && !a.group_id)) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      setSuccess(payload.pinned ? "ثبتنا البوست على ملفك الشخصي." : "اتشال تثبيت البوست من ملفك.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نثبت البوست. جرّب تاني.");
     } finally {
       setPostActionBusyId(null);
     }
@@ -259,8 +288,10 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
             <div className="profile-section-heading profile-posts-heading"><div><h2 className="section-title">بوستاتي</h2><p className="small muted">كل البوستات اللي نزلتها هتلاقيها هنا.</p></div><span className="pill navy">{formatCount(posts.length)} منشور</span></div>
             {posts.length ? <div className="profile-post-list">{posts.map((post) => <article key={post.id} className="card profile-post-card">
               <div className="profile-post-meta"><span>{post.specialty || user.specialty || "هندسة"}</span><span>·</span><time dateTime={post.created_at}>{formatDate(post.created_at)}</time></div>
+              {post.pinned_at && !post.group_id && <div className="post-pinned-badge"><Pin size={14}/> مثبت على الملف الشخصي</div>}
               <div className="profile-post-manage-actions">
                 {editingPostId !== post.id && <button type="button" className="btn btn-small" onClick={() => beginPostEdit(post)} disabled={Boolean(postActionBusyId)}><PencilLine size={14}/> تعديل</button>}
+                {!post.group_id && <button type="button" className="btn btn-small" onClick={() => void toggleProfilePin(post)} disabled={Boolean(postActionBusyId)}><Pin size={14}/>{postActionBusyId === post.id ? "جارٍ التثبيت…" : post.pinned_at ? "إلغاء التثبيت" : "تثبيت على ملفي"}</button>}
                 <button type="button" className="btn btn-small btn-danger" onClick={() => void deleteProfilePost(post)} disabled={postActionBusyId === post.id}><Trash2 size={14}/>{postActionBusyId === post.id ? "جارٍ الحذف…" : "حذف"}</button>
               </div>
               {editingPostId === post.id ? <form className="profile-post-edit-form" onSubmit={event => void savePostEdit(event, post)}>
