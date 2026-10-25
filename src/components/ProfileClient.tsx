@@ -1,4 +1,5 @@
 "use client";
+import { localizedConfirm } from "@/lib/i18n";
 import { LocalizedContent } from "@/components/LanguageProvider";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
@@ -116,7 +117,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
   }
 
   async function deleteProfilePost(post: ProfilePostPreview) {
-    if (postActionBusyId || !window.confirm("متأكد إنك عايز تحذف المشاركة نهائيًا؟")) return;
+    if (postActionBusyId || !localizedConfirm("متأكد إنك عايز تحذف المشاركة نهائيًا؟")) return;
     setPostActionBusyId(post.id);
     setError("");
     setSuccess("");
@@ -189,7 +190,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
 
   async function removeProfileMedia(kind: "avatar" | "cover") {
     if (!user[kind === "avatar" ? "has_avatar" : "has_cover"] || mediaBusy) return;
-    if (!window.confirm(kind === "avatar" ? "تشيل صورتك الشخصية وترجع للأحرف؟" : "تشيل صورة الغلاف؟")) return;
+    if (!localizedConfirm(kind === "avatar" ? "تشيل صورتك الشخصية وترجع للأحرف؟" : "تشيل صورة الغلاف؟")) return;
     setMediaBusy(kind); setError(""); setSuccess("");
     try {
       const response = await fetch(`/api/me/media?kind=${kind}`, { method: "DELETE" });
