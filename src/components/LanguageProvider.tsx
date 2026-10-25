@@ -15,6 +15,7 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import { getLocalizedText, type Locale } from "@/lib/i18n";
+export type { Locale } from "@/lib/i18n";
 
 export type UiPreferences = {
   compactMode: boolean;
