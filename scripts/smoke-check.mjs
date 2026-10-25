@@ -435,7 +435,7 @@ await check("moderation buttons have explicit destructive confirmations", async 
   const posts = await read("src/app/api/posts/[postId]/route.ts");
   assert.match(admin, /متأكد إنك عايز توقف حساب/);
   assert.match(admin, /ده إجراء فعلي/);
-  assert.match(groups, /متأكد إنك عايز تغادر المجموعة/);
+  assert.match(groups, /متأكد إنك عايز تخرج من الجروب/);
   assert.match(posts, /delete-post/);
   assert.match(posts, /sameOrigin/);
 });
