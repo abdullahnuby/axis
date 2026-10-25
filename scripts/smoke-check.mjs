@@ -127,7 +127,7 @@ await check("feed has professional post, composer, and mobile filter patterns", 
 await check("feed post controls use real API actions and accessible states", async () => {
   const feed = await read("src/components/FeedClient.tsx");
   assert.match(feed, /api\/posts\/\$\{post\.id\}\/like/);
-  assert.match(feed, /api\/posts\/\$\{post\.id\}\/comments/);
+  assert.match(feed, /api\/posts\/\$\{(?:post\.id|postId)\}\/comments/);
   assert.match(feed, /aria-pressed=\{post\.has_liked\}/);
   assert.match(feed, /aria-expanded=\{openComments === post\.id\}/);
 });
