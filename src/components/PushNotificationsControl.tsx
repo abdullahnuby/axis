@@ -5,11 +5,14 @@ import { BellRing, BellOff, Smartphone } from "lucide-react";
 
 type PushState = "loading" | "enabled" | "disabled" | "unsupported" | "blocked" | "install-required";
 
-function decodeApplicationServerKey(value: string): Uint8Array {
+function decodeApplicationServerKey(value: string): ArrayBuffer {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
   const raw = window.atob(padded);
-  return Uint8Array.from(raw, character => character.charCodeAt(0));
+  const bytes = Uint8Array.from(raw, character => character.charCodeAt(0));
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
 }
 
 export function PushNotificationsControl() {
