@@ -45,6 +45,8 @@ export interface FeedPost {
   comment_count: number;
   has_liked: boolean;
   shared_post_id: string | null;
+  group_id?: string | null;
+  pinned_at?: string | null;
   shared_body?: string | null;
   shared_created_at?: string | null;
   shared_has_image?: boolean | null;
