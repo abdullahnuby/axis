@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, Home, Settings, UserRound, Bell, SlidersHorizontal, BriefcaseBusiness, Plus, Users, MessageCircle } from "lucide-react";
-import type { SessionUser, EngineeringEvent } from "@/lib/types";
+import { Home, Settings, UserRound, Bell, SlidersHorizontal, BriefcaseBusiness, Users, MessageCircle } from "lucide-react";
+import type { SessionUser } from "@/lib/types";
 import { AppHeader } from "@/components/AppHeader";
 import { UserAvatar } from "@/components/UserAvatar";
+import { MobileCreatePostButton } from "@/components/MobileCreatePostButton";
 
 const navItems = [
   { href: "/feed", text: "الرئيسية", icon: Home },
@@ -15,7 +16,7 @@ const navItems = [
   { href: "/settings", text: "الإعدادات", icon: Settings },
 ];
 
-export function AppShell({ user, children, events = [], active = "" }: { user: SessionUser; children: ReactNode; events?: EngineeringEvent[]; active?: string }) {
+export function AppShell({ user, children, active = "" }: { user: SessionUser; children: ReactNode; active?: string }) {
   return <div className="page-shell"><AppHeader user={user}/><div className="container shell-layout">
     <aside className="left-rail"><div className="card side-card">
       <div className="user-line" style={{ padding: "7px 8px 14px" }}><UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at}/><div className="user-meta"><div className="user-name">{user.display_name}</div><div className="user-sub">@{user.username}</div></div></div>
@@ -25,13 +26,10 @@ export function AppShell({ user, children, events = [], active = "" }: { user: S
     </div></aside>
     <main className="feed-column">{children}</main>
     <aside className="right-stack">
-      <div className="card event-card"><div className="between"><h2 className="section-title">فعاليات وأخبار</h2><CalendarDays size={17} className="muted"/></div>
-        {events.length ? events.map((event) => <div className="event-row" key={event.id}><strong style={{ fontSize: 13 }}>{event.title}</strong>{event.starts_at && <div className="tiny muted">{new Date(event.starts_at).toLocaleDateString("ar-EG", { day: "numeric", month: "short", year: "numeric" })}</div>}{event.location && <div className="tiny muted">{event.location}</div>}{event.description && <p className="small muted" style={{ margin: 0 }}>{event.description}</p>}{event.event_url && <a className="tiny" href={event.event_url} rel="noreferrer" target="_blank">اعرف التفاصيل ←</a>}</div>) : <p className="small muted" style={{ margin: 0 }}>لما نضيف فعالية جديدة هتلاقي تفاصيلها هنا.</p>}
-      </div>
       <div className="card event-card"><div className="between"><h2 className="section-title">اختار اللي يهمّك</h2><SlidersHorizontal size={17} className="muted"/></div><p className="small muted" style={{ margin: 0 }}>اختار تخصصك من الفلاتر علشان تتابع المشاركات الأقرب لشغلك.</p><div className="row"><BriefcaseBusiness size={16}/><span className="small">{user.specialty || "ضيف تخصصك في حسابك"}</span></div></div>
     </aside>
   </div>
   <footer className="app-legal-footer"><Link href="/privacy">الخصوصية</Link><Link href="/terms">شروط الاستخدام</Link><Link href="/community-guidelines">إرشادات المجتمع</Link></footer>
-  <nav className="mobile-bottom" aria-label="التنقل الرئيسي"><Link href="/feed" className={active === "/feed" ? "active" : ""}><Home size={19}/><span>الرئيسية</span></Link><Link href="/people" className={active === "/people" ? "active" : ""}><Users size={19}/><span>المهندسين</span></Link><Link href="/feed#compose" className="mobile-compose-link" aria-label="إنشاء مشاركة جديدة"><span className="mobile-compose-icon"><Plus size={21}/></span><span>مشاركة</span></Link><Link href="/messages" className={active === "/messages" ? "active" : ""}><MessageCircle size={19}/><span>الرسائل</span></Link><Link href="/profile" className={active === "/profile" ? "active" : ""}><UserRound size={19}/><span>حسابي</span></Link></nav>
+  <nav className="mobile-bottom" aria-label="التنقل الرئيسي"><Link href="/feed" className={active === "/feed" ? "active" : ""}><Home size={19}/><span>الرئيسية</span></Link><Link href="/people" className={active === "/people" ? "active" : ""}><Users size={19}/><span>المهندسين</span></Link><MobileCreatePostButton/><Link href="/messages" className={active === "/messages" ? "active" : ""}><MessageCircle size={19}/><span>الرسائل</span></Link><Link href="/profile" className={active === "/profile" ? "active" : ""}><UserRound size={19}/><span>حسابي</span></Link></nav>
   </div>;
 }

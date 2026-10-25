@@ -21,7 +21,7 @@ async function recordFailure(identifier: string, ip: string) {
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return jsonError("طلب غير صالح.", 403);
   let body: Record<string, unknown>; try { body = await request.json(); } catch { return jsonError("بيانات الدخول غير صالحة."); }
-  const email = cleanText(body.email, 254).toLowerCase(); const password = typeof body.password === "string" ? body.password : ""; const ip = clientIp(request);
+  const email = cleanText(body.email, 254).toLowerCase(); const password = typeof body.password === "string" ? body.password : ""; const rememberMe = body.rememberMe === true; const ip = clientIp(request);
   if (!email || !password) return jsonError("اكتب البريد الإلكتروني وكلمة المرور.");
   try {
     if (await tooManyAttempts(email, ip)) return jsonError("محاولات كثيرة. انتظر 15 دقيقة ثم حاول مرة أخرى.", 429);
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (!user || !(await verifyPassword(password, user.password_hash))) { await recordFailure(email, ip); return jsonError("البريد الإلكتروني أو كلمة المرور غير صحيحين.", 401); }
     if (user.account_status !== "active") return jsonError("هذا الحساب موقوف حاليًا. تواصل مع الإدارة.", 403);
     await query("DELETE FROM login_attempts WHERE identifier=$1 AND ip_address=$2", [email, ip]);
-    await createSession(user.id);
+    await createSession(user.id, rememberMe);
     const redirect = user.verification_status === "verified" || ["admin", "reviewer", "moderator"].includes(user.role) ? "/feed" : "/verification";
     return NextResponse.json({ ok: true, redirect });
   } catch (error) {

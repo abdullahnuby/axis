@@ -99,3 +99,11 @@
 - تحليل CSS عبر PostCSS: **ناجح**.
 - `npm install --no-audit --no-fund --ignore-scripts`: انتهى بمهلة اتصال بعد 70 ثانية؛ لم تُوفَّر حزم المشروع. لذلك `npm run typecheck` و`npm run build` غير مؤكَّدين.
 - لم يتم دفع التغييرات إلى GitHub أو نشرها على Vercel.
+
+## 2026-10-25 — Session and feed UX follow-up
+
+- `npm test`: 50 static smoke checks passed.
+- `npm run pwa:check`: 13 checks passed.
+- Global TypeScript syntax transpilation: 104 TS/TSX files, 0 syntax errors.
+- Full `tsc --noEmit` is blocked by missing `node_modules` dependencies/type declarations (`next`, `react`, `@types/node`, and others).
+- `next build` and browser E2E are not verified; do not treat this source bundle as deployed. See `HANDOFF_2026-10-25_SESSION_NAV_NUMERALS.md`.

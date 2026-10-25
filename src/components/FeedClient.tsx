@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEv
 import {
   BadgeCheck,
   Camera,
-  CalendarDays,
   CheckCircle2,
   Flag,
   ImagePlus,
@@ -23,7 +22,7 @@ import {
   X,
   UserRound,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { AxisLogoMark } from "@/components/AxisLogoMark";
@@ -31,7 +30,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { ProfessionalBadges } from "@/components/ProfessionalIdentity";
 import { Toast } from "@/components/Toast";
 import { SPECIALTIES } from "@/lib/constants";
-import type { EngineeringEvent, FeedComment, FeedPost, SessionUser } from "@/lib/types";
+import type { FeedComment, FeedPost, SessionUser } from "@/lib/types";
 
 function formatPostTime(value: string): string {
   const date = new Date(value);
@@ -41,7 +40,7 @@ function formatPostTime(value: string): string {
   if (elapsed < 3_600_000) return `منذ ${Math.floor(elapsed / 60_000)} د`;
   if (elapsed < 86_400_000) return `منذ ${Math.floor(elapsed / 3_600_000)} س`;
   if (elapsed < 7 * 86_400_000) return `منذ ${Math.floor(elapsed / 86_400_000)} يوم`;
-  return date.toLocaleDateString("ar-EG", { day: "numeric", month: "short", year: elapsed > 365 * 86_400_000 ? "numeric" : undefined });
+  return date.toLocaleDateString("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: elapsed > 365 * 86_400_000 ? "numeric" : undefined });
 }
 
 function PostSkeleton() {
@@ -56,10 +55,10 @@ function PostSkeleton() {
 
 export function FeedClient({ user }: { user: SessionUser }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const imageInputRef = useRef<HTMLInputElement>(null);
   const didLoadRef = useRef(false);
   const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [events, setEvents] = useState<EngineeringEvent[]>([]);
   const [body, setBody] = useState("");
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [image, setImage] = useState<File | null>(null);
@@ -119,18 +118,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
     if (sharedPostId) params.set("post", sharedPostId);
     if (followingOnly) params.set("following", "1");
     try {
-      const [feedResponse, eventResponse] = await Promise.all([
-        fetch(`/api/feed?${params.toString()}`, { cache: "no-store" }),
-        fetch("/api/events", { cache: "no-store" }),
-      ]);
+      const feedResponse = await fetch(`/api/feed?${params.toString()}`, { cache: "no-store" });
       if (feedResponse.status === 401) { window.location.href = "/login"; return; }
       if (feedResponse.status === 403) { window.location.href = "/verification"; return; }
       const feedData = await feedResponse.json();
-      const eventData = eventResponse.ok ? await eventResponse.json() : { events: [] };
       if (!feedResponse.ok) throw new Error(feedData.error || "مش قادرين نحمّل المشاركات دلوقتي. جرّب تحدّث الصفحة.");
       setPosts(Array.isArray(feedData.posts) ? feedData.posts : []);
       setNextCursor(typeof feedData.nextCursor === "string" ? feedData.nextCursor : null);
-      setEvents(Array.isArray(eventData.events) ? eventData.events : []);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "الاتصال فصل لحظة. جرّب تاني، ومشاركاتك هتفضل زي ما هي.");
     } finally {
@@ -159,6 +153,30 @@ export function FeedClient({ user }: { user: SessionUser }) {
   }
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    const openComposer = () => {
+      setComposerExpanded(true);
+      window.requestAnimationFrame(() => {
+        document.getElementById("compose")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("feed-post-body")?.focus({ preventScroll: true });
+      });
+    };
+    window.addEventListener("axis-open-composer", openComposer);
+    return () => window.removeEventListener("axis-open-composer", openComposer);
+  }, []);
+
+  useEffect(() => {
+    if (searchParams.get("compose") !== "1") return;
+    setComposerExpanded(true);
+    window.requestAnimationFrame(() => {
+      document.getElementById("compose")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("feed-post-body")?.focus({ preventScroll: true });
+    });
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("compose");
+    router.replace(params.size ? `/feed?${params.toString()}` : "/feed", { scroll: false });
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (!isLoading && sharedPostId) {
@@ -353,7 +371,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       setComments(old => ({ ...old, [postId]: (old[postId] || []).filter(item => !removedIds.has(item.id)) }));
       setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: Math.max(0, post.comment_count - removedCount) } : post));
       if (editingCommentId && removedIds.has(editingCommentId)) { setEditingCommentId(null); setEditCommentBody(""); }
-      setSuccess(removedCount > 1 ? `اتحذف التعليق و${(removedCount - 1).toLocaleString("ar-EG")} من الردود التابعة له.` : "اتحذف التعليق.");
+      setSuccess(removedCount > 1 ? `اتحذف التعليق و${(removedCount - 1).toLocaleString("ar-EG-u-nu-latn")} من الردود التابعة له.` : "اتحذف التعليق.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف التعليق دلوقتي. جرّب تاني.");
     } finally {
@@ -447,7 +465,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                 <div className="comment-author-line">
                   <Link href={`/people/${encodeURIComponent(comment.username)}`}><strong>{comment.display_name}</strong></Link>
                   {comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}
-                  <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG")}>{formatPostTime(comment.created_at)}</time>
+                  <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG-u-nu-latn")}>{formatPostTime(comment.created_at)}</time>
                 </div>
                 <p>{comment.body}</p>
                 {comment.edited_at ? <span className="comment-edited-label">تم التعديل</span> : null}
@@ -455,7 +473,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </div>
             {!isEditing && <div className="comment-action-row">
               <button type="button" className={`comment-action ${comment.has_liked ? "liked" : ""}`} onClick={() => void toggleLikeComment(postId, comment)} disabled={busyLikeCommentId === comment.id} aria-pressed={comment.has_liked}>
-                <Heart size={13} fill={comment.has_liked ? "currentColor" : "none"}/><span>{comment.has_liked ? "أعجبك" : "إعجاب"}</span>{comment.like_count > 0 ? <b>{comment.like_count.toLocaleString("ar-EG")}</b> : null}
+                <Heart size={13} fill={comment.has_liked ? "currentColor" : "none"}/><span>{comment.has_liked ? "أعجبك" : "إعجاب"}</span>{comment.like_count > 0 ? <b>{comment.like_count.toLocaleString("ar-EG-u-nu-latn")}</b> : null}
               </button>
               <button type="button" className="comment-action" onClick={() => setReplyTargets(old => ({ ...old, [postId]: comment }))}>
                 <CornerDownLeft size={13}/><span>رد</span>
@@ -477,7 +495,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   }
 
   return (
-    <AppShell user={user} events={events} active="/feed">
+    <AppShell user={user} active="/feed">
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
       <form id="compose" className={`card compose compose-professional ${composerExpanded ? "compose-is-expanded" : ""}`} onSubmit={createPost}>
@@ -525,21 +543,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
               </select>
             </div>
             <div className="compose-submit-row">
-              <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("ar-EG")} / ٥٠٠٠</span>
+              <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("ar-EG-u-nu-latn-u-nu-latn")} / 5000</span>
               <button type="submit" className="btn btn-primary compose-publish" disabled={busy || (!body.trim() && !image)}><Send size={15}/><span>{busy ? "جارٍ النشر…" : "نشر"}</span></button>
             </div>
           </div>
         </div>
       </form>
 
-      <div className="feed-event-strip" aria-label="فعاليات وأخبار هندسية">
-        <span className="feed-event-strip-label"><CalendarDays size={13}/> فعاليات وأخبار</span>
-        <span className="feed-event-strip-divider" aria-hidden="true"/>
-        {events[0]?.event_url
-          ? <a href={events[0].event_url} target="_blank" rel="noreferrer">{events[0].title}</a>
-          : <span className="feed-event-strip-title">{events[0]?.title || "أي فعالية جديدة تهمّك هتلاقي تفاصيلها هنا."}</span>}
-        {events[0]?.starts_at && <time dateTime={events[0].starts_at}>{new Date(events[0].starts_at).toLocaleDateString("ar-EG", { day: "numeric", month: "short" })}</time>}
-      </div>
 
       <section className="feed-stream" aria-label="منشورات المهندسين">
         <div className="feed-stream-header feed-stream-header-filterable">
@@ -579,7 +589,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                     {post.job_title && <span>{post.job_title}</span>}
                     {!post.job_title && post.specialty && <span>تخصص {post.specialty}</span>}
                     {(post.job_title || post.specialty) && <span className="meta-dot"/>}
-                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG")}>{formatPostTime(post.created_at)}</time>
+                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG-u-nu-latn")}>{formatPostTime(post.created_at)}</time>
                   </div>
                 </div>
               </div>
@@ -609,16 +619,16 @@ export function FeedClient({ user }: { user: SessionUser }) {
             {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt={`صورة مرفقة بمنشور ${post.display_name}`} loading="lazy"/></a>}
 
             {(post.like_count > 0 || post.comment_count > 0) && <div className="post-engagement-summary">
-              <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={11}/></span>{post.like_count.toLocaleString("ar-EG")} إعجاب</span>
-              <button type="button" className="post-comment-summary" onClick={() => void toggleComments(post)}>{post.comment_count.toLocaleString("ar-EG")} تعليقات وردود</button>
+              <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={11}/></span>{post.like_count.toLocaleString("ar-EG-u-nu-latn")} إعجاب</span>
+              <button type="button" className="post-comment-summary" onClick={() => void toggleComments(post)}>{post.comment_count.toLocaleString("ar-EG-u-nu-latn")} تعليقات وردود</button>
             </div>}
 
             <div className="post-action-bar post-action-bar-compact">
               <button type="button" className={`post-action post-action-professional ${post.has_liked ? "liked" : ""}`} onClick={() => void toggleLike(post)} disabled={busyLikePostId === post.id} aria-pressed={post.has_liked}>
-                <ThumbsUp size={15}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span><b>{post.like_count.toLocaleString("ar-EG")}</b>
+                <ThumbsUp size={15}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span><b>{post.like_count.toLocaleString("ar-EG-u-nu-latn")}</b>
               </button>
               <button type="button" className={`post-action post-action-professional ${openComments === post.id ? "selected" : ""}`} onClick={() => void toggleComments(post)} aria-expanded={openComments === post.id}>
-                <MessageCircle size={15}/><span>تعليق</span><b>{post.comment_count.toLocaleString("ar-EG")}</b>
+                <MessageCircle size={15}/><span>تعليق</span><b>{post.comment_count.toLocaleString("ar-EG-u-nu-latn")}</b>
               </button>
               <button type="button" className="post-action post-action-professional post-share-action" onClick={() => void sharePost(post)}>
                 <Share2 size={15}/><span>مشاركة</span>
@@ -633,7 +643,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </div>}
 
             {openComments === post.id && <section className="comments comments-professional" aria-label="تعليقات المنشور">
-              <div className="comments-heading"><div><h3>التعليقات</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG")} تعليقات وردود</span></div></div>
+              <div className="comments-heading"><div><h3>التعليقات</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG-u-nu-latn")} تعليقات وردود</span></div></div>
               {!comments[post.id] ? <div className="comments-loading">بنحمّل التعليقات…</div> : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
               {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء <X size={13}/></button></div>}
               <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>

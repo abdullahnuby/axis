@@ -144,19 +144,20 @@ await check("mobile feed uses a compact composer and a single dropdown filter", 
   assert.match(styles, /\.compose-compact-bar/);
   assert.match(styles, /\.compose-expanded-content\.is-open/);
   assert.match(styles, /\.feed-specialty-filter/);
-  assert.match(feed, /feed-event-strip/);
+  assert.doesNotMatch(feed, /feed-event-strip/);
   assert.match(feed, /compose-input-row/);
   assert.match(feed, /post-action-bar-compact/);
   assert.match(feed, /id="compose"/);
-  assert.match(shell, /href="\/feed#compose"/);
+  assert.match(shell, /<MobileCreatePostButton\/>/);
   assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
   assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
 });
 await check("mobile navigation includes a dedicated create-post action", async () => {
   const shell = await read("src/components/AppShell.tsx");
-  assert.match(shell, /href="\/feed#compose"/);
-  assert.match(shell, /mobile-compose-link/);
-  assert.match(shell, /<Plus size=\{21\}/);
+  assert.match(shell, /<MobileCreatePostButton\/>/);
+  const action = await read("src/components/MobileCreatePostButton.tsx");
+  assert.match(action, /mobile-compose-link/);
+  assert.match(action, /<Plus size=\{21\}/);
   assert.match(await read("src/components/FeedClient.tsx"), /id="compose"/);
 });
 await check("directory, groups, direct messaging, and account recovery are wired into navigation", async () => {
@@ -307,7 +308,7 @@ await check("logo assets are used contextually, not as a repeated board image", 
   const styles = await read("src/app/globals.css");
   assert.match(brand, /"compact" \| "lockup" \| "mark"/);
   assert.match(homepage, /Brand variant="lockup" light/);
-  assert.match(header, /<Brand \/>/);
+  assert.match(header, /<Brand href="\/feed" \/>/);
   assert.match(profile, /AxisLogoMark className="profile-cover-mark"/);
   assert.match(admin, /<Brand admin light \/>/);
   assert.match(styles, /--blue:#007BFF/);
@@ -463,6 +464,63 @@ await check("public privacy, terms, and community-guideline pages are linked acr
   assert.match(privacy, /مستندات التحقق/);
   assert.match(terms, /مسؤولية المحتوى/);
   assert.match(guidelines, /سرية المشروعات والعملاء/);
+});
+
+
+await check("authenticated users never see the welcome page again until logout", async () => {
+  const home = await read("src/app/page.tsx");
+  const brand = await read("src/components/Brand.tsx");
+  const header = await read("src/components/AppHeader.tsx");
+  assert.match(home, /if \(user\) redirect\(/);
+  assert.match(header, /<Brand href="\/feed" \/>/);
+  assert.match(brand, /href=\{href \|\| \(admin \? "\/admin" : "\/"\)\}/);
+});
+await check("login remember-me controls whether the session cookie persists", async () => {
+  const form = await read("src/components/AuthForm.tsx");
+  const login = await read("src/app/api/auth/login/route.ts");
+  const auth = await read("src/lib/auth.ts");
+  assert.match(form, /تذكرني على هذا الجهاز/);
+  assert.match(form, /rememberMe: e\.target\.checked/);
+  assert.match(login, /body\.rememberMe === true/);
+  assert.match(login, /createSession\(user\.id, rememberMe\)/);
+  assert.match(auth, /rememberMe \? \`\$\{REMEMBER_SESSION_DAYS\} days\` : \`\$\{BROWSER_SESSION_HOURS\} hours\`/);
+  assert.match(auth, /rememberMe \? \{ maxAge:/);
+  assert.doesNotMatch(auth, /maxAge: REMEMBER_SESSION_DAYS[^,]*,\s*\}\);/);
+});
+await check("the central mobile action opens and focuses the feed composer", async () => {
+  const shell = await read("src/components/AppShell.tsx");
+  const action = await read("src/components/MobileCreatePostButton.tsx");
+  const feed = await read("src/components/FeedClient.tsx");
+  assert.match(shell, /<MobileCreatePostButton\/>/);
+  assert.match(action, /axis-open-composer/);
+  assert.match(action, /router\.push\("\/feed\?compose=1"\)/);
+  assert.match(feed, /window\.addEventListener\("axis-open-composer"/);
+  assert.match(feed, /getElementById\("feed-post-body"\)\?\.focus/);
+});
+await check("the feed no longer fetches or displays events/news widgets", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  const shell = await read("src/components/AppShell.tsx");
+  assert.doesNotMatch(feed, /fetch\("\/api\/events"/);
+  assert.doesNotMatch(feed, /feed-event-strip|فعاليات وأخبار/);
+  assert.doesNotMatch(shell, /فعاليات وأخبار|EngineeringEvent/);
+});
+await check("all Arabic-locale number formatting forces Latin digits and numeral literals are Western", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const scan = async dir => {
+    const out = [];
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) out.push(...await scan(full));
+      else if (/\.(tsx?|jsx?)$/.test(entry.name)) out.push([full, await readFile(full, "utf8")]);
+    }
+    return out;
+  };
+  const sources = await scan(path.join(root, "src"));
+  const arabicDigits = /[٠-٩]/u;
+  for (const [file, source] of sources) {
+    assert.doesNotMatch(source, arabicDigits, `Arabic-Indic digits remain in ${file}`);
+    assert.doesNotMatch(source, /toLocale(?:String|DateString|TimeString)\(['"]ar-EG['"]/, `Arabic locale formatting lacks Latin-digit extension in ${file}`);
+  }
 });
 
 console.log(`AXIS static smoke checks: ${checks.length} passed`);

@@ -101,3 +101,15 @@
 - Added public privacy, terms-of-use, and community-guideline pages, linked from the landing page and authenticated app footer. The text is an operational draft and requires local legal review before broad public launch.
 - Bumped the public-static service-worker cache from v3 to v4 so existing installs replace the cached set on the next update.
 - Added regression coverage for public policy pages and their app-wide links.
+
+
+## 2026-10-25 — Session navigation and feed cleanup
+
+- Authenticated visits to `/` now redirect to `/feed` (or `/verification` while membership is not yet verified); the welcome page is for signed-out visitors. The application header logo links directly to `/feed`.
+- Standard login includes an unchecked-by-default “تذكرني على هذا الجهاز” option. Unchecked login uses a browser-session cookie; checked login uses a persistent cookie with a 30-day lifetime. Registration and admin login remain browser-session cookies by default.
+- Changed the mobile bottom-center action from a decorative navigation link named “مشاركة” to a working “إنشاء” button that opens and focuses the feed composer from any app page.
+- Removed the feed event/news strip and the events/news card from the common app sidebar. The feed no longer makes an events API call just to render posts.
+- Replaced Arabic-Indic digits with Western digits in UI literals and applied the `ar-EG-u-nu-latn` locale for formatted counts and dates across TypeScript/TSX sources.
+- Changed the PWA start URL to `/` so session-aware routing can choose the welcome page or feed, and bumped the service-worker cache to v5.
+- Added five regression checks covering home redirect, remembered sessions, the create-post action, event-strip removal, and Latin digits.
+- Validation: `npm test` (50 static checks) and `npm run pwa:check` (13 checks) pass; TypeScript syntax transpilation passes for 104 TS/TSX files. A full `tsc --noEmit` and Next production build were not run because project dependencies are not installed in this workspace.

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const admin = result.rows[0];
     if (!admin || !(await verifyPassword(password, admin.password_hash)) || !["admin", "reviewer", "moderator"].includes(admin.role) || admin.account_status !== "active") { await recordFailure(email, ip); return jsonError("بيانات الدخول غير صحيحة أو لا توجد صلاحية إدارية.", 401); }
     await query("DELETE FROM login_attempts WHERE identifier=$1 AND ip_address=$2", ["admin:" + email, ip]);
-    await createSession(admin.id);
+    await createSession(admin.id, false);
     return NextResponse.json({ ok: true, redirect: "/admin" });
   } catch (error) { console.error("AXIS admin login error", (error as { code?: string })?.code || "database_error"); return jsonError("تعذر تسجيل الدخول للإدارة.", 500); }
 }

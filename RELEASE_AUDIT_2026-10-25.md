@@ -61,3 +61,13 @@
 ## قرار الجاهزية
 
 **الحالة: مرشح لاختبار Preview/دعوة مغلقة بعد build ونشر ناجحين، وليس جاهزًا بعد لفتح التسجيل العام.**
+
+## Follow-up UX/session pass — 2026-10-25
+
+- Signed-in access to `/` redirects to the feed (or membership verification while pending), and the authenticated logo links to `/feed`.
+- Login has an unchecked-by-default remember-me option. Unchecked sign-ins use a browser-session cookie and 24-hour server expiry; checked sign-ins use a persistent 30-day cookie. Registration/admin sessions default to browser-session cookies.
+- The central mobile nav is now a functional `إنشاء` action that expands and focuses the composer rather than a decorative link to the feed.
+- Removed the feed events/news strip and common-sidebar event panel; feed rendering no longer calls `/api/events`.
+- All TypeScript/TSX UI numeric literals are Western digits; formatted counts/dates use `ar-EG-u-nu-latn`.
+- PWA `start_url` now points to `/` for session-aware routing and service-worker static cache version is v5.
+- Latest validation: 50 static smoke checks passed; 13 PWA checks passed; TypeScript syntax transpilation passed across 104 files. Full `tsc --noEmit` cannot be validated in this workspace because project dependencies and type declarations are absent; Next production build and browser E2E have not been run. These changes are not deployed.

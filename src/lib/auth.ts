@@ -6,7 +6,8 @@ import { hashToken, randomToken } from "@/lib/crypto";
 import type { SessionUser } from "@/lib/types";
 
 export const SESSION_COOKIE = "axis_session";
-const SESSION_DAYS = 7;
+const REMEMBER_SESSION_DAYS = 30;
+const BROWSER_SESSION_HOURS = 24;
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
@@ -25,17 +26,20 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   return result.rows[0] ?? null;
 }
 
-export async function createSession(userId: string): Promise<void> {
+export async function createSession(userId: string, rememberMe = false): Promise<void> {
   const token = randomToken();
-  await query("INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1, $2, now() + interval '7 days')", [userId, hashToken(token)]);
+  const expiresAtInterval = rememberMe ? `${REMEMBER_SESSION_DAYS} days` : `${BROWSER_SESSION_HOURS} hours`;
+  await query("INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1, $2, now() + $3::interval)", [userId, hashToken(token), expiresAtInterval]);
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, token, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     path: "/",
-    maxAge: SESSION_DAYS * 24 * 60 * 60,
-  });
+    ...(rememberMe ? { maxAge: REMEMBER_SESSION_DAYS * 24 * 60 * 60 } : {}),
+  };
+  // Without maxAge/expires the browser receives a session cookie and should clear it when closed.
+  cookieStore.set(SESSION_COOKIE, token, cookieOptions);
 }
 
 export async function destroySession(): Promise<void> {

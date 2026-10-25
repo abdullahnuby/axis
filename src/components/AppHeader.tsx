@@ -42,7 +42,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
   }
   return <header className={`topbar app-topbar ${searchOpen ? "search-open" : ""}`}>
     <div className="topbar-inner">
-      <Brand />
+      <Brand href="/feed" />
       <form action="/feed" className="search-box header-search" role="search">
         <Search size={18} className="muted" aria-hidden="true" />
         <input aria-label="بحث" name="q" placeholder="دوّر على منشور أو مهندس" defaultValue="" />
@@ -55,7 +55,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
         </button>
         <Link className="icon-btn header-notification" aria-label={unreadCount > 0 ? `الإشعارات، ${unreadCount} غير مقروء` : "الإشعارات"} href="/notifications" title="الإشعارات">
           <Bell size={18}/>
-          {unreadCount > 0 && <span className="notification-count-badge" aria-label={`${unreadCount} إشعارات غير مقروءة`}>{unreadCount > 99 ? "99+" : unreadCount.toLocaleString("ar-EG")}</span>}
+          {unreadCount > 0 && <span className="notification-count-badge" aria-label={`${unreadCount} إشعارات غير مقروءة`}>{unreadCount > 99 ? "99+" : unreadCount.toLocaleString("ar-EG-u-nu-latn")}</span>}
         </Link>
         <Link href="/profile" className="user-name header-profile" style={{ paddingInline: 4 }} aria-label="حسابي">
           <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="sm"/><span className="desktop-only">{user.display_name}</span>

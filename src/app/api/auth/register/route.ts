@@ -27,7 +27,7 @@ export async function POST(request: Request) {
        VALUES ($1,$2,$3,$4, (ARRAY['#007BFF','#236B6B','#6650A4','#9B5D27'])[floor(random()*4+1)::int])
        RETURNING id`, [email, username, displayName, passwordHash]);
     const userId = result.rows[0].id;
-    await createSession(userId);
+    await createSession(userId, false);
     // Send confirmation automatically when the deployment has email configured.
     // Signup should still succeed if the provider has a transient delivery error.
     if (mailConfigured()) {

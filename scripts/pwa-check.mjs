@@ -19,7 +19,7 @@ const appIcon = await read("public/icons/axis-app-icon.svg");
 const installButton = await read("src/components/PWAInstallButton.tsx");
 const header = await read("src/components/AppHeader.tsx");
 const settings = await read("src/components/SettingsClient.tsx");
-check("manifest declares standalone RTL app and opens at the feed", () => { assert.equal(manifest.display, "standalone"); assert.equal(manifest.dir, "rtl"); assert.equal(manifest.icons.length >= 3, true); assert.equal(manifest.start_url, "/feed"); });
+check("manifest declares standalone RTL app and starts at root for session-aware routing", () => { assert.equal(manifest.display, "standalone"); assert.equal(manifest.dir, "rtl"); assert.equal(manifest.icons.length >= 3, true); assert.equal(manifest.start_url, "/"); });
 check("PWA theme and background match the AXIS palette", () => { assert.equal(manifest.theme_color, "#007BFF"); assert.equal(manifest.background_color, "#F8FCFF"); });
 check("service worker never caches API responses", () => assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/));
 check("service worker excludes private route caches", () => assert.match(sw, /url\.pathname\.startsWith\("\/admin"\)/));
@@ -31,7 +31,7 @@ check("install guidance is visible from the landing hero, header, and settings",
 check("iPhone install guide explains Add to Home Screen, Edit Actions, and browser-menu limits", () => { assert.match(installButton, /إضافة إلى الشاشة الرئيسية/); assert.match(installButton, /تعديل الإجراءات/); assert.match(installButton, /قائمة iOS نفسها/); });
 
 check("app icons use the supplied blue/cyan AXIS mark", () => { assert.match(appIcon, /#007BFF/); assert.match(appIcon, /#00C4CC/); });
-check("service worker cache version changed for new brand assets", () => { assert.match(sw, /CACHE_NAME = `\$\{CACHE_PREFIX\}v4`/); assert.match(sw, /axis-logo\.svg/); });
+check("service worker cache version changed for new brand assets", () => { assert.match(sw, /CACHE_NAME = `\$\{CACHE_PREFIX\}v5`/); assert.match(sw, /axis-logo\.svg/); });
 check("responsive glossary uses mobile-safe grid class", () => assert.match(homepage, /features glossary-grid/));
 check("regular login routes staff users to the platform feed", () => assert.match(login, /\? "\/feed" : "\/verification"/));
 console.log(`AXIS PWA checks: ${checks.length} passed`);

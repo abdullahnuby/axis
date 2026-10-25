@@ -44,10 +44,10 @@ const badgeLabels = new Map<string, string>(BADGE_OPTIONS.map((badge) => [badge.
 const levelDescriptions = new Map(GLOSSARY.map((item) => [item.code, item.description]));
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ar-EG", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
 }
 function formatCount(value: number) {
-  return new Intl.NumberFormat("ar-EG", { notation: "compact", maximumFractionDigits: 1 }).format(value || 0);
+  return new Intl.NumberFormat("ar-EG-u-nu-latn", { notation: "compact", maximumFractionDigits: 1 }).format(value || 0);
 }
 
 export function ProfileClient({ initialUser, initialPosts }: { initialUser: SessionUser; initialPosts: ProfilePostPreview[] }) {
@@ -289,7 +289,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
             {isMember ? <div className="profile-credential-list">
               <div className="profile-credential-row"><span className="profile-credential-label">المستوى المهني</span><span className="profile-credential-value"><span className="pill navy">{user.seniority_code}</span>{levelLabels[user.seniority_code] || "مستوى مهني"}</span>{levelDescriptions.has(user.seniority_code) ? <p>{levelDescriptions.get(user.seniority_code)}</p> : null}</div>
               {user.job_title ? <div className="profile-credential-row"><span className="profile-credential-label">المسمى الوظيفي</span><span className="profile-credential-value"><span className="pill gold">{user.verified_badges.includes("PM") ? "PM" : "موثّق"}</span>{user.job_title}</span></div> : null}
-              {user.approved_years != null ? <div className="profile-credential-row"><span className="profile-credential-label">الخبرة المعتمدة</span><strong>{Number(user.approved_years).toLocaleString("ar-EG")} سنوات</strong></div> : null}
+              {user.approved_years != null ? <div className="profile-credential-row"><span className="profile-credential-label">الخبرة المعتمدة</span><strong>{Number(user.approved_years).toLocaleString("ar-EG-u-nu-latn")} سنوات</strong></div> : null}
               <div className="profile-credential-row"><span className="profile-credential-label">المؤهلات والشهادات</span>{approvedBadges.length ? <div className="profile-verified-qualifications">{approvedBadges.map((code) => <div className="profile-qualification" key={code}><span className="pill navy">{code}</span><span>{badgeLabels.get(code)}</span></div>)}</div> : <p className="profile-no-qualifications">مفيش مؤهلات إضافية تم اعتمادها لعرضها دلوقتي.</p>}</div>
             </div> : <div className="profile-admin-note"><ShieldCheck size={22}/><div><strong>حساب إداري</strong><p>هذا الحساب مخصص لإدارة المجتمع ولا يعرض اعتمادات هندسية شخصية.</p></div></div>}
           </section>
