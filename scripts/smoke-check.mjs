@@ -530,5 +530,39 @@ await check("profile camera icon import exists whenever profile media controls u
   assert.match(profile, /import \{[\s\S]*?\bCamera\b[\s\S]*?\} from "lucide-react"/);
 });
 
+await check("same-origin mutation guard supports stable Vercel aliases and safe Referer fallback", async () => {
+  const http = await read("src/lib/http.ts");
+  assert.match(http, /x-forwarded-host/);
+  assert.match(http, /APP_URL/);
+  assert.match(http, /trustedOrigins\.has\(new URL\(referer\)\.origin\.toLowerCase\(\)\)/);
+  assert.doesNotMatch(http, /if \(!origin\) return false/);
+  const mutation = await read("src/app/api/posts/[postId]/route.ts");
+  assert.match(mutation, /export async function PATCH/);
+  assert.match(mutation, /export async function DELETE/);
+  assert.match(mutation, /sameOrigin\(request\)/);
+});
+
+await check("post pinning is limited to one pinned post per personal profile or group", async () => {
+  const pin = await read("src/app/api/posts/[postId]/pin/route.ts");
+  const schema = await read("db/schema.sql");
+  const migration = await read("db/migrations/20261025_post_pinning.sql");
+  const feedRoute = await read("src/app/api/feed/route.ts");
+  const groupRoute = await read("src/app/api/groups/[groupId]/posts/route.ts");
+  const feed = await read("src/components/FeedClient.tsx");
+  const profile = await read("src/components/ProfileClient.tsx");
+  const groupClient = await read("src/components/GroupDetailClient.tsx");
+  assert.match(pin, /getApiUser\(\{ verified: true \}\)/);
+  assert.match(pin, /group_owner_id !== user!\.id/);
+  assert.match(pin, /UPDATE posts SET pinned_at=NULL/);
+  assert.match(schema, /ADD COLUMN IF NOT EXISTS pinned_at timestamptz/);
+  assert.match(migration, /posts_one_pinned_personal_per_author_idx/);
+  assert.match(migration, /posts_one_pinned_group_idx/);
+  assert.match(feedRoute, /p\.group_id,p\.pinned_at/);
+  assert.match(groupRoute, /p\.pinned_at DESC NULLS LAST/);
+  assert.match(feed, /togglePinPost/);
+  assert.match(profile, /toggleProfilePin/);
+  assert.match(groupClient, /togglePinGroupPost/);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);
