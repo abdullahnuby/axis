@@ -9,7 +9,7 @@ const exists = async (file) => { try { await access(path.join(root, file), fsCon
 const checks = [];
 async function check(name, fn) { await fn(); checks.push(name); }
 await check("core pages and admin entrypoints exist", async () => {
-  for (const file of ["src/app/page.tsx", "src/app/register/page.tsx", "src/app/login/page.tsx", "src/app/verification/page.tsx", "src/app/feed/page.tsx", "src/app/admin/page.tsx", "src/app/admin/login/page.tsx", "db/schema.sql"]) assert.equal(await exists(file), true, `${file} missing`);
+  for (const file of ["src/app/page.tsx", "src/app/register/page.tsx", "src/app/login/page.tsx", "src/app/verification/page.tsx", "src/app/(app)/feed/page.tsx", "src/app/admin/page.tsx", "src/app/admin/login/page.tsx", "db/schema.sql"]) assert.equal(await exists(file), true, `${file} missing`);
 });
 await check("one-sprint social graph, groups, direct messaging, recovery, and rate limits are database-backed", async () => {
   const schema = await read("db/schema.sql");
