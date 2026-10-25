@@ -1,3 +1,4 @@
+import { LocalizedContent } from "@/components/LanguageProvider";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Brand } from "@/components/Brand";
@@ -9,7 +10,7 @@ export type LegalSection = {
 };
 
 export function LegalPage({ title, intro, sections }: { title: string; intro: string; sections: LegalSection[] }) {
-  return <main className="legal-page" dir="rtl">
+  return <LocalizedContent>{<main className="legal-page" dir="rtl">
     <header className="topbar legal-topbar"><div className="topbar-inner"><Brand/><Link href="/" className="btn btn-small"><ArrowRight size={15}/> الصفحة الرئيسية</Link></div></header>
     <div className="container legal-container">
       <div className="legal-eyebrow"><ShieldCheck size={16}/> AXIS · مساحة خاصة للمهندسين</div>
@@ -25,5 +26,5 @@ export function LegalPage({ title, intro, sections }: { title: string; intro: st
       </div>
       <nav className="legal-links" aria-label="سياسات AXIS"><Link href="/privacy">الخصوصية</Link><Link href="/terms">شروط الاستخدام</Link><Link href="/community-guidelines">قواعد المجتمع</Link></nav>
     </div>
-  </main>;
+  </main>}</LocalizedContent>;
 }
