@@ -36,15 +36,15 @@ assert.equal(dictionary["مساحة للمهندسين لتبادل الخبرا
 assert.ok(Object.values(dictionary).every((value) => typeof value === "string"), "all locale entries must have string values");
 assert.ok(Object.values(dictionary).every((value) => !/[\u0600-\u06FF]/u.test(value)), "English locale values must not contain Arabic script");
 
-assert.match(languageProvider, /document\.documentElement\.lang = locale/);
+assert.match(languageProvider, /document\.documentElement\.lang = localeState/);
 assert.match(languageProvider, /usePathname/);
 assert.match(languageProvider, /document\.title = translateArabicText\(original\.title\)/);
 assert.match(languageProvider, /descriptionMeta\.content = translateArabicText\(original\.description\)/);
 assert.match(landing, /<LocalizedContent>\{<main/);
 assert.doesNotMatch(legalPage, /<main className="legal-page" dir="rtl">/);
-assert.match(languageProvider, /document\.documentElement\.dir = locale === "ar" \? "rtl" : "ltr"/);
+assert.match(languageProvider, /document\.documentElement\.dir = localeState === "ar" \? "rtl" : "ltr"/);
 assert.match(languageProvider, /localStorage\.getItem\("axis-locale"\)/);
-assert.match(languageProvider, /localStorage\.setItem\("axis-locale", locale\)/);
+assert.match(languageProvider, /localStorage\.setItem\("axis-locale", localeState\)/);
 assert.match(languageProvider, /hasUserContentBoundary/);
 assert.match(languageProvider, /no-translate/);
 assert.doesNotMatch(languageProvider, /MutationObserver|document\.body\.innerText|querySelectorAll\(/);
