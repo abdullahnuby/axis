@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowLeft, ArrowUpLeft, BadgeCheck, BriefcaseBusiness, Check,
-  CheckCircle2, ChevronLeft, LockKeyhole, MessageCircle, MessagesSquare,
-  ShieldCheck, UsersRound, Workflow, FileCheck2, Fingerprint, EyeOff,
+  ArrowLeft, ArrowUpLeft, ChevronLeft, LockKeyhole, MessagesSquare,
+  ShieldCheck, Workflow, FileCheck2, Fingerprint, EyeOff,
 } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import { CommunityBlueprint } from "@/components/CommunityBlueprint";
