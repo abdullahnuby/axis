@@ -687,53 +687,7 @@ export const AR_TO_EN: Record<string, string> = {
   "العودة إلى AXIS": "Back to AXIS",
   "AXIS — مجتمع المهندسين": "AXIS — Engineering Community",
   "مساحة للمهندسين لتبادل الخبرات والأسئلة وتجارب مواقع العمل داخل مجتمع بعضوية موثّقة.": "A verified-membership community for engineers to share experience, questions, and site-work insights.",
-  "بعد إنشاء حسابك، ابعت إثبات العضوية علشان نقلّل دخول حسابات من برّه المجال. خليك عارف إن البوستات والتعليقات بتظهر باسم حسابك داخل AXIS، فبلاش تشارك أسرار شغل أو بيانات حساسة.": "After creating your account, submit proof of membership to help keep unrelated accounts out. Posts and comments appear under your AXIS account name, so do not share work secrets or sensitive information.",};
-
-export function translateArabicText(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return value;
-  const direct = AR_TO_EN[trimmed];
-  if (direct) return value.replace(trimmed, direct);
-
-  let metaTitleMatch = trimmed.match(/^(.+?)(?: \| AXIS)+$/);
-  if (metaTitleMatch && AR_TO_EN[metaTitleMatch[1]]) {
-    return value.replace(trimmed, AR_TO_EN[metaTitleMatch[1]] + " | AXIS");
-  }
-
-  let match = trimmed.match(/^نتائج البحث عن «(.+)»$/);
-  if (match) return value.replace(trimmed, "Search results for “" + match[1] + "”");
-  match = trimmed.match(/^عضو منذ (.+)$/);
-  if (match) return value.replace(trimmed, "Member since " + match[1]);
-  match = trimmed.match(/^تخصصي: (.+)$/);
-  if (match) return value.replace(trimmed, "My specialty: " + match[1]);
-  match = trimmed.match(/^تخصص (.+)$/);
-  if (match) return value.replace(trimmed, "Specialty: " + match[1]);
-  match = trimmed.match(/^تخصص: (.+)$/);
-  if (match) return value.replace(trimmed, "Specialty: " + match[1]);
-  match = trimmed.match(/^أنشأها (.+)$/);
-  if (match) return value.replace(trimmed, "Created by " + match[1]);
-  match = trimmed.match(/^شارك منشور (.+)$/);
-  if (match) return value.replace(trimmed, "Shared a post by " + match[1]);
-  match = trimmed.match(/^مشاركات (.+)$/);
-  if (match) return value.replace(trimmed, "Posts by " + match[1]);
-  match = trimmed.match(/^منذ (\d+)\s*د$/);
-  if (match) return value.replace(trimmed, match[1] + " min ago");
-  match = trimmed.match(/^منذ (\d+)\s*س$/);
-  if (match) return value.replace(trimmed, match[1] + " hr ago");
-  match = trimmed.match(/^منذ (\d+)\s*يوم$/);
-  if (match) return value.replace(trimmed, match[1] + " days ago");
-  match = trimmed.match(/^(\d+)\s+أحرف على الأقل$/);
-  if (match) return value.replace(trimmed, match[1] + " characters minimum");
-  match = trimmed.match(/^حساب @(.+)$/);
-  if (match) return value.replace(trimmed, "Account @" + match[1]);
-  match = trimmed.match(/^التعليقات\s*·\s*(.*)$/);
-  if (match) return value.replace(trimmed, "Comments · " + match[1]);
-  match = trimmed.match(/^متأكد إنك عايز توقف حساب (.+)؟ هيتسجل خروجه من الجلسات الحالية\\.?$/);
-  if (match) return value.replace(trimmed, "Suspend " + match[1] + "? They'll be signed out of all active sessions.");
-  match = trimmed.match(/^ده إجراء فعلي: (.+)\\. مش هينفع التراجع عنه من لوحة البلاغات\\. متأكد؟$/);
-  if (match) return value.replace(trimmed, "You're about to " + translateArabicText(match[1]).toLowerCase() + ". This can't be undone from the report panel. Continue?");
-  return value;
-}
+  "بعد إنشاء حسابك، ابعت إثبات العضوية علشان نقلّل دخول حسابات من برّه المجال. خليك عارف إن البوستات والتعليقات بتظهر باسم حسابك داخل AXIS، فبلاش تشارك أسرار شغل أو بيانات حساسة.": "After creating your account, submit proof of membership to help keep unrelated accounts out. Posts and comments appear under your AXIS account name, so do not share work secrets or sensitive information.",
   "مش قادرين نحمّل المشاركات دلوقتي. جرّب تحدّث الصفحة.": "The feed couldn't load. Refresh the page and try again.",
   "ما قدرناش نثبت البوست في الرئيسية.": "We couldn't pin the post to the main feed.",
   "جارٍ التثبيت…": "Pinning…",
@@ -906,8 +860,54 @@ export function translateArabicText(value: string): string {
   "فعّلها علشان تعرف بنتيجة التوثيق والرسائل والتفاعلات من غير ما تفضل فاتح الموقع.": "Turn notifications on to hear about verification updates, messages, and activity without keeping AXIS open.",
   "إيقاف الإشعارات": "Turn off notifications",
   "تفعيل الإشعارات": "Enable notifications",
-  "AXIS · مساحة خاصة للمهندسين": "AXIS · A private community for engineers",
+  "AXIS · مساحة خاصة للمهندسين": "AXIS · A private community for engineers"
+};
 
+export function translateArabicText(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  const direct = AR_TO_EN[trimmed];
+  if (direct) return value.replace(trimmed, direct);
+
+  let metaTitleMatch = trimmed.match(/^(.+?)(?: \| AXIS)+$/);
+  if (metaTitleMatch && AR_TO_EN[metaTitleMatch[1]]) {
+    return value.replace(trimmed, AR_TO_EN[metaTitleMatch[1]] + " | AXIS");
+  }
+
+  let match = trimmed.match(/^نتائج البحث عن «(.+)»$/);
+  if (match) return value.replace(trimmed, "Search results for “" + match[1] + "”");
+  match = trimmed.match(/^عضو منذ (.+)$/);
+  if (match) return value.replace(trimmed, "Member since " + match[1]);
+  match = trimmed.match(/^تخصصي: (.+)$/);
+  if (match) return value.replace(trimmed, "My specialty: " + match[1]);
+  match = trimmed.match(/^تخصص (.+)$/);
+  if (match) return value.replace(trimmed, "Specialty: " + match[1]);
+  match = trimmed.match(/^تخصص: (.+)$/);
+  if (match) return value.replace(trimmed, "Specialty: " + match[1]);
+  match = trimmed.match(/^أنشأها (.+)$/);
+  if (match) return value.replace(trimmed, "Created by " + match[1]);
+  match = trimmed.match(/^شارك منشور (.+)$/);
+  if (match) return value.replace(trimmed, "Shared a post by " + match[1]);
+  match = trimmed.match(/^مشاركات (.+)$/);
+  if (match) return value.replace(trimmed, "Posts by " + match[1]);
+  match = trimmed.match(/^منذ (\d+)\s*د$/);
+  if (match) return value.replace(trimmed, match[1] + " min ago");
+  match = trimmed.match(/^منذ (\d+)\s*س$/);
+  if (match) return value.replace(trimmed, match[1] + " hr ago");
+  match = trimmed.match(/^منذ (\d+)\s*يوم$/);
+  if (match) return value.replace(trimmed, match[1] + " days ago");
+  match = trimmed.match(/^(\d+)\s+أحرف على الأقل$/);
+  if (match) return value.replace(trimmed, match[1] + " characters minimum");
+  match = trimmed.match(/^حساب @(.+)$/);
+  if (match) return value.replace(trimmed, "Account @" + match[1]);
+  match = trimmed.match(/^التعليقات\s*·\s*(.*)$/);
+  if (match) return value.replace(trimmed, "Comments · " + match[1]);
+  match = trimmed.match(/^متأكد إنك عايز توقف حساب (.+)؟ هيتسجل خروجه من الجلسات الحالية\\.?$/);
+  if (match) return value.replace(trimmed, "Suspend " + match[1] + "? They'll be signed out of all active sessions.");
+  match = trimmed.match(/^ده إجراء فعلي: (.+)\\. مش هينفع التراجع عنه من لوحة البلاغات\\. متأكد؟$/);
+  if (match) return value.replace(trimmed, "You're about to " + translateArabicText(match[1]).toLowerCase() + ". This can't be undone from the report panel. Continue?");
+  return value;
+}
 export function localizedConfirm(message: string): boolean {
   if (typeof window === "undefined") return false;
   const locale = document.documentElement.lang === "en" ? "en" : "ar";
