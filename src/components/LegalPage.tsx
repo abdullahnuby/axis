@@ -10,7 +10,7 @@ export type LegalSection = {
 };
 
 export function LegalPage({ title, intro, sections }: { title: string; intro: string; sections: LegalSection[] }) {
-  return <LocalizedContent>{<main className="legal-page" dir="rtl">
+  return <LocalizedContent>{<main className="legal-page">
     <header className="topbar legal-topbar"><div className="topbar-inner"><Brand/><Link href="/" className="btn btn-small"><ArrowRight size={15}/> الصفحة الرئيسية</Link></div></header>
     <div className="container legal-container">
       <div className="legal-eyebrow"><ShieldCheck size={16}/> AXIS · مساحة خاصة للمهندسين</div>

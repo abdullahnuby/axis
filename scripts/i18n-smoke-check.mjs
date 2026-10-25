@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
-const [dictionarySource, languageProvider, feed, messages, groupDetail, groupComments, groups, people, profile, publicProfile, avatar] =
+const [dictionarySource, languageProvider, feed, messages, groupDetail, groupComments, groups, people, profile, publicProfile, avatar, landing, legalPage] =
   await Promise.all([
     read("../src/lib/i18n.ts"),
     read("../src/components/LanguageProvider.tsx"),
@@ -15,6 +15,8 @@ const [dictionarySource, languageProvider, feed, messages, groupDetail, groupCom
     read("../src/components/ProfileClient.tsx"),
     read("../src/components/PublicProfileClient.tsx"),
     read("../src/components/UserAvatar.tsx"),
+    read("../src/app/page.tsx"),
+    read("../src/components/LegalPage.tsx"),
   ]);
 
 const dictionaryMatch = dictionarySource.match(
@@ -29,10 +31,17 @@ assert.ok(Object.keys(dictionary).length >= 800, "the UI needs a substantial cur
 assert.equal(rawKeys.length, new Set(rawKeys).size, "duplicate locale keys are not allowed");
 assert.equal(dictionary["ليه AXIS؟"], "Why AXIS?");
 assert.equal(dictionary["مساحة خاصة للمهندسين"], "A community built for engineers");
+assert.equal(dictionary["AXIS — مجتمع المهندسين"], "AXIS — Engineering Community");
+assert.equal(dictionary["مساحة للمهندسين لتبادل الخبرات والأسئلة وتجارب مواقع العمل داخل مجتمع بعضوية موثّقة."], "A verified-membership community for engineers to share experience, questions, and site-work insights.");
 assert.ok(Object.values(dictionary).every((value) => typeof value === "string"), "all locale entries must have string values");
 assert.ok(Object.values(dictionary).every((value) => !/[\u0600-\u06FF]/u.test(value)), "English locale values must not contain Arabic script");
 
 assert.match(languageProvider, /document\.documentElement\.lang = locale/);
+assert.match(languageProvider, /usePathname/);
+assert.match(languageProvider, /document\.title = translateArabicText\(original\.title\)/);
+assert.match(languageProvider, /descriptionMeta\.content = translateArabicText\(original\.description\)/);
+assert.match(landing, /<LocalizedContent>\{<main/);
+assert.doesNotMatch(legalPage, /<main className="legal-page" dir="rtl">/);
 assert.match(languageProvider, /document\.documentElement\.dir = locale === "ar" \? "rtl" : "ltr"/);
 assert.match(languageProvider, /localStorage\.getItem\("axis-locale"\)/);
 assert.match(languageProvider, /localStorage\.setItem\("axis-locale", locale\)/);

@@ -8,9 +8,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import { translateArabicText } from "@/lib/i18n";
 
 export type Locale = "ar" | "en";
@@ -85,6 +87,8 @@ export function useLanguage() {
 }
 
 export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>) {
+  const pathname = usePathname();
+  const originalMetadata = useRef(new Map<string, { title: string; description: string }>());
   const [locale, setLocale] = useState<Locale>("ar");
 
   useEffect(() => {
@@ -106,6 +110,33 @@ export function LanguageProvider({ children }: Readonly<{ children: ReactNode }>
       // The current session can still switch languages when storage is restricted.
     }
   }, [locale]);
+
+
+  useEffect(() => {
+    const pageKey = pathname || "/";
+    const descriptionMeta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    let original = originalMetadata.current.get(pageKey);
+
+    if (!original) {
+      original = {
+        title: document.title,
+        description: descriptionMeta?.content ?? "",
+      };
+      originalMetadata.current.set(pageKey, original);
+    }
+
+    if (locale === "en") {
+      document.title = translateArabicText(original.title);
+      if (descriptionMeta && original.description) {
+        descriptionMeta.content = translateArabicText(original.description);
+      }
+    } else {
+      document.title = original.title;
+      if (descriptionMeta && original.description) {
+        descriptionMeta.content = original.description;
+      }
+    }
+  }, [locale, pathname]);
 
   const contextValue = useMemo<LanguageContextValue>(() => ({
     locale,
