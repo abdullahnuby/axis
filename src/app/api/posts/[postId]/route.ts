@@ -13,7 +13,9 @@ async function loadAccessiblePost(postId: string, userId: string, role: string) 
   const existing = await query<ExistingPost>("SELECT author_id,image_data,shared_post_id,group_id FROM posts WHERE id=$1", [postId]);
   const post = existing.rows[0];
   if (!post) return null;
-  if (post.group_id && !["admin", "moderator"].includes(role)) {
+  // Let authors manage their own group posts even after leaving that group.
+  // Non-authors still need active membership unless they are moderators/admins.
+  if (post.group_id && post.author_id !== userId && !["admin", "moderator"].includes(role)) {
     const access = await query("SELECT 1 FROM group_members WHERE group_id=$1 AND user_id=$2 AND status='active'", [post.group_id, userId]);
     if (!access.rows.length) return null;
   }

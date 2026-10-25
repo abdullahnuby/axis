@@ -564,5 +564,19 @@ await check("post pinning is limited to one pinned post per personal profile or 
   assert.match(groupClient, /togglePinGroupPost/);
 });
 
+await check("authors can still edit or delete their group posts after leaving the group", async () => {
+  const route = await read("src/app/api/posts/[postId]/route.ts");
+  assert.match(route, /post\.group_id && post\.author_id !== userId/);
+  assert.match(route, /export async function PATCH/);
+  assert.match(route, /export async function DELETE/);
+});
+
+await check("mobile same-origin fallback accepts browser Fetch Metadata only when the request is same-origin", async () => {
+  const http = await read("src/lib/http.ts");
+  assert.match(http, /sec-fetch-site/);
+  assert.match(http, /=== "same-origin"/);
+  assert.match(http, /trustedOrigins\.has\(new URL\(request\.url\)\.origin\.toLowerCase\(\)\)/);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);

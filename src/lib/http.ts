@@ -35,10 +35,12 @@ export function sameOrigin(request: Request): boolean {
     const origin = request.headers.get("origin");
     if (origin) return trustedOrigins.has(new URL(origin).origin.toLowerCase());
 
-    // Some mobile browser contexts omit Origin. Only accept a matching Referer
-    // as a fallback; do not allow state-changing requests with neither header.
+    // Some installed mobile browsers omit Origin and may omit Referer too.
+    // Trust browser Fetch Metadata only for requests declared same-origin.
     const referer = request.headers.get("referer");
-    return referer ? trustedOrigins.has(new URL(referer).origin.toLowerCase()) : false;
+    if (referer) return trustedOrigins.has(new URL(referer).origin.toLowerCase());
+    return request.headers.get("sec-fetch-site") === "same-origin" &&
+      trustedOrigins.has(new URL(request.url).origin.toLowerCase());
   } catch {
     return false;
   }
