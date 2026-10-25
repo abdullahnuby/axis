@@ -294,6 +294,21 @@ await check("membership number is required while the membership card image is op
   assert.ok(upload.includes('if (file.size === 0 && file.name === "") return null'));
   assert.ok(admin.includes("لم تُرفق صورة كارنيه النقابة"));
 });
+await check("registered members without verification requests appear in the admin queue but cannot be approved prematurely", async () => {
+  const listApi = await read("src/app/api/admin/verifications/route.ts");
+  const reopenApi = await read("src/app/api/admin/members/[memberId]/reopen-verification/route.ts");
+  const overviewApi = await read("src/app/api/admin/overview/route.ts");
+  const admin = await read("src/components/AdminClient.tsx");
+  assert.ok(listApi.includes("not_submitted"));
+  assert.ok(listApi.includes("false AS request_exists"));
+  assert.ok(listApi.includes("NOT EXISTS (SELECT 1 FROM verification_requests vr WHERE vr.user_id=u.id)"));
+  assert.ok(reopenApi.includes("UPDATE users SET verification_status='needs_info'"));
+  assert.ok(reopenApi.includes("verification_requests WHERE user_id=$1"));
+  assert.ok(reopenApi.includes("verification_step_reopened"));
+  assert.ok(overviewApi.includes("NOT EXISTS (SELECT 1 FROM verification_requests vr WHERE vr.user_id=u.id)"));
+  assert.ok(admin.includes("إعادة فتح خطوة التوثيق"));
+  assert.ok(admin.includes("لا يمكن اعتماد العضوية من هذه الشاشة قبل أن يدخل العضو رقم النقابة ويرسل الطلب"));
+});
 await check("admin login is separate and rate limited", async () => {
   const page = await read("src/app/admin/login/page.tsx");
   const api = await read("src/app/api/admin/login/route.ts");
