@@ -15,9 +15,17 @@ Give the existing AXIS product a coherent, professional visual language across t
 
 ## Files changed
 
-- `src/app/globals.css`: appended the cohesive responsive design-system layer and screen-specific refinements.
-- `src/app/layout.tsx`: aligned the browser theme color with AXIS navy and removed viewport settings that blocked pinch-to-zoom.
-- `scripts/smoke-check.mjs`: added regression checks for the design tokens, responsive navigation, motion/accessibility styles, and zoom capability.
+- `src/app/page.tsx`: rebuilt the public landing page with a designed hero, onboarding path, transparent privacy disclosure, and CTA/footer.
+- `src/components/CommunityBlueprint.tsx`: custom SVG-based engineering illustration for the landing hero.
+- `src/components/AppShell.tsx`: reworked workspace navigation, member profile card, calculated profile completeness, and privacy/community guidance rails.
+- `src/components/FeedClient.tsx`: added member-space hero and strengthened post/card hierarchy.
+- `src/components/PeopleClient.tsx`, `GroupsClient.tsx`, `MessagesClient.tsx`, `NotificationsClient.tsx`: purpose-built directory, group, inbox, and activity-center headers with real state/counts.
+- `src/components/VerificationClient.tsx`: state-aware visual journey through membership data, review, and access.
+- `src/components/SettingsClient.tsx`: account-control introduction with actual email verification state.
+- `src/app/globals.css`: keeps the foundational design tokens and shared responsive styles.
+- `src/app/axis-experience.css`: separates bespoke screen compositions from the base stylesheet and is loaded after `globals.css`.
+- `src/app/layout.tsx`: loads the experience stylesheet, aligns browser theme color with AXIS navy, and keeps pinch-to-zoom enabled.
+- `scripts/smoke-check.mjs`: checks custom screen compositions, responsive styles, and zoom/accessibility behavior.
 - `CHANGELOG.md`: recorded the UI/UX refresh.
 - `.github/workflows/quality.yml`: added CI for `npm test` and `npm run typecheck` on the UI branch and pull requests.
 - `docs/AXIS_UI_UX_REDESIGN_2026-10-25.md`: this handoff and explicit privacy/product-scope notes.
@@ -30,8 +38,8 @@ The current implementation still renders posts under the member account identity
 
 ## Validation
 
-- **Vercel preview build:** completed with status `READY` for the UI and content changes at commit `9eea7cc0675ee9aed10ce6492e4b5d10eb6578b3`. Preview: https://axis-4rl21tgk1-abdullahelmassry-7339s-projects.vercel.app. Later changes are limited to documentation and CI trigger optimization.
-- **GitHub Actions:** the latest pull-request job for commit `9eea7cc0675ee9aed10ce6492e4b5d10eb6578b3` passed `npm test` and `npm run typecheck` (run `40206857659`).
-- **Static regression suite:** passed after refreshing stale copy assertions, restoring the missing `.env.example`, and adding checks for the responsive design tokens and accessible zoom.
-- **Live visual review on real desktop/iOS/Android devices:** not yet performed. Use the preview link on target devices to check spacing, fixed navigation, and auth/verification flows.
-- **Production alias:** intentionally untouched. Changes are isolated to branch `ui/axis-design-system-2026-10`.
+- **Current branch:** `ui/axis-design-system-2026-10`; review PR: https://github.com/abdullahnuby/axis/pull/1.
+- **Static regression suite:** the latest run for commit `68b40412fb0b973c27444d37bd466d330e9502b9` passed `npm test`; `npm run typecheck` was still running when this handoff was last checked.
+- **Vercel preview:** the current commit has a build in progress at https://axis-6b709wcah-abdullahelmassry-7339s-projects.vercel.app; confirm it reaches `READY` before treating this as a usable visual preview.
+- **Visual review on real desktop/iOS/Android devices:** not yet performed. Check directory card wrapping, group hero balance, message/notification count panels, verification progress steps, and fixed mobile navigation.
+- **Production alias:** intentionally untouched. These changes remain isolated from production.
