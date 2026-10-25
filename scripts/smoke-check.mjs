@@ -134,6 +134,7 @@ await check("feed post controls use real API actions and accessible states", asy
 await check("mobile feed uses a compact composer and a single dropdown filter", async () => {
   const feed = await read("src/components/FeedClient.tsx");
   const shell = await read("src/components/AppShell.tsx");
+  const nav = await read("src/components/ShellNav.tsx");
   const styles = await read("src/app/globals.css");
   assert.doesNotMatch(feed, /feed-mobile-filterbar/);
   assert.doesNotMatch(feed, /feed-filters-mobile|feed-filter-chip/);
@@ -148,12 +149,12 @@ await check("mobile feed uses a compact composer and a single dropdown filter", 
   assert.match(feed, /compose-input-row/);
   assert.match(feed, /post-action-bar-compact/);
   assert.match(feed, /id="compose"/);
-  assert.match(shell, /<MobileCreatePostButton\/>/);
+  assert.match(nav, /<MobileCreatePostButton\/>/);
   assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
   assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
 });
 await check("mobile navigation includes a dedicated create-post action", async () => {
-  const shell = await read("src/components/AppShell.tsx");
+  const shell = await read("src/components/ShellNav.tsx");
   assert.match(shell, /<MobileCreatePostButton\/>/);
   const action = await read("src/components/MobileCreatePostButton.tsx");
   assert.match(action, /mobile-compose-link/);
