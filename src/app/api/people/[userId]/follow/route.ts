@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, withTransaction } from "@/lib/db";
+import { sendPushToUser } from "@/lib/push";
 import { getApiUser, jsonError, sameOrigin } from "@/lib/http";
 import { consumeRateLimit, requestIpKey } from "@/lib/rate-limit";
 export const runtime = "nodejs";
@@ -12,6 +13,7 @@ export async function POST(request: Request, context: Ctx) {
   if (!UUID.test(userId)) return jsonError("حساب المهندس غير صالح.", 400);
   if (userId === user!.id) return jsonError("مش محتاج تتابع نفسك 🙂", 400);
   if (await consumeRateLimit("follow-user", `${requestIpKey(request)}:${user!.id}`, { limit: 80, windowMinutes: 60, blockMinutes: 30 })) return jsonError("نشاط متابعة كتير في وقت قصير. جرّب بعد شوية.", 429);
+  let pushRecipient: string | null = null;
   try {
     const result = await withTransaction(async client => {
       const target = await client.query<{ id: string; display_name: string }>(`SELECT id,display_name FROM users WHERE id=$1 AND account_status='active' AND (verification_status='verified' OR role IN ('admin','reviewer','moderator'))`, [userId]);
@@ -19,10 +21,12 @@ export async function POST(request: Request, context: Ctx) {
       const inserted = await client.query("INSERT INTO user_follows(follower_id,following_id) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING following_id", [user!.id, userId]);
       if (inserted.rowCount && inserted.rowCount > 0) {
         await client.query("INSERT INTO notifications(user_id,actor_id,kind,message,target_user_id) VALUES($1,$2,'follow',$3,$4)", [userId,user!.id,`${user!.display_name} بدأ يتابعك.`,user!.id]);
+        pushRecipient = userId;
       }
       const count = await client.query<{ count: number }>("SELECT count(*)::int AS count FROM user_follows WHERE following_id=$1", [userId]);
       return { following: true, followerCount: Number(count.rows[0]?.count || 0) };
     });
+    if (pushRecipient) await sendPushToUser(pushRecipient, { title: "متابع جديد على AXIS", body: "بدأ مهندس بمتابعتك على AXIS.", url: "/notifications" });
     return NextResponse.json(result);
   } catch (error) { const status = (error as { statusCode?: number }).statusCode || 500; return jsonError(error instanceof Error ? error.message : "ما قدرناش نتابع الحساب دلوقتي.", status); }
 }
