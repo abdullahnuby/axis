@@ -523,5 +523,11 @@ await check("all Arabic-locale number formatting forces Latin digits and numeral
   }
 });
 
+await check("profile camera icon import exists whenever profile media controls use Camera", async () => {
+  const profile = await read("src/components/ProfileClient.tsx");
+  assert.match(profile, /\bCamera\b/);
+  assert.match(profile, /import \{[\s\S]*?\bCamera\b[\s\S]*?\} from "lucide-react"/);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);
