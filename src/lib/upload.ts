@@ -12,6 +12,8 @@ function detectMime(buffer: Buffer): SafeUpload["mime"] | null {
 
 export async function parseSafeUpload(file: FormDataEntryValue | null, options: { allowPdf: boolean; maxBytes: number }): Promise<SafeUpload | null> {
   if (!file || typeof file === "string") return null;
+  // Browsers may include an empty File sentinel when no file was selected.
+  if (file.size === 0 && file.name === "") return null;
   if (file.size <= 0 || file.size > options.maxBytes || !allowed.has(file.type)) throw new Error(`حجم أو نوع الملف غير مسموح. الحد ${Math.round(options.maxBytes / 1_000_000 * 10) / 10} ميجابايت.`);
   if (!options.allowPdf && file.type === "application/pdf") throw new Error("هذا الحقل يقبل الصور فقط.");
   const buffer = Buffer.from(await file.arrayBuffer());
