@@ -43,7 +43,7 @@ function localizeTextNode(node: Text, locale: Locale) {
 }
 
 function localizeAttributes(element: Element, locale: Locale) {
-  if (shouldSkip(element)) return;
+  if (element.closest('[data-locale-switcher], script, style, .post-body, .message-text, .message-content, [data-user-content="true"]')) return;
   const attributes = ["placeholder", "title", "aria-label"];
   if (element.matches('meta[name="description"], meta[property="og:description"]')) attributes.push("content");
   let originals = originalAttributes.get(element);
