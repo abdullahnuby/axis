@@ -520,6 +520,7 @@ await check("all Arabic-locale number formatting forces Latin digits and numeral
   for (const [file, source] of sources) {
     assert.doesNotMatch(source, arabicDigits, `Arabic-Indic digits remain in ${file}`);
     assert.doesNotMatch(source, /toLocale(?:String|DateString|TimeString)\(['"]ar-EG['"]/, `Arabic locale formatting lacks Latin-digit extension in ${file}`);
+    assert.doesNotMatch(source, /u-nu-latn-u-nu-latn/, `Duplicated Unicode number-format extension found in ${file}`);
   }
 });
 
