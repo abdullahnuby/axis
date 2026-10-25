@@ -242,10 +242,10 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
             <div className="form-row"><label className="label" htmlFor="profile-name">اسم الظهور</label><input className="field" id="profile-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required minLength={2} maxLength={80}/></div>
             <div className="form-row"><label className="label" htmlFor="profile-specialty">التخصص</label><select className="field" id="profile-specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)}><option value="">اختار تخصصك</option>{SPECIALTIES.map((value) => <option key={value}>{value}</option>)}</select></div>
           </div>
-          <div className="form-row"><label className="label" htmlFor="profile-bio">نبذة مهنية قصيرة</label><textarea className="field" id="profile-bio" value={bio} onChange={(e) => setBio(e.target.value)} maxLength={600} placeholder="احكيلنا عن خبرتك والحاجات اللي بتهتم بيها…"/><span className="tiny muted">{bio.length}/600 حرفًا</span></div>
+          <div className="form-row"><label className="label" htmlFor="profile-bio">نبذة عنك</label><textarea className="field" id="profile-bio" value={bio} onChange={(e) => setBio(e.target.value)} maxLength={600} placeholder="احكيلنا شوية عنك وعن الحاجات اللي بتحب تتكلم فيها…"/><span className="tiny muted">{bio.length}/600 حرفًا</span></div>
           <div className="row profile-edit-actions"><button className="btn btn-primary" disabled={busy} type="submit"><Save size={16}/>{busy ? "جارٍ الحفظ…" : "حفظ التغييرات"}</button><button className="btn" type="button" disabled={busy} onClick={() => { setDisplayName(user.display_name); setSpecialty(user.specialty || ""); setBio(user.bio || ""); setEditing(false); }}>إلغاء</button></div>
         </form>
-        <p className="profile-security-note"><LockKeyhole size={15}/> سنوات الخبرة والشارات المهنية بيأكدها فريق AXIS بعد مراجعة المستندات، علشان المعلومات تفضل موثوقة.</p>
+        <p className="profile-security-note"><LockKeyhole size={15}/> بيانات التحقق بتظهر بعد مراجعتها، علشان الأعضاء يعرفوا إيه اللي اتأكدنا منه.</p>
       </section>}
 
       <div className="profile-content-grid">
@@ -256,7 +256,7 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
           </section>
 
           <section className="profile-posts-section">
-            <div className="profile-section-heading profile-posts-heading"><div><h2 className="section-title">مشاركاتي</h2><p className="small muted">كل اللي شاركته مع زملائك هتلاقيه هنا.</p></div><span className="pill navy">{formatCount(posts.length)} منشور</span></div>
+            <div className="profile-section-heading profile-posts-heading"><div><h2 className="section-title">بوستاتي</h2><p className="small muted">كل البوستات اللي نزلتها هتلاقيها هنا.</p></div><span className="pill navy">{formatCount(posts.length)} منشور</span></div>
             {posts.length ? <div className="profile-post-list">{posts.map((post) => <article key={post.id} className="card profile-post-card">
               <div className="profile-post-meta"><span>{post.specialty || user.specialty || "هندسة"}</span><span>·</span><time dateTime={post.created_at}>{formatDate(post.created_at)}</time></div>
               <div className="profile-post-manage-actions">
@@ -279,21 +279,21 @@ export function ProfileClient({ initialUser, initialPosts }: { initialUser: Sess
               </div>}
               {post.has_image ? <a className="profile-post-image-link" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح صورة المنشور"><img className="profile-post-image" src={`/api/posts/${post.id}/image`} alt="صورة مرفقة بالمنشور" loading="lazy"/></a> : null}
               <div className="profile-post-stats"><span><ThumbsUp size={14}/>{formatCount(post.like_count)} إعجاب</span><span><MessageCircle size={14}/>{formatCount(post.comment_count)} تعليق</span><Link className="btn btn-small" href={`/feed?post=${encodeURIComponent(post.id)}`}>عرض النقاش</Link></div>
-            </article>)}</div> : <div className="card profile-empty-posts"><div className="profile-empty-icon"><MessageCircle size={22}/></div><h3>لسه ما شاركتش حاجة</h3><p className="small muted">ابدأ بسؤال من الشغل أو احكيلنا عن تجربة ممكن تفيد زملاءك.</p><Link href="/feed#compose" className="btn btn-primary btn-small">أول مشاركة ليك</Link></div>}
+            </article>)}</div> : <div className="card profile-empty-posts"><div className="profile-empty-icon"><MessageCircle size={22}/></div><h3>لسه ما شاركتش حاجة</h3><p className="small muted">ابدأ بسؤال، موقف حصل معاك، أو موضوع حابب تسمع رأي الناس فيه.</p><Link href="/feed#compose" className="btn btn-primary btn-small">أول بوست ليك</Link></div>}
           </section>
         </div>
 
         <aside className="profile-side-column">
           <section className="card profile-credentials-card">
-            <div className="profile-section-heading"><div><h2 className="section-title">الاعتمادات المهنية</h2><p className="small muted">البيانات التي تمت مراجعتها فقط.</p></div><GraduationCap size={21} className="muted"/></div>
+            <div className="profile-section-heading"><div><h2 className="section-title">معلومات متوثّقة</h2><p className="small muted">اللي تم التأكد منه بس.</p></div><GraduationCap size={21} className="muted"/></div>
             {isMember ? <div className="profile-credential-list">
-              <div className="profile-credential-row"><span className="profile-credential-label">المستوى المهني</span><span className="profile-credential-value"><span className="pill navy">{user.seniority_code}</span>{levelLabels[user.seniority_code] || "مستوى مهني"}</span>{levelDescriptions.has(user.seniority_code) ? <p>{levelDescriptions.get(user.seniority_code)}</p> : null}</div>
+              <div className="profile-credential-row"><span className="profile-credential-label">مستوى الخبرة</span><span className="profile-credential-value"><span className="pill navy">{user.seniority_code}</span>{levelLabels[user.seniority_code] || "مستوى الخبرة"}</span>{levelDescriptions.has(user.seniority_code) ? <p>{levelDescriptions.get(user.seniority_code)}</p> : null}</div>
               {user.job_title ? <div className="profile-credential-row"><span className="profile-credential-label">المسمى الوظيفي</span><span className="profile-credential-value"><span className="pill gold">{user.verified_badges.includes("PM") ? "PM" : "موثّق"}</span>{user.job_title}</span></div> : null}
               {user.approved_years != null ? <div className="profile-credential-row"><span className="profile-credential-label">الخبرة المعتمدة</span><strong>{Number(user.approved_years).toLocaleString("ar-EG-u-nu-latn")} سنوات</strong></div> : null}
               <div className="profile-credential-row"><span className="profile-credential-label">المؤهلات والشهادات</span>{approvedBadges.length ? <div className="profile-verified-qualifications">{approvedBadges.map((code) => <div className="profile-qualification" key={code}><span className="pill navy">{code}</span><span>{badgeLabels.get(code)}</span></div>)}</div> : <p className="profile-no-qualifications">مفيش مؤهلات إضافية تم اعتمادها لعرضها دلوقتي.</p>}</div>
             </div> : <div className="profile-admin-note"><ShieldCheck size={22}/><div><strong>حساب إداري</strong><p>هذا الحساب مخصص لإدارة المجتمع ولا يعرض اعتمادات هندسية شخصية.</p></div></div>}
           </section>
-          <div className="profile-privacy-note"><LockKeyhole size={18}/><div><strong>بياناتك تحت سيطرتك</strong><p>فريق AXIS بيراجع الشارات المهنية، وبيانات عضويتك ومستنداتك الخاصة مش ظاهرة لباقي الأعضاء.</p></div></div>
+          <div className="profile-privacy-note"><LockKeyhole size={18}/><div><strong>خلي بالك من خصوصيتك</strong><p>مستندات إثبات العضوية مش ظاهرة لباقي الأعضاء. حسابك وبوستاتك بيظهروا باسم حسابك؛ ما تنشرش معلومات حساسة.</p></div></div>
         </aside>
       </div>
     </main>
