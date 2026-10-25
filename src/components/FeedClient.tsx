@@ -13,6 +13,7 @@ import {
   Share2,
   MessageCircle,
   MoreHorizontal,
+  Pin,
   RefreshCw,
   Search,
   Send,
@@ -80,6 +81,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [busyEditCommentId, setBusyEditCommentId] = useState<string | null>(null);
   const [busyDeleteCommentId, setBusyDeleteCommentId] = useState<string | null>(null);
   const [busyDeletePostId, setBusyDeletePostId] = useState<string | null>(null);
+  const [pinBusyPostId, setPinBusyPostId] = useState<string | null>(null);
   const [replyTargets, setReplyTargets] = useState<Record<string, FeedComment | null>>({});
   const [openMenuPost, setOpenMenuPost] = useState<string | null>(null);
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
@@ -442,6 +444,34 @@ export function FeedClient({ user }: { user: SessionUser }) {
     }
   }
 
+  async function togglePinPost(post: FeedPost) {
+    if (post.group_id || pinBusyPostId) return;
+    const nextPinned = !post.pinned_at;
+    setPinBusyPostId(post.id);
+    setError("");
+    setSuccess("");
+    try {
+      const response = await fetch(`/api/posts/${post.id}/pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned: nextPinned }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نثبت البوست. جرّب تاني.");
+      setPosts(old => old.map(item => {
+        if (item.id === post.id) return { ...item, pinned_at: payload.pinned_at || null };
+        if (payload.pinned && item.author_id === user.id && !item.group_id) return { ...item, pinned_at: null };
+        return item;
+      }));
+      setSuccess(payload.pinned ? "ثبتنا البوست على ملفك الشخصي." : "اتشال تثبيت البوست من ملفك.");
+      setOpenMenuPost(null);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نثبت البوست. جرّب تاني.");
+    } finally {
+      setPinBusyPostId(null);
+    }
+  }
+
   function renderComment(postId: string, comment: FeedComment, thread: FeedComment[], depth = 0): ReactNode {
     const replies = thread.filter(item => item.parent_comment_id === comment.id);
     const canManageComment = comment.author_id === user.id || ["admin", "moderator"].includes(user.role);
@@ -596,12 +626,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
               <div className="post-menu-anchor">
                 <button type="button" className="icon-btn post-menu-trigger" aria-label="خيارات المنشور" aria-expanded={openMenuPost === post.id} onClick={() => setOpenMenuPost(openMenuPost === post.id ? null : post.id)}><MoreHorizontal size={20}/></button>
                 {openMenuPost === post.id && <div className="post-menu" role="menu">
-                  {post.author_id === user.id ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل البوست</button><button type="button" role="menuitem" disabled={busyDeletePostId === post.id} onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> {busyDeletePostId === post.id ? "جارٍ الحذف…" : "حذف البوست"}</button></> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
+                  {post.author_id === user.id ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل البوست</button><button type="button" role="menuitem" disabled={busyDeletePostId === post.id} onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> {busyDeletePostId === post.id ? "جارٍ الحذف…" : "حذف البوست"}</button>{!post.group_id && <button type="button" role="menuitem" disabled={pinBusyPostId === post.id} onClick={() => void togglePinPost(post)}><Pin size={16}/> {pinBusyPostId === post.id ? "جارٍ التثبيت…" : post.pinned_at ? "إلغاء التثبيت من ملفي" : "تثبيت في ملفي"}</button>}</> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن المنشور</button>}
                   <button type="button" role="menuitem" onClick={() => setOpenMenuPost(null)}><X size={15}/> إغلاق</button>
                 </div>}
               </div>
             </header>
 
+            {post.pinned_at && <div className="post-pinned-badge"><Pin size={14}/> {post.group_id ? "مثبت في الجروب" : "مثبت على الملف الشخصي"}</div>}
             {post.specialty && <div className="post-topic-row"><span className="post-topic-chip">{post.specialty}</span><span className="post-topic-caption">موضوع النقاش</span></div>}
             {editingPost?.id === post.id ? <form className="post-edit-form" onSubmit={savePostEdit}><label className="sr-only" htmlFor={`edit-post-${post.id}`}>تعديل نص المنشور</label><textarea id={`edit-post-${post.id}`} className="field" maxLength={5000} rows={4} value={editBody} onChange={event=>setEditBody(event.target.value)} placeholder="اكتب تحديثك…"/><label className="post-edit-specialty"><span>التخصص</span><select className="field" value={editSpecialty} onChange={event=>setEditSpecialty(event.target.value)}><option value="">بدون تخصص</option>{SPECIALTIES.map(item=><option key={item}>{item}</option>)}</select></label><div className="row"><button className="btn btn-primary btn-small" disabled={editBusy||!editBody.trim()&&!post.has_image&&!post.shared_post_id}>{editBusy?"جارٍ الحفظ…":"حفظ التعديل"}</button><button className="btn btn-small" type="button" disabled={editBusy} onClick={()=>setEditingPost(null)}>إلغاء</button></div></form> : post.body && <p className="post-body post-professional-body">{post.body}</p>}
             {post.shared_post_id && post.shared_display_name && <div className="shared-post-shell">
