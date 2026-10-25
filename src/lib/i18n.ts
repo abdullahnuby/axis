@@ -728,6 +728,10 @@ export function translateArabicText(value: string): string {
   if (match) return value.replace(trimmed, "Account @" + match[1]);
   match = trimmed.match(/^التعليقات\s*·\s*(.*)$/);
   if (match) return value.replace(trimmed, "Comments · " + match[1]);
+  match = trimmed.match(/^متأكد إنك عايز توقف حساب (.+)؟ هيتسجل خروجه من الجلسات الحالية\\.?$/);
+  if (match) return value.replace(trimmed, "Suspend " + match[1] + "? They'll be signed out of all active sessions.");
+  match = trimmed.match(/^ده إجراء فعلي: (.+)\\. مش هينفع التراجع عنه من لوحة البلاغات\\. متأكد؟$/);
+  if (match) return value.replace(trimmed, "You're about to " + translateArabicText(match[1]).toLowerCase() + ". This can't be undone from the report panel. Continue?");
   return value;
 }
   "مش قادرين نحمّل المشاركات دلوقتي. جرّب تحدّث الصفحة.": "The feed couldn't load. Refresh the page and try again.",
@@ -902,3 +906,10 @@ export function translateArabicText(value: string): string {
   "فعّلها علشان تعرف بنتيجة التوثيق والرسائل والتفاعلات من غير ما تفضل فاتح الموقع.": "Turn notifications on to hear about verification updates, messages, and activity without keeping AXIS open.",
   "إيقاف الإشعارات": "Turn off notifications",
   "تفعيل الإشعارات": "Enable notifications",
+  "AXIS · مساحة خاصة للمهندسين": "AXIS · A private community for engineers",
+
+export function localizedConfirm(message: string): boolean {
+  if (typeof window === "undefined") return false;
+  const locale = document.documentElement.lang === "en" ? "en" : "ar";
+  return window.confirm(locale === "en" ? translateArabicText(message) : message);
+}
