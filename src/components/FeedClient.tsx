@@ -599,7 +599,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
           <h1>أهلًا بيك في مساحتك المهنية.</h1>
           <p>هنا تقدر تسأل، تشارك تجربة، وتسمع وجهات نظر مهندسين من واقع الشغل. خليك واضح في طرحك، وحافظ على سرية بياناتك وبيانات غيرك.</p>
           <div className="workspace-welcome-tags">
-            <span><CheckCircle2 size={14}/> عضويتك تم التحقق منها</span>
+            <span><CheckCircle2 size={14}/>{user.role === "member" ? "عضويتك تم التحقق منها" : "حساب فريق AXIS"}</span>
             {user.specialty && <span><BriefcaseBusiness size={14}/>{user.specialty}</span>}
             <span><LockKeyhole size={14}/> مستندات التحقق غير معروضة للأعضاء</span>
           </div>
