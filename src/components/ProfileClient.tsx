@@ -2,7 +2,7 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, CalendarDays,
+  ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, Camera, CalendarDays,
   GraduationCap, LockKeyhole, MessageCircle, PencilLine, Save, ShieldCheck,
   ThumbsUp, UserRound, X, Share2, Trash2,
 } from "lucide-react";
