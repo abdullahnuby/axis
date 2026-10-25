@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   if (sharedPostId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sharedPostId)) return jsonError("رابط المنشور غير صالح.", 400);
   try {
     const result = await query(`SELECT p.id,p.author_id,u.username,u.display_name,u.role AS author_role,u.seniority_code,u.job_title,u.specialty AS profile_specialty,
-      u.verified_badges,u.avatar_color,(u.avatar_image_mime IS NOT NULL) AS has_avatar,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,p.shared_post_id,
+      u.verified_badges,u.avatar_color,(u.avatar_image_mime IS NOT NULL) AS has_avatar,p.body,p.specialty,p.image_data IS NOT NULL AS has_image,p.image_mime,p.created_at,p.shared_post_id,p.group_id,p.pinned_at,
       sp.body AS shared_body,sp.author_id AS shared_author_id,sp.specialty AS shared_specialty,sp.created_at AS shared_created_at,
       sp.image_data IS NOT NULL AS shared_has_image,sp.image_mime AS shared_image_mime,
       su.username AS shared_username,su.display_name AS shared_display_name,su.role AS shared_author_role,
