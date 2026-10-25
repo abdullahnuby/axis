@@ -541,7 +541,63 @@ export const AR_TO_EN: Record<string, string> = {
   "التالي": "Next",
   "السابق": "Previous",
   "تحميل المزيد": "Load more",
-  "English": "English"
+  "English": "English",
+  "الآن": "Just now",
+  "مدني": "Civil engineering",
+  "إنشائي": "Structural engineering",
+  "معماري": "Architecture",
+  "كهرباء": "Electrical engineering",
+  "ميكانيكا": "Mechanical engineering",
+  "مساحة": "Surveying",
+  "تخطيط وإدارة مشروعات": "Project planning and management",
+  "مكتب فني": "Technical office",
+  "BIM وتقنيات هندسية": "BIM and engineering technology",
+  "أخرى": "Other",
+  "عندك حساب بالفعل؟": "Already have an account?",
+  "فبلاش تشارك أسرار شغل أو بيانات حساسة.": "so do not share work secrets or sensitive information.",
+  "إنشاء حساب": "Create account",
+  "تحقق من بريدك الإلكتروني": "Verify your email address",
+  "إعادة إرسال رابط التأكيد": "Resend verification link",
+  "العودة لتسجيل الدخول": "Back to sign in",
+  "تحديث كلمة المرور": "Update password",
+  "كلمة المرور الجديدة": "New password",
+  "تأكيد كلمة المرور": "Confirm password",
+  "إعادة تعيين كلمة المرور": "Reset password",
+  "إرسال رابط الاستعادة": "Send reset link",
+  "إذا كان البريد مسجلًا، سنرسل رابط استعادة كلمة المرور.": "If the email is registered, we'll send a password reset link.",
+  "تم إرسال الرابط إذا كان البريد مسجلًا.": "A link has been sent if the email is registered.",
+  "الرابط غير صالح أو انتهت صلاحيته.": "This link is invalid or has expired.",
+  "تعذر إكمال العملية.": "We couldn't complete the operation.",
+  "حاول مرة أخرى": "Try again",
+  "العودة": "Back",
+  "جارٍ التحميل…": "Loading…",
+  "قيد التنفيذ": "In progress",
+  "موافقة": "Approval",
+  "مرفوض": "Rejected",
+  "مفتوح": "Open",
+  "مغلق": "Closed",
+  "قيد المعالجة": "In progress",
+  "عرض التفاصيل": "View details",
+  "تفاصيل العضو": "Member details",
+  "تاريخ الإنشاء": "Created on",
+  "التخصص:": "Specialty:",
+  "الاسم": "Name",
+  "البريد": "Email",
+  "سبب البلاغ": "Report reason",
+  "تفاصيل البلاغ": "Report details",
+  "لا توجد بيانات": "No data available",
+  "لا توجد نتائج": "No results",
+  "إعادة المحاولة": "Try again",
+  "إرسال": "Send",
+  "تحميل": "Upload",
+  "مرفق": "Attachment",
+  "الصورة الشخصية": "Profile photo",
+  "صورة الغلاف": "Cover image",
+  "الحالة الحالية": "Current status",
+  "مطلوب": "Required",
+  "اختياري": "Optional",
+  "نعم": "Yes",
+  "لا": "No"
 };
 
 export function translateArabicText(value: string): string {
@@ -566,11 +622,11 @@ export function translateArabicText(value: string): string {
   if (match) return value.replace(trimmed, "Shared a post by " + match[1]);
   match = trimmed.match(/^مشاركات (.+)$/);
   if (match) return value.replace(trimmed, "Posts by " + match[1]);
-  match = trimmed.match(/^منذ (\\d+)\\s*د$/);
+  match = trimmed.match(/^منذ (\d+)\s*د$/);
   if (match) return value.replace(trimmed, match[1] + " min ago");
-  match = trimmed.match(/^منذ (\\d+)\\s*س$/);
+  match = trimmed.match(/^منذ (\d+)\s*س$/);
   if (match) return value.replace(trimmed, match[1] + " hr ago");
-  match = trimmed.match(/^منذ (\\d+)\\s*يوم$/);
+  match = trimmed.match(/^منذ (\d+)\s*يوم$/);
   if (match) return value.replace(trimmed, match[1] + " days ago");
   match = trimmed.match(/^حساب @(.+)$/);
   if (match) return value.replace(trimmed, "Account @" + match[1]);
