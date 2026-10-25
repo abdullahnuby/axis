@@ -1,7 +1,7 @@
 "use client";
 import { useCallback,useEffect,useState, type FormEvent } from "react";
 import Link from "next/link";
-import { MessageCircle, Search, Send, UserRound, ArrowRight, PencilLine, Trash2, Check, X } from "lucide-react";
+import { ArrowRight, Check, LockKeyhole, MessageCircle, MessagesSquare, PencilLine, Search, Send, Trash2, UserRound, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Toast } from "@/components/Toast";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -12,7 +12,27 @@ export function MessagesClient({user}:{user:SessionUser}){const[items,setItems]=
 const load=useCallback(async()=>{try{const r=await fetch('/api/conversations',{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'مش قادرين نحمّل رسايلك.');setItems(d.conversations||[]);}catch(e){setError(e instanceof Error?e.message:'حصلت مشكلة.');}finally{setLoading(false);}},[]);useEffect(()=>{void load();},[load]);
 useEffect(()=>{let active=true;const t=setTimeout(async()=>{if(!q.trim()){setResults([]);return;}try{const r=await fetch(`/api/people?q=${encodeURIComponent(q)}&limit=8`,{cache:'no-store'});const d=await r.json();if(active&&r.ok)setResults(d.people||[]);}catch{}},250);return()=>{active=false;clearTimeout(t);};},[q]);
 async function start(userId:string){setBusyId(userId);try{const r=await fetch('/api/conversations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId})});const d=await r.json();if(!r.ok)throw new Error(d.error||'ما قدرناش نبدأ المحادثة.');window.location.href=d.redirect;}catch(e){setError(e instanceof Error?e.message:'حصلت مشكلة.');setBusyId(null);}}
-return <AppShell user={user} active="/messages"><header className="page-heading-line"><div><h1 className="page-title">الرسائل</h1><p className="muted">اتكلم مع زملائك على انفراد، وكمّل النقاش بعيدًا عن المنشورات.</p></div><MessageCircle size={23} className="muted"/></header><label className="people-search-field messages-search"><Search size={18}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="ابدأ محادثة مع مهندس…"/></label><Toast message={error} error/>{results.length>0&&<section className="card message-people-results"><h2 className="section-title">مهندسين تقدر تراسلهم</h2>{results.map(p=><div className="conversation-row" key={p.id}><UserAvatar userId={p.id} displayName={p.display_name} avatarColor={p.avatar_color} hasAvatar={p.has_avatar} className="sm"/><div className="conversation-copy"><strong>{p.display_name}</strong><span className="tiny muted">{p.specialty||'عضو AXIS'}</span></div><button className="btn btn-small btn-primary" disabled={busyId===p.id} onClick={()=>void start(p.id)}>رسالة</button></div>)}</section>}{loading?<div className="card people-empty">بنحمّل محادثاتك…</div>:items.length?<section className="conversation-list">{items.map(c=><Link href={`/messages/${c.id}`} className="card conversation-row" key={c.id}><UserAvatar userId={c.other_user_id} displayName={c.other_display_name} avatarColor={c.other_avatar_color} hasAvatar={c.other_has_avatar}/><div className="conversation-copy"><strong>{c.other_display_name}</strong><span className="small muted">{c.last_sender_id===user.id?'إنت: ':''}{c.last_message||'ابدأوا الكلام برسالة جديدة.'}</span></div><div className="conversation-row-meta">{c.last_message_at&&<time className="tiny muted">{new Date(c.last_message_at).toLocaleDateString('ar-EG-u-nu-latn')}</time>}{Number(c.unread_count)>0&&<span className="conversation-unread">{Number(c.unread_count)}</span>}</div></Link>)}</section>:<div className="card people-empty"><MessageCircle size={25}/><h2>لسه مفيش محادثات</h2><p>دوّر على مهندس فوق وابدأ أول محادثة.</p><Link href="/people" className="btn btn-primary"><UserRound size={16}/> اكتشف المهندسين <ArrowRight size={15}/></Link></div>}</AppShell>}
+return <AppShell user={user} active="/messages"><section className="messages-page-hero">
+ <div className="messages-page-hero-copy">
+  <div className="directory-eyebrow"><span className="directory-eyebrow-icon"><MessagesSquare size={14}/></span><span>AXIS / DIRECT MESSAGES</span><span className="directory-eyebrow-divider"/><span>محادثات خاصة</span></div>
+  <h1>كمّل النقاش <span>على راحتك.</span></h1>
+  <p>لما يبقى السؤال محتاج تفاصيل أكتر، أو النقاش يحتاج يكمل بعيد عن المنشور، هتلاقي محادثاتك هنا.</p>
+  <div className="messages-hero-metrics">
+   <div><span>محادثاتك</span><strong>{items.length.toLocaleString("en-US")}</strong></div>
+   <span className="messages-hero-divider"/>
+   <div><span>رسائل غير مقروءة</span><strong>{items.reduce((total, item) => total + Math.max(0, Number(item.unread_count) || 0), 0).toLocaleString("en-US")}</strong></div>
+  </div>
+ </div>
+ <div className="messages-hero-visual" aria-hidden="true">
+  <div className="messages-visual-orbit"/>
+  <div className="messages-visual-orbit orbit-small"/>
+  <div className="messages-visual-lock"><LockKeyhole size={24}/></div>
+  <div className="messages-visual-bubble bubble-one"><i/><i/><i/></div>
+  <div className="messages-visual-bubble bubble-two"><span/><span/></div>
+  <span className="messages-visual-node node-one"/><span className="messages-visual-node node-two"/>
+  <span className="messages-visual-label">PRIVATE / 1:1</span>
+ </div>
+</section><label className="people-search-field messages-search"><Search size={18}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="ابدأ محادثة مع مهندس…"/></label><Toast message={error} error/>{results.length>0&&<section className="card message-people-results"><h2 className="section-title">مهندسين تقدر تراسلهم</h2>{results.map(p=><div className="conversation-row" key={p.id}><UserAvatar userId={p.id} displayName={p.display_name} avatarColor={p.avatar_color} hasAvatar={p.has_avatar} className="sm"/><div className="conversation-copy"><strong>{p.display_name}</strong><span className="tiny muted">{p.specialty||'عضو AXIS'}</span></div><button className="btn btn-small btn-primary" disabled={busyId===p.id} onClick={()=>void start(p.id)}>رسالة</button></div>)}</section>}{loading?<div className="card people-empty">بنحمّل محادثاتك…</div>:items.length?<section className="conversation-list">{items.map(c=><Link href={`/messages/${c.id}`} className="card conversation-row" key={c.id}><UserAvatar userId={c.other_user_id} displayName={c.other_display_name} avatarColor={c.other_avatar_color} hasAvatar={c.other_has_avatar}/><div className="conversation-copy"><strong>{c.other_display_name}</strong><span className="small muted">{c.last_sender_id===user.id?'إنت: ':''}{c.last_message||'ابدأوا الكلام برسالة جديدة.'}</span></div><div className="conversation-row-meta">{c.last_message_at&&<time className="tiny muted">{new Date(c.last_message_at).toLocaleDateString('ar-EG-u-nu-latn')}</time>}{Number(c.unread_count)>0&&<span className="conversation-unread">{Number(c.unread_count)}</span>}</div></Link>)}</section>:<div className="card people-empty"><MessageCircle size={25}/><h2>لسه مفيش محادثات</h2><p>دوّر على مهندس فوق وابدأ أول محادثة.</p><Link href="/people" className="btn btn-primary"><UserRound size={16}/> اكتشف المهندسين <ArrowRight size={15}/></Link></div>}</AppShell>}
 export function ConversationClient({user,conversationId}:{user:SessionUser;conversationId:string}) {
   const [peer,setPeer]=useState<{other_user_id:string;other_display_name:string;other_username:string;other_avatar_color:string;other_has_avatar:boolean}|null>(null);
   const [messages,setMessages]=useState<Message[]>([]);
