@@ -237,6 +237,37 @@ await check("profile persisted badge values no longer fail the Map type check", 
   const profile = await read("src/components/ProfileClient.tsx");
   assert.match(profile, /new Map<string, string>\(BADGE_OPTIONS\.map/);
 });
+await check("group post comments use an inline working thread rather than a dead feed link", async () => {
+  const groupDetail = await read("src/components/GroupDetailClient.tsx");
+  const comments = await read("src/components/GroupPostComments.tsx");
+  assert.match(groupDetail, /<GroupPostComments/);
+  assert.match(groupDetail, /openCommentsPostId/);
+  assert.doesNotMatch(groupDetail, /href=\{`\/feed\?post=\$\{p\.id\}`\}/);
+  assert.match(comments, /api\/posts\/\$\{postId\}\/comments/);
+  assert.match(comments, /api\/comments\/\$\{comment\.id\}\/like/);
+  assert.match(comments, /method: "PATCH"/);
+  assert.match(comments, /method: "DELETE"/);
+  assert.match(comments, /api\/comments\/\$\{reporting\.id\}\/report/);
+});
+await check("own profile post cards have a working deep link to the discussion", async () => {
+  const profile = await read("src/components/ProfileClient.tsx");
+  assert.match(profile, /href=\{`\/feed\?post=\$\{encodeURIComponent\(post\.id\)\}`\}/);
+  assert.match(profile, /عرض النقاش/);
+});
+await check("moderators cannot trigger account suspension from report UI", async () => {
+  const admin = await read("src/components/AdminClient.tsx");
+  const api = await read("src/app/api/admin/reports/[reportId]/route.ts");
+  assert.match(admin, /report\.target_type === "user" && admin\.role !== "admin"/);
+  assert.match(api, /if \(user!\.role !== "admin"\) throw/);
+});
+await check("deleting a source post preserves other members' reposts instead of cascading them away", async () => {
+  const postApi = await read("src/app/api/posts/[postId]/route.ts");
+  const adminReports = await read("src/app/api/admin/reports/[reportId]/route.ts");
+  assert.match(postApi, /UPDATE posts SET body = CASE WHEN length\(btrim\(body\)\) > 0/);
+  assert.match(postApi, /shared_post_id = NULL, updated_at = now\(\)\s+WHERE shared_post_id = \$1/s);
+  assert.match(postApi, /withTransaction/);
+  assert.match(adminReports, /الاحتفاظ بمشاركات الأعضاء التي كانت تشير إليه/);
+});
 
 await check("membership is encrypted and duplicate checked", async () => {
   const crypto = await read("src/lib/crypto.ts");
@@ -292,5 +323,79 @@ await check("secrets stay out of git", async () => {
   assert.match(env, /YOUR-ENDPOINT/);
   assert.match(env, /USER:PASSWORD/);
 });
+await check("comment editing and deletion are API-backed with owner/moderator permissions and counts", async () => {
+  const route = await read("src/app/api/comments/[commentId]/route.ts");
+  const feed = await read("src/components/FeedClient.tsx");
+  const comments = await read("src/app/api/posts/[postId]/comments/route.ts");
+  const schema = await read("db/schema.sql");
+  const migration = await read("db/migrations/20261025_one_sprint.sql");
+  assert.match(route, /export async function PATCH/);
+  assert.match(route, /edited_at=now\(\)/);
+  assert.match(route, /removedCount/);
+  assert.match(route, /moderator/);
+  assert.match(feed, /saveCommentEdit/);
+  assert.match(feed, /deleteComment/);
+  assert.match(comments, /c\.edited_at/);
+  assert.match(schema, /ALTER TABLE comments ADD COLUMN IF NOT EXISTS edited_at timestamptz/);
+  assert.match(migration, /ALTER TABLE public\.comments ADD COLUMN IF NOT EXISTS edited_at timestamptz/);
+});
+await check("profile-owned posts have working edit/delete controls", async () => {
+  const profile = await read("src/components/ProfileClient.tsx");
+  assert.match(profile, /savePostEdit/);
+  assert.match(profile, /deleteProfilePost/);
+  assert.match(profile, /api\/posts\/\$\{post\.id\}/);
+  assert.match(profile, /حفظ التعديل/);
+  assert.match(profile, /حذف/);
+});
+await check("direct messages support sender-only edits and soft deletion from UI and API", async () => {
+  const client = await read("src/components/MessagesClient.tsx");
+  const route = await read("src/app/api/conversations/[conversationId]/messages/[messageId]/route.ts");
+  assert.match(client, /saveEdit/);
+  assert.match(client, /deleteMessage/);
+  assert.match(client, /تعديل الرسالة/);
+  assert.match(route, /export async function PATCH/);
+  assert.match(route, /export async function DELETE/);
+  assert.match(route, /existing\.sender_id !== user!\.id/);
+  assert.match(route, /deleted_at=now\(\)/);
+});
+await check("comment and member reports can be filed and safely reviewed", async () => {
+  const commentReport = await read("src/app/api/comments/[commentId]/report/route.ts");
+  const personReport = await read("src/app/api/people/[userId]/report/route.ts");
+  const feed = await read("src/components/FeedClient.tsx");
+  const profile = await read("src/components/PublicProfileClient.tsx");
+  const moderation = await read("src/app/api/admin/reports/[reportId]/route.ts");
+  const admin = await read("src/components/AdminClient.tsx");
+  assert.match(commentReport, /target_type='comment'/);
+  assert.match(personReport, /target_type='user'/);
+  assert.match(feed, /api\/comments\/\$\{comment\.id\}\/report/);
+  assert.match(profile, /api\/people\/\$\{profile\.id\}\/report/);
+  assert.match(moderation, /DELETE FROM posts/);
+  assert.match(moderation, /DELETE FROM comments/);
+  assert.match(moderation, /account_status='suspended'/);
+  assert.match(admin, /applyReportAction/);
+  assert.match(admin, /applyAction: true/);
+});
+await check("moderation buttons have explicit destructive confirmations", async () => {
+  const admin = await read("src/components/AdminClient.tsx");
+  const groups = await read("src/components/GroupDetailClient.tsx");
+  const posts = await read("src/app/api/posts/[postId]/route.ts");
+  assert.match(admin, /متأكد إنك عايز توقف حساب/);
+  assert.match(admin, /ده إجراء فعلي/);
+  assert.match(groups, /متأكد إنك عايز تغادر المجموعة/);
+  assert.match(posts, /delete-post/);
+  assert.match(posts, /sameOrigin/);
+});
+await check("notification buttons navigate only after read status is acknowledged", async () => {
+  const client = await read("src/components/NotificationsClient.tsx");
+  assert.match(client, /openNotification/);
+  assert.match(client, /if \(!response\.ok\) throw new Error/);
+  assert.match(client, /router\.push\(target\(item\)\)/);
+});
+await check("public-profile TypeScript query is explicitly typed to fix latest Vercel build failure", async () => {
+  const page = await read("src/app/people/[username]/page.tsx");
+  assert.match(page, /query<PublicProfileRecord>/);
+  assert.match(page, /profile=\{\{\.\.\.profile,created_at:String\(profile\.created_at\)\}\}/);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);

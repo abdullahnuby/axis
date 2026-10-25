@@ -178,10 +178,12 @@ CREATE TABLE IF NOT EXISTS comments (
   author_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   parent_comment_id uuid REFERENCES comments(id) ON DELETE CASCADE,
   body text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 1200),
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  edited_at timestamptz
 );
 -- Upgrade existing Neon databases without deleting comments.
 ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_comment_id uuid REFERENCES comments(id) ON DELETE CASCADE;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS edited_at timestamptz;
 CREATE INDEX IF NOT EXISTS comments_post_idx ON comments (post_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS comments_parent_idx ON comments (parent_comment_id, created_at ASC);
 

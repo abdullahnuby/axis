@@ -11,6 +11,7 @@
 ALTER TABLE public.comments
   ADD COLUMN IF NOT EXISTS parent_comment_id uuid
   REFERENCES public.comments(id) ON DELETE CASCADE;
+ALTER TABLE public.comments ADD COLUMN IF NOT EXISTS edited_at timestamptz;
 
 CREATE INDEX IF NOT EXISTS comments_parent_idx
   ON public.comments (parent_comment_id, created_at ASC);
