@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Refresh internal repost copy assertion
+
+- Updated the smoke check to match the current “إعادة نشر داخل AXIS” dialog heading for the in-platform repost flow.
+
 ## 2026-10-26 — Update feed copy regression assertions
 
 - Synced feed/profile smoke assertions to the current Arabic headings and profile hero structure, keeping the regression test aligned with the shipped UI copy.
