@@ -933,7 +933,7 @@ export const EN_MESSAGES: Record<string, string> = {
   "الحساب غير موجود.": "Account not found.",
   "بيانات كلمة المرور غير صالحة.": "The password details are invalid.",
   "اكتب كلمة المرور الحالية والجديدة.": "Enter your current and new passwords.",
-  "كلمة المرور الجديدة لازم تكون من 12 إلى 128 حرفًا.": "Your new password must be between 12 and 128 characters."
+  "كلمة المرور الجديدة لازم تكون من 12 إلى 128 حرفًا.": "Your new password must be between 12 and 128 characters.",
   "اعمل حسابك وادخل معاينة محدودة فيها منشورات مختارة. لتفتح النقاشات المهنية والرسائل، قدّم رقم كارنيه النقابة لتوثيق عضويتك.": "Create an account to browse a limited preview with selected posts. Submit your syndicate card number to unlock professional discussions and messaging.",
   "أهلًا بيك في معاينة AXIS": "Welcome to the AXIS preview",
   "هتشوف منشورات مختارة اختار أصحابها إتاحتها لكل الأعضاء المسجلين. النقاشات المهنية والرسائل والتفاعل بتفتح بعد توثيق عضويتك.": "You'll see selected posts that their authors made available to registered members. Professional discussions, messaging, and interactions unlock after your membership is verified.",

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-26 — Progressive membership access
+
+- Added a registered-member preview feed with an explicit post audience setting.
+- Kept pre-existing posts verified-only by default; an additive Neon migration adds the audience column and feed index without deleting content.
+- Fixed a missing comma in the Arabic and English locale dictionaries that blocked the Vercel production build.
+
 ## 2026-10-25 — Opt-in mobile push notifications
 
 - Added opt-in Web Push subscriptions for phones and installed AXIS web apps, including members who are waiting for verification.
