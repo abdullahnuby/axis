@@ -647,7 +647,7 @@ await check("admin can pin one announcement at the top of the main feed, and lon
   assert.match(pinRoute, /user!\.role !== "admin"/);
   assert.match(pinRoute, /main_feed_pinned_at/);
   assert.match(feedRoute, /p\.main_feed_pinned_at/);
-  assert.match(feedRoute, /ORDER BY p\.main_feed_pinned_at DESC NULLS LAST, p\.created_at DESC/);
+  assert.match(feedRoute, /ORDER BY p\.main_feed_pinned_at DESC NULLS LAST,[\s\S]*p\.created_at DESC/);
   assert.match(feed, /تثبيت في الرئيسية/);
   assert.match(feed, /عرض المزيد/);
   assert.match(feed, /POST_PREVIEW_WORD_LIMIT = 20/);
@@ -679,5 +679,31 @@ await check("admins can curate visibility of existing standalone feed posts", as
   assert.match(feed, /قصر الرؤية على الموثقين/);
 });
 
+await check("feed ranking is server-side, supports freshness/engagement/discussion, refresh, and offset pagination", async () => {
+  const feedRoute = await read("src/app/api/feed/route.ts");
+  const feed = await read("src/components/FeedClient.tsx");
+  assert.match(feedRoute, /sortParam === "engagement" \|\| sortParam === "discussion"/);
+  assert.match(feedRoute, /engagement_score/);
+  assert.match(feedRoute, /share_stats\.share_count/);
+  assert.match(feedRoute, /POWER\(1 \+ GREATEST/);
+  assert.match(feedRoute, /LIMIT 31 OFFSET \$9/);
+  assert.match(feed, /setSortBy\("latest"\)/);
+  assert.match(feed, /setSortBy\("engagement"\)/);
+  assert.match(feed, /setSortBy\("discussion"\)/);
+  assert.match(feed, /feed-refresh-button/);
+  assert.match(feed, /offset: String\(posts\.length\)/);
+});
+await check("root comments are batched and reply branches are collapsed until requested", async () => {
+  const feed = await read("src/components/FeedClient.tsx");
+  const comments = await read("src/app/api/posts/[postId]/comments/route.ts");
+  assert.match(feed, /if \(comments\[post\.id\]\) return/);
+  assert.match(feed, /ROOT_COMMENTS_PREVIEW_COUNT = 3/);
+  assert.match(feed, /ROOT_COMMENTS_PAGE_SIZE = 5/);
+  assert.match(feed, /expandedReplies\[comment\.id\]/);
+  assert.match(feed, /aria-expanded=\{repliesExpanded\}/);
+  assert.match(feed, /renderRootComments\(post\.id/);
+  assert.match(feed, /عرض المزيد من التعليقات/);
+  assert.match(comments, /LIMIT 250/);
+});
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);

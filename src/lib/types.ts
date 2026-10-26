@@ -51,6 +51,8 @@ export interface FeedPost {
   created_at: string;
   like_count: number;
   comment_count: number;
+  share_count?: number;
+  engagement_score?: number;
   has_liked: boolean;
   shared_post_id: string | null;
   group_id?: string | null;

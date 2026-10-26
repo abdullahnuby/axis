@@ -53,6 +53,9 @@ function formatPostTime(value: string): string {
 }
 
 const POST_PREVIEW_WORD_LIMIT = 20;
+const ROOT_COMMENTS_PREVIEW_COUNT = 3;
+const ROOT_COMMENTS_PAGE_SIZE = 5;
+type FeedSort = "latest" | "engagement" | "discussion";
 
 function getPostPreview(text: string): { preview: string; expandable: boolean } {
   const words = text.match(/\S+/g) ?? [];
@@ -126,6 +129,8 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [openComments, setOpenComments] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, FeedComment[]>>({});
   const [commentsFailed, setCommentsFailed] = useState<Record<string, boolean>>({});
+  const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
+  const [visibleRootComments, setVisibleRootComments] = useState<Record<string, number>>({});
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [commentBusy, setCommentBusy] = useState(false);
   const [busyLikePostId, setBusyLikePostId] = useState<string | null>(null);
@@ -154,6 +159,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [editSpecialty, setEditSpecialty] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [followingOnly, setFollowingOnly] = useState(searchParams.get("following") === "1");
+  const [sortBy, setSortBy] = useState<FeedSort>("latest");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const q = searchParams.get("q") || "";
@@ -177,6 +183,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     if (filter) params.set("specialty", filter);
     if (sharedPostId) params.set("post", sharedPostId);
     if (followingOnly) params.set("following", "1");
+    params.set("sort", sortBy);
     try {
       const feedResponse = await fetch(`/api/feed?${params.toString()}`, { cache: "no-store" });
       if (feedResponse.status === 401) { window.location.href = "/login"; return; }
@@ -193,13 +200,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [q, filter, sharedPostId, followingOnly]);
+  }, [q, filter, sharedPostId, followingOnly, sortBy]);
 
   async function loadMore() {
     if (!nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
     try {
-      const params = new URLSearchParams({ before: nextCursor });
+      const params = new URLSearchParams({ offset: String(posts.length), sort: sortBy });
       if (q) params.set("q", q);
       if (filter) params.set("specialty", filter);
       if (sharedPostId) params.set("post", sharedPostId);
@@ -326,6 +333,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "التعليق ما اتبعتش. جرّب تاني.");
       setComments(old => ({ ...old, [postId]: [...(old[postId] || []), payload.comment] }));
+      if (replyTarget) setExpandedReplies(old => ({ ...old, [replyTarget.id]: true }));
       setCommentDrafts(old => ({ ...old, [postId]: "" }));
       setReplyTargets(old => ({ ...old, [postId]: null }));
       setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: post.comment_count + 1 } : post));
@@ -620,6 +628,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
     const replies = thread.filter(item => item.parent_comment_id === comment.id);
     const canManageComment = comment.author_id === user.id || ["admin", "moderator"].includes(user.role);
     const isEditing = editingCommentId === comment.id;
+    const repliesExpanded = Boolean(expandedReplies[comment.id]);
     return <LocalizedContent>{(
       <div className={`comment-thread ${depth > 0 ? "comment-thread-reply" : ""}`} id={`comment-${comment.id}`} key={comment.id}>
         <div className="comment comment-professional">
@@ -663,9 +672,24 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </form>}
           </div>
         </div>
-        {replies.length > 0 && <div className="comment-replies">{replies.map(reply => renderComment(postId, reply, thread, depth + 1))}</div>}
+        {replies.length > 0 && <div className="comment-replies-block">
+          <button type="button" className="comment-replies-toggle" aria-expanded={repliesExpanded} onClick={() => setExpandedReplies(old => ({ ...old, [comment.id]: !old[comment.id] }))}>
+            <CornerDownLeft size={13}/><span>{replies.length.toLocaleString("en-US")}</span><span>{repliesExpanded ? "إخفاء الردود" : "عرض الردود"}</span>
+          </button>
+          {repliesExpanded && <div className="comment-replies">{replies.map(reply => renderComment(postId, reply, thread, depth + 1))}</div>}
+        </div>}
       </div>
 )}</LocalizedContent>;
+  }
+
+  function renderRootComments(postId: string, thread: FeedComment[]): ReactNode {
+    const roots = thread.filter(comment => !comment.parent_comment_id).reverse();
+    const visibleCount = Math.min(roots.length, visibleRootComments[postId] ?? ROOT_COMMENTS_PREVIEW_COUNT);
+    return <>
+      {roots.slice(0, visibleCount).map(comment => renderComment(postId, comment, thread))}
+      {roots.length > visibleCount && <button type="button" className="comment-list-more" onClick={() => setVisibleRootComments(old => ({ ...old, [postId]: Math.min(roots.length, visibleCount + ROOT_COMMENTS_PAGE_SIZE) }))}>عرض المزيد من التعليقات</button>}
+      {visibleCount > ROOT_COMMENTS_PREVIEW_COUNT && <button type="button" className="comment-list-more comment-list-less" onClick={() => setVisibleRootComments(old => ({ ...old, [postId]: ROOT_COMMENTS_PREVIEW_COUNT }))}>عرض تعليقات أقل</button>}
+    </>;
   }
 
   return <LocalizedContent>{(
@@ -741,8 +765,17 @@ export function FeedClient({ user }: { user: SessionUser }) {
       <section className="feed-stream" aria-label="بوستات المجتمع">
         <div className="feed-stream-header feed-stream-header-filterable">
           <div className="feed-stream-heading">
-            <div><h2>آخر البوستات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p>{canViewVerifiedContent ? <div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div> : <span className="feed-limited-mode">معاينة محدودة</span>}</div>
+            <div><h2>آخر البوستات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p><div className="feed-controls-stack">
+  <div className="feed-sort-switch" role="group" aria-label="ترتيب المنشورات">
+    <button type="button" className={sortBy === "latest" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("latest")}>الأحدث</button>
+    <button type="button" className={sortBy === "engagement" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("engagement")}>الأكثر تفاعلًا</button>
+    <button type="button" className={sortBy === "discussion" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("discussion")}>الأكثر نقاشًا</button>
+  </div>
+  {canViewVerifiedContent && <div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setFollowingOnly(true)}>بتابعهم</button></div>}
+  {!canViewVerifiedContent && <span className="feed-limited-mode">معاينة محدودة</span>}
+</div></div>
           </div>
+          <button type="button" className="feed-refresh-button" onClick={() => void load()} disabled={isLoading || isRefreshing || isLoadingMore} aria-label="تحديث المنشورات" title="تحديث المنشورات"><RefreshCw size={15} className={isRefreshing ? "spin-icon" : ""}/><span>تحديث</span></button>
           <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
             <SlidersHorizontal size={16} aria-hidden="true"/>
             <span className="sr-only">فلترة المشاركات حسب التخصص</span>
@@ -859,7 +892,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
             {openComments === post.id && <section className="comments comments-professional" aria-label="تعليقات المنشور">
               <div className="comments-heading"><div><h3>التعليقات</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG", { numberingSystem: "latn" })} تعليقات وردود</span></div></div>
-              {!comments[post.id] ? (commentsFailed[post.id] ? <div className="comments-error" role="alert"><span>مقدرناش نحمّل التعليقات.</span><button type="button" onClick={() => void loadComments(post.id)}>حاول تاني</button></div> : <div className="comments-loading">بنحمّل التعليقات…</div>) : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
+              {!comments[post.id] ? (commentsFailed[post.id] ? <div className="comments-error" role="alert"><span>مقدرناش نحمّل التعليقات.</span><button type="button" onClick={() => void loadComments(post.id)}>حاول تاني</button></div> : <div className="comments-loading">بنحمّل التعليقات…</div>) : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : renderRootComments(post.id, comments[post.id] ?? [])}
               {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء <X size={13}/></button></div>}
               <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>
                 <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="sm comment-current-avatar"/>

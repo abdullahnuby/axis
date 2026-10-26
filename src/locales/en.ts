@@ -965,6 +965,15 @@ export const EN_MESSAGES: Record<string, string> = {
   "منشورات الجروبات بتتدار من إعدادات الجروب، مش من معاينة المجتمع.": "Group posts are managed through group settings, not community preview.",
   "ما قدرناش نغيّر جمهور المنشور. جرّب تاني.": "We couldn't change the post audience. Please try again.",
   "ما قدرناش نغيّر جمهور المنشور دلوقتي.": "We couldn't change the post audience right now.",
-  "تم تغيير جمهور منشورات كتير في وقت قصير. جرّب بعد شوية.": "Too many post-audience changes in a short time. Please try again later."
-
+  "تم تغيير جمهور منشورات كتير في وقت قصير. جرّب بعد شوية.": "Too many post-audience changes in a short time. Please try again later.",
+  "الأحدث": "Newest",
+  "الأكثر تفاعلًا": "Most engaging",
+  "الأكثر نقاشًا": "Most discussed",
+  "ترتيب المنشورات": "Sort posts",
+  "تحديث المنشورات": "Refresh feed",
+  "تحديث": "Refresh",
+  "عرض الردود": "Show replies",
+  "إخفاء الردود": "Hide replies",
+  "عرض المزيد من التعليقات": "Show more comments",
+  "عرض تعليقات أقل": "Show fewer comments"
 };
