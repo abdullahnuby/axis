@@ -177,9 +177,9 @@ await check("feed removes the decorative hero, uses natural social copy, and kee
   const verification = await read("src/components/VerificationClient.tsx");
   const styles = await read("src/app/globals.css");
   assert.doesNotMatch(feed, /<section className="feed-page-intro"/);
-  assert.match(feed, /آخر المشاركات/);
-  assert.match(feed, /إيه اللي حابب تشاركه مع زملائك/);
-  assert.match(profile, /<span>الرئيسية<\/span>/);
+  assert.match(feed, /<h2>آخر البوستات<\/h2>/);
+  assert.match(feed, /قول اللي عندك — سؤال أو موقف أو موضوع على بالك/);
+  assert.match(profile, /profile-hero-card/);
   assert.doesNotMatch(feed + profile + verification, /الموجز/);
   assert.match(styles, /\.post-professional-body \{[^}]*font-size: 15\.5px !important/s);
   assert.match(styles, /\.mobile-bottom a \{[^}]*font-size: 11\.5px !important/s);
