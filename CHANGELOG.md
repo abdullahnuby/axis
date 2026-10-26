@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-26 — Admin curation of preview-post visibility
+
+- Added an administrator-only control in each standalone feed post menu to switch audience between verified engineers and all registered members, including members awaiting verification.
+- Kept the author-facing audience choice when a verified member creates a post; administrators can now correct that choice later without deleting or reposting the content.
+- The API verifies same-origin requests and administrator role, excludes group posts, validates the selected audience, rate-limits changes, and records successful changes in `audit_logs`.
+- Added Arabic/English UI labels and a static regression check for server authorization and audit logging.
+
 ## 2026-10-26 — Launch reliability fixes
 
 - Fixed feed date formatting by separating the Arabic locale from the Latin-numbering option, preventing malformed duplicated Unicode locale extensions. Applied the same safe pattern to feed timestamps and counts.

@@ -25,6 +25,7 @@ import {
   Trash2,
   X,
   UserRound,
+  Users,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -136,6 +137,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const [busyDeletePostId, setBusyDeletePostId] = useState<string | null>(null);
   const [pinBusyPostId, setPinBusyPostId] = useState<string | null>(null);
   const [mainFeedPinBusyId, setMainFeedPinBusyId] = useState<string | null>(null);
+  const [audienceBusyPostId, setAudienceBusyPostId] = useState<string | null>(null);
   const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
   const [replyTargets, setReplyTargets] = useState<Record<string, FeedComment | null>>({});
   const [openMenuPost, setOpenMenuPost] = useState<string | null>(null);
@@ -558,6 +560,34 @@ export function FeedClient({ user }: { user: SessionUser }) {
 )}</LocalizedContent>;
   }
 
+  async function togglePostAudience(post: FeedPost) {
+    if (user.role !== "admin" || post.group_id || audienceBusyPostId) return;
+    const nextAccessLevel = post.access_level === "members" ? "verified" : "members";
+    setAudienceBusyPostId(post.id);
+    setError("");
+    setSuccess("");
+    try {
+      const response = await fetch(`/api/posts/${post.id}/audience`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessLevel: nextAccessLevel }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "ما قدرناش نغيّر جمهور المنشور. جرّب تاني.");
+      setPosts(old => old.map(item => item.id === post.id
+        ? { ...item, access_level: payload.access_level }
+        : item));
+      setSuccess(nextAccessLevel === "members"
+        ? "المنشور أصبح متاحًا لكل الأعضاء المسجلين."
+        : "المنشور أصبح متاحًا للمهندسين الموثقين فقط.");
+      setOpenMenuPost(null);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ما قدرناش نغيّر جمهور المنشور دلوقتي.");
+    } finally {
+      setAudienceBusyPostId(null);
+    }
+  }
+
   async function toggleMainFeedPin(post: FeedPost) {
     if (user.role !== "admin" || post.group_id || mainFeedPinBusyId) return;
     const nextPinned = !post.main_feed_pinned_at;
@@ -778,6 +808,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                 <button type="button" className="icon-btn post-menu-trigger" aria-label="خيارات المنشور" aria-expanded={openMenuPost === post.id} onClick={() => setOpenMenuPost(openMenuPost === post.id ? null : post.id)}><MoreHorizontal size={20}/></button>
                 {openMenuPost === post.id && <div className="post-menu" role="menu">
                   {(post.author_id === user.id || ["admin", "moderator"].includes(user.role)) ? <><button type="button" role="menuitem" onClick={() => beginPostEdit(post)}><Edit3 size={16}/> تعديل البوست</button><button type="button" role="menuitem" disabled={busyDeletePostId === post.id} onClick={() => { setOpenMenuPost(null); void deletePost(post); }}><Trash2 size={16}/> {busyDeletePostId === post.id ? "جارٍ الحذف…" : "حذف البوست"}</button>{post.author_id === user.id && !post.group_id && <button type="button" role="menuitem" disabled={pinBusyPostId === post.id} onClick={() => void togglePinPost(post)}><Pin size={16}/> {pinBusyPostId === post.id ? "جارٍ التثبيت…" : post.pinned_at ? "إلغاء التثبيت من ملفي" : "تثبيت في ملفي"}</button>}</> : <button type="button" role="menuitem" onClick={() => { setReportingPostId(post.id); setReportReason(""); setOpenMenuPost(null); }}><Flag size={16}/> الإبلاغ عن البوست</button>}
+                  {user.role === "admin" && !post.group_id && <button type="button" role="menuitem" disabled={audienceBusyPostId === post.id} onClick={() => void togglePostAudience(post)}><Users size={16}/>{audienceBusyPostId === post.id ? "جارٍ تحديث جمهور المنشور…" : post.access_level === "members" ? "قصر الرؤية على الموثقين" : "إتاحة لكل الأعضاء المسجلين"}</button>}
                   {user.role === "admin" && !post.group_id && <button type="button" role="menuitem" disabled={mainFeedPinBusyId === post.id} onClick={() => void toggleMainFeedPin(post)}><Pin size={16}/>{mainFeedPinBusyId === post.id ? "جارٍ التثبيت…" : post.main_feed_pinned_at ? "إلغاء التثبيت من الرئيسية" : "تثبيت في الرئيسية"}</button>}
                   <button type="button" role="menuitem" onClick={() => setOpenMenuPost(null)}><X size={15}/> إغلاق</button>
                 </div>}

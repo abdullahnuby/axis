@@ -956,4 +956,15 @@ export const EN_MESSAGES: Record<string, string> = {
   "AXIS · المعاينة محدودة قبل اعتماد التوثيق.": "AXIS · Your preview is limited until your membership is approved.",
   "دي معاينة محدودة: هتشوف المنشورات اللي أصحابها اختاروا إتاحتها لكل الأعضاء. لتفتح باقي النقاشات والرسائل، وثّق عضويتك.": "This is a limited preview. You'll see posts their authors chose to share with registered members. Verify your membership to unlock other discussions and messaging.",
   "اختيار جمهور المنشور غير صالح.": "The selected post audience is invalid."
+  "إتاحة لكل الأعضاء المسجلين": "Make visible to all registered members",
+  "قصر الرؤية على الموثقين": "Restrict visibility to verified engineers",
+  "جارٍ تحديث جمهور المنشور…": "Updating post audience…",
+  "المنشور أصبح متاحًا لكل الأعضاء المسجلين.": "The post is now visible to all registered members.",
+  "المنشور أصبح متاحًا للمهندسين الموثقين فقط.": "The post is now visible to verified engineers only.",
+  "تغيير جمهور المنشور من صلاحية الأدمن فقط.": "Only an administrator can change a post's audience.",
+  "منشورات الجروبات بتتدار من إعدادات الجروب، مش من معاينة المجتمع.": "Group posts are managed through group settings, not community preview.",
+  "ما قدرناش نغيّر جمهور المنشور. جرّب تاني.": "We couldn't change the post audience. Please try again.",
+  "ما قدرناش نغيّر جمهور المنشور دلوقتي.": "We couldn't change the post audience right now.",
+  "تم تغيير جمهور منشورات كتير في وقت قصير. جرّب بعد شوية.": "Too many post-audience changes in a short time. Please try again later.",
+
 };

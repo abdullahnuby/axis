@@ -657,5 +657,19 @@ await check("Postgres TLS mode and Vercel region match the Frankfurt Neon databa
   assert.deepEqual(deploymentConfig.regions, ["fra1"]);
 });
 
+await check("admins can curate visibility of existing standalone feed posts", async () => {
+  const audienceRoute = await read("src/app/api/posts/[postId]/audience/route.ts");
+  const feed = await read("src/components/FeedClient.tsx");
+  assert.match(audienceRoute, /sameOrigin\(request\)/);
+  assert.match(audienceRoute, /user!\.role !== "admin"/);
+  assert.match(audienceRoute, /requested !== "verified" && requested !== "members"/);
+  assert.match(audienceRoute, /SELECT id,group_id,access_level FROM posts WHERE id=\$1 FOR UPDATE/);
+  assert.match(audienceRoute, /UPDATE posts SET access_level=\$1/);
+  assert.match(audienceRoute, /INSERT INTO audit_logs/);
+  assert.match(feed, /togglePostAudience/);
+  assert.match(feed, /إتاحة لكل الأعضاء المسجلين/);
+  assert.match(feed, /قصر الرؤية على الموثقين/);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);
