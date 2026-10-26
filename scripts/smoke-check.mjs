@@ -148,17 +148,19 @@ await check("mobile feed uses a compact composer and a single dropdown filter", 
   assert.match(feed, /compose-input-row/);
   assert.match(feed, /post-action-bar-compact/);
   assert.match(feed, /id="compose"/);
-  assert.match(shell, /<MobileCreatePostButton\/>/);
+  assert.match(shell, /<MobileNav verified=\{canViewVerifiedContent\}\/?>/);
   assert.match(styles, /\.feed-page-intro\{display:none!important\}/);
   assert.match(styles, /\.mobile-bottom \.mobile-compose-link/);
 });
-await check("mobile navigation includes a dedicated create-post action", async () => {
+await check("mobile navigation exposes current destinations and the feed composer remains available", async () => {
   const shell = await read("src/components/AppShell.tsx");
-  assert.match(shell, /<MobileCreatePostButton\/>/);
-  const action = await read("src/components/MobileCreatePostButton.tsx");
-  assert.match(action, /mobile-compose-link/);
-  assert.match(action, /<Plus size=\{21\}/);
-  assert.match(await read("src/components/FeedClient.tsx"), /id="compose"/);
+  const mobileNav = await read("src/components/ShellNav.tsx");
+  const feed = await read("src/components/FeedClient.tsx");
+  assert.match(shell, /<MobileNav verified=\{canViewVerifiedContent\}\/?>/);
+  assert.match(mobileNav, /aria-label="التنقل الرئيسي"/);
+  assert.match(mobileNav, /item\("\/feed", "الرئيسية", Home\)/);
+  assert.match(mobileNav, /item\("\/people", "الأعضاء", Users\)/);
+  assert.match(feed, /id="compose"/);
 });
 await check("directory, groups, direct messaging, and account recovery are wired into navigation", async () => {
   const shell = await read("src/components/AppShell.tsx");
