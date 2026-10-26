@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Match current client-confidentiality guidance in CI
+
+- Updated the legal-page smoke assertion to match the existing advice to hide client names and identifying data from uploaded material.
+
 ## 2026-10-26 — Match current group-leave confirmation wording
 
 - Updated the destructive-action smoke assertion to the actual group-leave confirmation copy used by the current GroupDetailClient.
