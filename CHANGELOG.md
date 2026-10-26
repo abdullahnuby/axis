@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Align smoke checks with App Router route groups
+
+- Updated stale page paths to the current `src/app/(app)` group and aligned the feed guard assertion with the intended registered-member preview. Profile, settings, and notifications remain verification-gated.
+
 ## 2026-10-26 — Restore environment template required by setup and CI
 
 - Restored the documented `.env.example` template with variable names and safe blank placeholders only; it contains no production secrets.
