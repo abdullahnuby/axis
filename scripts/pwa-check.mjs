@@ -32,7 +32,7 @@ check("iPhone install guide explains Add to Home Screen, Edit Actions, and brows
 
 check("app icons use the supplied blue/cyan AXIS mark", () => { assert.match(appIcon, /#007BFF/); assert.match(appIcon, /#00C4CC/); });
 check("service worker cache uses a versioned key for static asset updates", () => { assert.match(sw, /CACHE_NAME = `\$\{CACHE_PREFIX\}v\d+`/); assert.match(sw, /axis-logo\.svg/); });
-check("responsive glossary uses mobile-safe grid class", () => assert.match(homepage, /features glossary-grid/));
+check("landing feature cards use the current responsive grid container", () => assert.match(homepage, /className="features"/));
 check("regular login routes staff users to the platform feed", () => assert.match(login, /\? "\/feed" : "\/verification"/));
 console.log(`AXIS PWA checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);
