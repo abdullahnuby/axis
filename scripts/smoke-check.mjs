@@ -575,8 +575,12 @@ await check("all Arabic-locale number formatting forces Latin digits and numeral
   const arabicDigits = /[٠-٩]/u;
   for (const [file, source] of sources) {
     assert.doesNotMatch(source, arabicDigits, `Arabic-Indic digits remain in ${file}`);
-    assert.doesNotMatch(source, /toLocale(?:String|DateString|TimeString)\(['"]ar-EG['"]/, `Arabic locale formatting lacks Latin-digit extension in ${file}`);
+    assert.doesNotMatch(source, /toLocale(?:String|DateString|TimeString)\(['"]ar-EG['"]\s*\)/, `Arabic locale formatting must specify Latin digits in ${file}`);
     assert.doesNotMatch(source, /u-nu-latn-u-nu-latn/, `Duplicated Unicode number-format extension found in ${file}`);
+    const localeCalls = [...source.matchAll(/toLocale(?:String|DateString|TimeString)\(['"]ar-EG['"]\s*,\s*\{([^}]*)\}/g)];
+    for (const call of localeCalls) {
+      assert.match(call[1], /numberingSystem:\s*["']latn["']/, `Arabic locale formatting must use numberingSystem: latn in ${file}`);
+    }
   }
 });
 
