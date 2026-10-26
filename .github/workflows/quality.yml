@@ -26,11 +26,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Static smoke checks
+        run: npm test
+
+      - name: PWA checks
+        run: npm run pwa:check
 
       - name: Typecheck
         run: npm run typecheck

@@ -113,6 +113,8 @@ assert.ok(passwordRoute.includes("DELETE FROM sessions WHERE user_id=$1 AND toke
 assert.ok(schema.includes("preferred_locale text NOT NULL DEFAULT 'ar'"));
 assert.ok(schema.includes("ui_preferences jsonb NOT NULL DEFAULT"));
 
+assert.doesNotMatch(feed, /ar-EG-u-nu-latn/, "avoid Unicode numbering extensions duplicated by runtime locale formatting");
+assert.match(feed, /toLocaleDateString\("ar-EG", \{[\s\S]*?numberingSystem: "latn"/, "format dates with a valid locale tag and an explicit Latin numbering system");
 assert.match(feed, /className=\{\x60\$\{className\} no-translate\x60\}/, "post bodies must not be run through UI localization");
 assert.match(feed, /<p className="no-translate">\{comment\.body\}<\/p>/);
 assert.match(feed, /post-author-name no-translate/);

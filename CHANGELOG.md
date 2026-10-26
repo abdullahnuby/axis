@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-26 — Launch reliability fixes
+
+- Fixed feed date formatting by separating the Arabic locale from the Latin-numbering option, preventing malformed duplicated Unicode locale extensions. Applied the same safe pattern to feed timestamps and counts.
+- Normalized legacy PostgreSQL `sslmode` aliases to explicit `verify-full`, preserving full certificate verification while removing the driver deprecation warning.
+- Routed Vercel functions to Frankfurt (`fra1`) to match the AXIS Neon database region and reduce cross-region request latency.
+- Expanded CI to run static smoke checks, PWA checks, localization checks, TypeScript typechecking, and a production build on Node.js 24 (matching the Vercel runtime).
+- Production was healthy before this change, but launch is not fully cleared until email delivery and real two-account end-to-end checks are verified.
+
 ## 2026-10-26 — Progressive membership access
 
 - Added a registered-member preview feed with an explicit post audience setting.

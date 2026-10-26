@@ -649,5 +649,13 @@ await check("admin can pin one announcement at the top of the main feed, and lon
   assert.match(migration, /posts_single_main_feed_pin_idx/);
 });
 
+await check("Postgres TLS mode and Vercel region match the Frankfurt Neon database", async () => {
+  const db = await read("src/lib/db.ts");
+  const deploymentConfig = JSON.parse(await read("vercel.json"));
+  assert.match(db, /normalizeDatabaseSslMode/);
+  assert.match(db, /verify-full/);
+  assert.deepEqual(deploymentConfig.regions, ["fra1"]);
+});
+
 console.log(`AXIS static smoke checks: ${checks.length} passed`);
 for (const name of checks) console.log(`✓ ${name}`);

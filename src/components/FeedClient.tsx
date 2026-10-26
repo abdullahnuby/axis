@@ -43,7 +43,12 @@ function formatPostTime(value: string): string {
   if (elapsed < 3_600_000) return `منذ ${Math.floor(elapsed / 60_000)} د`;
   if (elapsed < 86_400_000) return `منذ ${Math.floor(elapsed / 3_600_000)} س`;
   if (elapsed < 7 * 86_400_000) return `منذ ${Math.floor(elapsed / 86_400_000)} يوم`;
-  return date.toLocaleDateString("ar-EG-u-nu-latn", { day: "numeric", month: "short", year: elapsed > 365 * 86_400_000 ? "numeric" : undefined });
+  return date.toLocaleDateString("ar-EG", {
+    day: "numeric",
+    month: "short",
+    year: elapsed > 365 * 86_400_000 ? "numeric" : undefined,
+    numberingSystem: "latn",
+  });
 }
 
 const POST_PREVIEW_WORD_LIMIT = 20;
@@ -434,7 +439,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       setComments(old => ({ ...old, [postId]: (old[postId] || []).filter(item => !removedIds.has(item.id)) }));
       setPosts(old => old.map(post => post.id === postId ? { ...post, comment_count: Math.max(0, post.comment_count - removedCount) } : post));
       if (editingCommentId && removedIds.has(editingCommentId)) { setEditingCommentId(null); setEditCommentBody(""); }
-      setSuccess(removedCount > 1 ? `اتحذف التعليق و${(removedCount - 1).toLocaleString("ar-EG-u-nu-latn")} من الردود التابعة له.` : "اتحذف التعليق.");
+      setSuccess(removedCount > 1 ? `اتحذف التعليق و${(removedCount - 1).toLocaleString("ar-EG", { numberingSystem: "latn" })} من الردود التابعة له.` : "اتحذف التعليق.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ما قدرناش نحذف التعليق دلوقتي. جرّب تاني.");
     } finally {
@@ -604,7 +609,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                 <div className="comment-author-line">
                   <Link href={`/people/${encodeURIComponent(comment.username)}`}><strong className="no-translate">{comment.display_name}</strong></Link>
                   {comment.author_role === "member" ? <ProfessionalBadges level={comment.seniority_code} badges={comment.verified_badges} compact/> : <span className="post-team-label">فريق AXIS</span>}
-                  <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG-u-nu-latn")}>{formatPostTime(comment.created_at)}</time>
+                  <time dateTime={comment.created_at} title={new Date(comment.created_at).toLocaleString("ar-EG", { numberingSystem: "latn" })}>{formatPostTime(comment.created_at)}</time>
                 </div>
                 <p className="no-translate">{comment.body}</p>
                 {comment.edited_at ? <span className="comment-edited-label">تم التعديل</span> : null}
@@ -612,7 +617,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </div>
             {!isEditing && <div className="comment-action-row">
               <button type="button" className={`comment-action ${comment.has_liked ? "liked" : ""}`} onClick={() => void toggleLikeComment(postId, comment)} disabled={busyLikeCommentId === comment.id} aria-pressed={comment.has_liked}>
-                <Heart size={13} fill={comment.has_liked ? "currentColor" : "none"}/><span>{comment.has_liked ? "أعجبك" : "إعجاب"}</span>{comment.like_count > 0 ? <b>{comment.like_count.toLocaleString("ar-EG-u-nu-latn")}</b> : null}
+                <Heart size={13} fill={comment.has_liked ? "currentColor" : "none"}/><span>{comment.has_liked ? "أعجبك" : "إعجاب"}</span>{comment.like_count > 0 ? <b>{comment.like_count.toLocaleString("ar-EG", { numberingSystem: "latn" })}</b> : null}
               </button>
               <button type="button" className="comment-action" onClick={() => setReplyTargets(old => ({ ...old, [postId]: comment }))}>
                 <CornerDownLeft size={13}/><span>رد</span>
@@ -737,7 +742,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                     {post.specialty && <span>تخصص <b className="no-translate">{post.specialty}</b></span>}
                     {post.job_title && <span>{post.job_title}</span>}
                     {(post.job_title || post.specialty) && <span className="meta-dot"/>}
-                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG-u-nu-latn")}>{formatPostTime(post.created_at)}</time>
+                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG", { numberingSystem: "latn" })}>{formatPostTime(post.created_at)}</time>
                   </div>
                 </div>
               </div>
@@ -765,7 +770,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
                     {post.job_title && <span>{post.job_title}</span>}
                     {!post.job_title && post.specialty && <span>تخصص {post.specialty}</span>}
                     {(post.job_title || post.specialty) && <span className="meta-dot"/>}
-                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG-u-nu-latn")}>{formatPostTime(post.created_at)}</time>
+                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG", { numberingSystem: "latn" })}>{formatPostTime(post.created_at)}</time>
                   </div>
                 </div>
               </div>
@@ -798,16 +803,16 @@ export function FeedClient({ user }: { user: SessionUser }) {
             {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt={`صورة مرفقة بمنشور ${post.display_name}`} loading="lazy"/></a>}
 
             {(post.like_count > 0 || post.comment_count > 0) && <div className="post-engagement-summary">
-              <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={11}/></span>{post.like_count.toLocaleString("ar-EG-u-nu-latn")} إعجاب</span>
-              <button type="button" className="post-comment-summary" onClick={() => void toggleComments(post)}>{post.comment_count.toLocaleString("ar-EG-u-nu-latn")} تعليقات وردود</button>
+              <span className="post-like-summary"><span className="post-like-dot"><ThumbsUp size={11}/></span>{post.like_count.toLocaleString("ar-EG", { numberingSystem: "latn" })} إعجاب</span>
+              <button type="button" className="post-comment-summary" onClick={() => void toggleComments(post)}>{post.comment_count.toLocaleString("ar-EG", { numberingSystem: "latn" })} تعليقات وردود</button>
             </div>}
 
             <div className="post-action-bar post-action-bar-compact">
               <button type="button" className={`post-action post-action-professional ${post.has_liked ? "liked" : ""}`} onClick={() => void toggleLike(post)} disabled={busyLikePostId === post.id} aria-pressed={post.has_liked}>
-                <ThumbsUp size={15}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span><b>{post.like_count.toLocaleString("ar-EG-u-nu-latn")}</b>
+                <ThumbsUp size={15}/><span>{post.has_liked ? "أعجبك" : "إعجاب"}</span><b>{post.like_count.toLocaleString("ar-EG", { numberingSystem: "latn" })}</b>
               </button>
               <button type="button" className={`post-action post-action-professional ${openComments === post.id ? "selected" : ""}`} onClick={() => void toggleComments(post)} aria-expanded={openComments === post.id}>
-                <MessageCircle size={15}/><span>تعليق</span><b>{post.comment_count.toLocaleString("ar-EG-u-nu-latn")}</b>
+                <MessageCircle size={15}/><span>تعليق</span><b>{post.comment_count.toLocaleString("ar-EG", { numberingSystem: "latn" })}</b>
               </button>
               <button type="button" className="post-action post-action-professional post-share-action" onClick={() => void sharePost(post)}>
                 <Share2 size={15}/><span>مشاركة</span>
@@ -822,7 +827,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </div>}
 
             {openComments === post.id && <section className="comments comments-professional" aria-label="تعليقات المنشور">
-              <div className="comments-heading"><div><h3>التعليقات</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG-u-nu-latn")} تعليقات وردود</span></div></div>
+              <div className="comments-heading"><div><h3>التعليقات</h3><span>{(comments[post.id] || []).length.toLocaleString("ar-EG", { numberingSystem: "latn" })} تعليقات وردود</span></div></div>
               {!comments[post.id] ? (commentsFailed[post.id] ? <div className="comments-error" role="alert"><span>مقدرناش نحمّل التعليقات.</span><button type="button" onClick={() => void loadComments(post.id)}>حاول تاني</button></div> : <div className="comments-loading">بنحمّل التعليقات…</div>) : comments[post.id].length === 0 ? <p className="comments-empty">لسه محدش علّق. قول رأيك وافتح باب النقاش.</p> : comments[post.id].filter(comment => !comment.parent_comment_id).map(comment => renderComment(post.id, comment, comments[post.id] ?? []))}
               {replyTargets[post.id] && <div className="comment-replying-to"><span>الرد على <strong>{replyTargets[post.id]!.display_name}</strong></span><button type="button" onClick={() => setReplyTargets(old => ({ ...old, [post.id]: null }))}>إلغاء <X size={13}/></button></div>}
               <form className="comment-compose" onSubmit={event => void addComment(post.id, event)}>

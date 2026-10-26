@@ -3,13 +3,23 @@ import { Pool, type QueryResult, type QueryResultRow, type PoolClient } from "pg
 
 const globalForPg = globalThis as unknown as { axisPgPool?: Pool };
 
+/** Keep the TLS verification behavior explicit as pg-connection-string evolves. */
+function normalizeDatabaseSslMode(connectionString: string): string {
+  const url = new URL(connectionString);
+  const mode = url.searchParams.get("sslmode")?.toLowerCase();
+  if (mode && ["prefer", "require", "verify-ca"].includes(mode)) {
+    url.searchParams.set("sslmode", "verify-full");
+  }
+  return url.toString();
+}
+
 export function getPool(): Pool {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is not configured. Add your Neon pooled connection string to .env.local.");
   }
   if (!globalForPg.axisPgPool) {
     globalForPg.axisPgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: normalizeDatabaseSslMode(process.env.DATABASE_URL),
       max: 2,
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 10_000,
