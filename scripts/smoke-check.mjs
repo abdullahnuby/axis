@@ -203,11 +203,11 @@ await check("post sharing is an in-platform repost to profile and feed, not an e
   assert.match(profilePage, /LEFT JOIN posts sp ON sp\.id=p\.shared_post_id/);
   assert.match(profileClient, /profile-shared-post-shell/);
 });
-await check("mobile zoom is disabled and form controls stay at 16px", async () => {
+await check("mobile zoom remains accessible and form controls avoid iOS input auto-zoom", async () => {
   const layout = await read("src/app/layout.tsx");
   const styles = await read("src/app/globals.css");
-  assert.match(layout, /maximumScale: 1/);
-  assert.match(layout, /userScalable: false/);
+  assert.doesNotMatch(layout, /maximumScale:\s*1/);
+  assert.doesNotMatch(layout, /userScalable:\s*false/);
   assert.match(styles, /touch-action: manipulation/);
   assert.match(styles, /font-size: 16px !important/);
 });
