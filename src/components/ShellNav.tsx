@@ -4,7 +4,7 @@ import { LocalizedContent, useLanguage } from "@/components/LanguageProvider";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Settings, UserRound, Bell, BriefcaseBusiness, Users, MessageCircle, Menu, X, Languages, LogOut } from "lucide-react";
+import { Home, Settings, UserRound, Bell, BriefcaseBusiness, Users, MessageCircle, Menu, X, Languages, LogOut, ShieldCheck } from "lucide-react";
 
 const sideItems = [
   { href: "/feed", text: "الرئيسية", icon: Home },
@@ -20,9 +20,13 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SidebarNav() {
+export function SidebarNav({ verified = true }: { verified?: boolean }) {
   const pathname = usePathname();
-  return <LocalizedContent>{<>{sideItems.map(({ href, text, icon: Icon }) => {
+  const items = verified ? sideItems : [
+    { href: "/feed", text: "المعاينة المحدودة", icon: Home },
+    { href: "/verification", text: "توثيق العضوية", icon: ShieldCheck },
+  ];
+  return <LocalizedContent>{<>{items.map(({ href, text, icon: Icon }) => {
     const active = isActive(pathname, href);
     return <Link key={href} href={href} className={`nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}><Icon size={18}/><span>{text}</span></Link>;
   })}</>}</LocalizedContent>;
@@ -34,7 +38,7 @@ const moreItems = [
   { href: "/settings", text: "الإعدادات", icon: Settings },
 ];
 
-export function MobileNav() {
+export function MobileNav({ verified = true }: { verified?: boolean }) {
   const pathname = usePathname();
   const language = useLanguage();
   const [open, setOpen] = useState(false);
@@ -54,16 +58,21 @@ export function MobileNav() {
   }
   return <LocalizedContent>{<>
     <nav className="mobile-bottom" aria-label="التنقل الرئيسي">
-      {item("/feed", "الرئيسية", Home)}
-      {item("/people", "الأعضاء", Users)}
-      {item("/groups", "الجروبات", BriefcaseBusiness)}
-      {item("/messages", "الرسائل", MessageCircle)}
-      <button type="button" aria-label="المزيد" className={`mobile-more ${moreActive || open ? "active" : ""}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={19}/><span>المزيد</span></button>
+      {verified ? <>
+        {item("/feed", "الرئيسية", Home)}
+        {item("/people", "الأعضاء", Users)}
+        {item("/groups", "الجروبات", BriefcaseBusiness)}
+        {item("/messages", "الرسائل", MessageCircle)}
+      </> : <>
+        {item("/feed", "المعاينة", Home)}
+        {item("/verification", "توثيق العضوية", ShieldCheck)}
+      </>}
+      <button type="button" aria-label="المزيد" className={`mobile-more ${(verified && moreActive) || open ? "active" : ""}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={19}/><span>المزيد</span></button>
     </nav>
     {open && <div className="more-sheet-backdrop" onClick={() => setOpen(false)}>
       <div className="more-sheet" role="dialog" aria-modal="true" aria-label="المزيد" onClick={(e) => e.stopPropagation()}>
         <div className="more-sheet-head"><strong>المزيد</strong><button type="button" className="more-sheet-close" aria-label="إغلاق" onClick={() => setOpen(false)}><X size={20}/></button></div>
-        {moreItems.map(({ href, text, icon: Icon }) => <Link key={href} href={href} className={`more-sheet-item ${isActive(pathname, href) ? "active" : ""}`}><Icon size={20}/><span>{text}</span></Link>)}
+        {verified ? moreItems.map(({ href, text, icon: Icon }) => <Link key={href} href={href} className={`more-sheet-item ${isActive(pathname, href) ? "active" : ""}`}><Icon size={20}/><span>{text}</span></Link>) : <Link href="/verification" className="more-sheet-item"><ShieldCheck size={20}/><span>توثيق العضوية</span></Link>}
         <button type="button" className="more-sheet-item" onClick={switchLocale}><Languages size={20}/><span>{language.locale === "ar" ? "English" : "العربية"}</span></button>
         <button type="button" className="more-sheet-item danger" onClick={logout}><LogOut size={20}/><span>تسجيل الخروج</span></button>
         <div className="more-sheet-legal"><Link href="/privacy">الخصوصية</Link><Link href="/terms">شروط الاستخدام</Link><Link href="/community-guidelines">إرشادات المجتمع</Link></div>

@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         console.error("AXIS registration email delivery failed", (mailError as { code?: string })?.code || "email_error");
       }
     }
-    return NextResponse.json({ ok: true, redirect: "/verification" }, { status: 201 });
+    return NextResponse.json({ ok: true, redirect: "/feed" }, { status: 201 });
   } catch (error) {
     const code = (error as { code?: string })?.code;
     if (code === "23505") return jsonError("البريد الإلكتروني أو اسم المستخدم مستخدم بالفعل.", 409);

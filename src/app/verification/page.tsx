@@ -17,5 +17,5 @@ export default async function VerificationPage() {
   const result = await query<RequestStatus>("SELECT status, legal_name, review_note, created_at FROM verification_requests WHERE user_id=$1 LIMIT 1", [user.id]);
   const req = result.rows[0];
   const status = req?.status === "approved" ? "verified" : req?.status || user.verification_status;
-  return <main><header className="topbar" style={{ position: "relative" }}><div className="topbar-inner"><Brand/><div className="topbar-actions"><span className="pill gold">{user.display_name}</span><LogoutButton/></div></div></header><VerificationClient initialStatus={status} legalName={req?.legal_name} reviewNote={req?.review_note} submittedAt={req?.created_at}/><footer className="footer-note">AXIS · لا تفتح المنصة إلا بعد اعتماد التوثيق.</footer></main>;
+  return <main><header className="topbar" style={{ position: "relative" }}><div className="topbar-inner"><Brand/><div className="topbar-actions"><span className="pill gold">{user.display_name}</span><LogoutButton/></div></div></header><VerificationClient initialStatus={status} legalName={req?.legal_name} reviewNote={req?.review_note} submittedAt={req?.created_at}/><footer className="footer-note">AXIS · المعاينة محدودة قبل اعتماد التوثيق.</footer></main>;
 }

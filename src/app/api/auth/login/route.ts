@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     if (user.account_status !== "active") return jsonError("هذا الحساب موقوف حاليًا. تواصل مع الإدارة.", 403);
     await query("DELETE FROM login_attempts WHERE identifier=$1 AND ip_address=$2", [email, ip]);
     await createSession(user.id, rememberMe);
-    const redirect = user.verification_status === "verified" || ["admin", "reviewer", "moderator"].includes(user.role) ? "/feed" : "/verification";
+    const redirect = "/feed";
     return NextResponse.json({ ok: true, redirect });
   } catch (error) {
     console.error("AXIS login error", (error as { code?: string })?.code || "database_error");

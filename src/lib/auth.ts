@@ -55,10 +55,15 @@ export async function destroySession(): Promise<void> {
   if (token) await query("DELETE FROM sessions WHERE token_hash = $1", [hashToken(token)]);
 }
 
-export async function requireVerifiedPage(): Promise<SessionUser> {
+export async function requireActivePage(): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (user.account_status !== "active") redirect("/login?status=suspended");
+  return user;
+}
+
+export async function requireVerifiedPage(): Promise<SessionUser> {
+  const user = await requireActivePage();
   if (user.verification_status !== "verified" && !["admin", "reviewer", "moderator"].includes(user.role)) redirect("/verification");
   return user;
 }

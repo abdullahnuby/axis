@@ -21,7 +21,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" | "admin" }) {
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, rememberMe: !isAdmin && !isRegister && form.rememberMe }) });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "حصلت مشكلة وإحنا بنكمل الطلب. جرّب تاني.");
-      router.push(payload.redirect || (isAdmin ? "/admin" : isRegister ? "/verification" : "/feed"));
+      router.push(payload.redirect || (isAdmin ? "/admin" : isRegister ? "/feed" : "/feed"));
       router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع."); }
     finally { setLoading(false); }
@@ -29,7 +29,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" | "admin" }) {
   return <LocalizedContent>{<div className="auth-bg"><div className="narrow"><div className="card auth-card">
     <div className="between" style={{ marginBottom: 25 }}><Brand/><span className="pill navy">{isAdmin ? "ADMIN" : "مجتمع خاص للمهندسين"}</span></div>
     <h1 className="auth-title">{isAdmin ? "دخول الإدارة" : isRegister ? "إنشاء حساب AXIS" : "تسجيل الدخول"}</h1>
-    <p className="muted" style={{ marginTop: 0, marginBottom: 22 }}>{isAdmin ? "دخول خاص بفريق إدارة AXIS." : isRegister ? "اعمل حسابك. هنراجع عضويتك علشان المجتمع يفضل للمهندسين، وبعد الموافقة تقدر تدخل وتشارك." : "أهلًا بيك تاني. سجّل دخولك وارجع للمجتمع وكمل كلامك."}</p>
+    <p className="muted" style={{ marginTop: 0, marginBottom: 22 }}>{isAdmin ? "دخول خاص بفريق إدارة AXIS." : isRegister ? "اعمل حسابك وادخل معاينة محدودة فيها منشورات مختارة. لتفتح النقاشات المهنية والرسائل، قدّم رقم كارنيه النقابة لتوثيق عضويتك." : "أهلًا بيك تاني. سجّل دخولك وارجع للمجتمع وكمل كلامك."}</p>
     <Toast message={error} error />
     <form className="form-stack" onSubmit={submit}>
       {isRegister && <><div className="form-row"><label className="label" htmlFor="displayName">اسم الظهور</label><input className="field" id="displayName" value={form.displayName} onChange={e => setForm({...form, displayName:e.target.value})} maxLength={80} required autoComplete="name" placeholder="الاسم اللي هيظهر على حسابك"/></div><div className="form-row"><label className="label" htmlFor="username">اسم المستخدم</label><input className="field" id="username" value={form.username} onChange={e => setForm({...form, username:e.target.value})} minLength={3} maxLength={24} pattern="[A-Za-z0-9_.-]+" required autoComplete="username" placeholder="مثال: ahmed_civil"/><span className="tiny muted">إنجليزي أو أرقام و . _ - فقط</span></div></>}

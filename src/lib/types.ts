@@ -43,6 +43,7 @@ export interface FeedPost {
   seniority_code: SeniorityCode;
   job_title: string | null;
   specialty: string | null;
+  access_level?: "verified" | "members";
   verified_badges: string[];
   body: string;
   has_image: boolean;

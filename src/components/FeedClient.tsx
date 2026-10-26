@@ -16,6 +16,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   Pin,
+  LockKeyhole,
   RefreshCw,
   Search,
   Send,
@@ -104,11 +105,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const didLoadRef = useRef(false);
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [lockedPostCount, setLockedPostCount] = useState(0);
   const [body, setBody] = useState("");
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState("");
+  const [accessLevel, setAccessLevel] = useState<"verified" | "members">("verified");
   const [busy, setBusy] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -149,6 +152,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
   const q = searchParams.get("q") || "";
   const sharedPostId = searchParams.get("post") || "";
   const [filter, setFilter] = useState(searchParams.get("specialty") || "");
+  const canViewVerifiedContent = user.verification_status === "verified" || ["admin", "reviewer", "moderator"].includes(user.role);
 
   useEffect(() => {
     if (!image) { setImagePreview(null); return; }
@@ -173,6 +177,7 @@ export function FeedClient({ user }: { user: SessionUser }) {
       const feedData = await feedResponse.json();
       if (!feedResponse.ok) throw new Error(feedData.error || "مش قادرين نحمّل المشاركات دلوقتي. جرّب تحدّث الصفحة.");
       setPosts(Array.isArray(feedData.posts) ? feedData.posts : []);
+      setLockedPostCount(Math.min(3, Math.max(0, Number(feedData.lockedPostCount) || 0)));
       setNextCursor(typeof feedData.nextCursor === "string" ? feedData.nextCursor : null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "الاتصال فصل لحظة. جرّب تاني، ومشاركاتك هتفضل زي ما هي.");
@@ -239,12 +244,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
     const data = new FormData();
     data.set("body", body);
     data.set("specialty", specialty || user.specialty || "");
+    data.set("accessLevel", accessLevel);
     if (image) data.set("image", image);
     try {
       const response = await fetch("/api/feed", { method: "POST", body: data });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "ما قدرناش ننشر المشاركة. جرّب تاني.");
-      setBody(""); setImage(null); setSpecialty(""); setComposerExpanded(false);
+      setBody(""); setImage(null); setSpecialty(""); setAccessLevel("verified"); setComposerExpanded(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
       setSuccess("البوست نزل 🙌");
       await load();
@@ -631,7 +637,15 @@ export function FeedClient({ user }: { user: SessionUser }) {
     <>
       <div className="feed-feedback" aria-live="polite"><Toast message={error} error/><Toast message={success}/></div>
 
-      <form id="compose" className={`card compose compose-professional ${composerExpanded ? "compose-is-expanded" : ""}`} onSubmit={createPost}>
+      {!canViewVerifiedContent && <section className="card feed-access-banner">
+        <div className="feed-access-banner-copy">
+          <span className="feed-access-banner-icon"><LockKeyhole size={21}/></span>
+          <div><strong>أهلًا بيك في معاينة AXIS</strong><p>هتشوف منشورات مختارة اختار أصحابها إتاحتها لكل الأعضاء المسجلين. النقاشات المهنية والرسائل والتفاعل بتفتح بعد توثيق عضويتك.</p></div>
+        </div>
+        <Link href="/verification" className="btn btn-primary btn-small">وثّق عضويتك</Link>
+      </section>}
+
+      {canViewVerifiedContent && <form id="compose" className={`card compose compose-professional ${composerExpanded ? "compose-is-expanded" : ""}`} onSubmit={createPost}>
         <input ref={imageInputRef} className="hidden" type="file" id="post-image" accept="image/jpeg,image/png,image/webp" onChange={chooseImage}/>
         <div className="compose-compact-bar">
           <UserAvatar userId={user.id} displayName={user.display_name} avatarColor={user.avatar_color} hasAvatar={user.has_avatar} version={user.updated_at} className="compose-compact-avatar"/>
@@ -674,6 +688,11 @@ export function FeedClient({ user }: { user: SessionUser }) {
                 <option value="">{user.specialty ? `تخصصي: ${user.specialty}` : "اختر التخصص"}</option>
                 {SPECIALTIES.map(item => <option key={item} value={item}>{item}</option>)}
               </select>
+              <label className="sr-only" htmlFor="post-access-level">مين يقدر يشوف المنشور؟</label>
+              <select id="post-access-level" className="compose-specialty compose-audience-select" value={accessLevel} onChange={event => setAccessLevel(event.target.value === "members" ? "members" : "verified")} aria-label="مين يقدر يشوف المنشور؟">
+                <option value="verified">للمهندسين الموثقين</option>
+                <option value="members">لكل الأعضاء المسجلين</option>
+              </select>
             </div>
             <div className="compose-submit-row">
               <span className={`compose-char-count ${body.length > 4700 ? "near-limit" : ""}`}>{body.length.toLocaleString("en-US")} / 5000</span>
@@ -681,13 +700,13 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </div>
           </div>
         </div>
-      </form>
+      </form>}
 
 
       <section className="feed-stream" aria-label="بوستات المجتمع">
         <div className="feed-stream-header feed-stream-header-filterable">
           <div className="feed-stream-heading">
-            <div><h2>آخر البوستات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p><div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div></div>
+            <div><h2>آخر البوستات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p>{canViewVerifiedContent ? <div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} onClick={()=>setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} onClick={()=>setFollowingOnly(true)}>بتابعهم</button></div> : <span className="feed-limited-mode">معاينة محدودة</span>}</div>
           </div>
           <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
             <SlidersHorizontal size={16} aria-hidden="true"/>
@@ -700,14 +719,38 @@ export function FeedClient({ user }: { user: SessionUser }) {
         </div>
 
         {isRefreshing && <div className="feed-refresh-line"><RefreshCw size={14} className="spin-icon"/> بنحدّث المشاركات…</div>}
-        {isLoading ? <div className="feed-loading"><PostSkeleton/><PostSkeleton/></div> : posts.length === 0 ? (
+        {isLoading ? <div className="feed-loading"><PostSkeleton/><PostSkeleton/></div> : posts.length === 0 && lockedPostCount === 0 ? (
           <div className="empty-state feed-empty-state">
             <div className="feed-empty-icon"><Search size={26}/></div>
-            <h2>{q || filter ? "ملقيناش مشاركات مناسبة" : "ابدأها بمشاركة منك"}</h2>
-            <p>{q || filter ? "جرّب كلمة بحث تانية أو اختار تخصص مختلف." : "لسه مفيش بوستات هنا. ابدأ الكلام بسؤال، موقف حصل معاك، أو موضوع نفسك تسمع رأي الناس فيه."}</p>
+            <h2>{q || filter ? "ملقيناش مشاركات مناسبة" : canViewVerifiedContent ? "ابدأها بمشاركة منك" : "لسه مفيش منشورات متاحة للمعاينة"}</h2>
+            <p>{q || filter ? "جرّب كلمة بحث تانية أو اختار تخصص مختلف." : canViewVerifiedContent ? "لسه مفيش بوستات هنا. ابدأ الكلام بسؤال، موقف حصل معاك، أو موضوع نفسك تسمع رأي الناس فيه." : "أول ما تنزل منشورات مختارة للأعضاء المسجلين هتظهر هنا. تقدر توثّق عضويتك لفتح كل النقاشات المهنية."}</p>
             {(q || filter) && <button className="btn btn-primary" type="button" onClick={() => { setFilter(""); if (q) window.location.href = "/feed"; }}>عرض كل البوستات</button>}
           </div>
-        ) : posts.map(post => (
+        ) : posts.map(post => !canViewVerifiedContent ? (
+          <article className="card post post-professional post-member-preview" id={`post-${post.id}`} key={post.id} tabIndex={-1}>
+            <header className="post-header post-preview-header">
+              <div className="user-line post-author-line">
+                <UserAvatar userId={post.author_id} displayName={post.display_name} avatarColor={post.avatar_color} hasAvatar={post.has_avatar} className="post-avatar"/>
+                <div className="user-meta post-author-meta">
+                  <strong className="post-author-name no-translate">{post.display_name}</strong>
+                  <div className="post-meta-line">
+                    {post.specialty && <span>تخصص <b className="no-translate">{post.specialty}</b></span>}
+                    {post.job_title && <span>{post.job_title}</span>}
+                    {(post.job_title || post.specialty) && <span className="meta-dot"/>}
+                    <time dateTime={post.created_at} title={new Date(post.created_at).toLocaleString("ar-EG-u-nu-latn")}>{formatPostTime(post.created_at)}</time>
+                  </div>
+                </div>
+              </div>
+              <span className="post-preview-access-tag">منشور مختار</span>
+            </header>
+            {post.body && renderExpandableBody(post.body, post.id, "post-body post-professional-body")}
+            {post.has_image && <a className="post-media-frame" href={`/api/posts/${post.id}/image`} target="_blank" rel="noreferrer" aria-label="فتح الصورة المرفقة بالحجم الكامل"><img className="post-image post-professional-image" src={`/api/posts/${post.id}/image`} alt="صورة مرفقة بمنشور مختار" loading="lazy"/></a>}
+            <footer className="post-preview-lock-footer">
+              <span><LockKeyhole size={15}/> التفاعل متاح بعد توثيق العضوية.</span>
+              <Link href="/verification">وثّق عضويتك</Link>
+            </footer>
+          </article>
+        ) : (
           <article className="card post post-professional" id={`post-${post.id}`} key={post.id} tabIndex={-1}>
             <header className="post-header">
               <div className="user-line post-author-line">
@@ -791,6 +834,14 @@ export function FeedClient({ user }: { user: SessionUser }) {
             </section>}
           </article>
         ))}
+        {lockedPostCount > 0 && !canViewVerifiedContent && <section className="locked-post-preview-list" aria-label="نقاشات مهنية مقفولة">
+          <header className="locked-post-preview-heading"><span><LockKeyhole size={19}/></span><div><h3>نقاشات مهنية مقفولة</h3><p>تظهر بعد التوثيق</p></div></header>
+          {Array.from({ length: lockedPostCount }, (_, index) => <article className="locked-post-teaser" key={`locked-post-${index}`}>
+            <span className="locked-post-visual"><LockKeyhole size={19}/></span>
+            <div className="locked-post-copy"><strong>نقاش مهني مقفول</strong><p>محتوى مخصص للمهندسين الموثقين.</p></div>
+            <Link href="/verification" className="btn btn-primary btn-small">وثّق عضويتك</Link>
+          </article>)}
+        </section>}
         {nextCursor && !isLoading && <div className="feed-load-more-wrap"><button type="button" className="btn feed-load-more" onClick={()=>void loadMore()} disabled={isLoadingMore}>{isLoadingMore?<RefreshCw size={15} className="spin-icon"/>:null}{isLoadingMore?"بنحمّل كمان…":"عرض مشاركات أقدم"}</button></div>}
       </section>
       <div className="feed-footer-note"><BadgeCheck size={15}/> AXIS مساحة خاصة للأعضاء — اتكلم باحترام، وما تشاركش أسرار شغل أو بيانات شخصية. البوستات بتظهر باسم حسابك.</div>

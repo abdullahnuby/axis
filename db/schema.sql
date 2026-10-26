@@ -173,6 +173,7 @@ CREATE TABLE IF NOT EXISTS posts (
   image_data bytea,
   image_mime text CHECK (image_mime IS NULL OR image_mime IN ('image/jpeg','image/png','image/webp')),
   image_name text,
+  access_level text NOT NULL DEFAULT 'verified' CHECK (access_level IN ('members','verified')),
   shared_post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
   group_id uuid REFERENCES engineering_groups(id) ON DELETE CASCADE,
   pinned_at timestamptz,
@@ -188,6 +189,14 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES engineering_
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at timestamptz;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS main_feed_pinned_at timestamptz;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS main_feed_pinned_by uuid REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS access_level text NOT NULL DEFAULT 'verified';
+DO $
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'posts_access_level_check' AND conrelid = 'public.posts'::regclass) THEN
+    ALTER TABLE public.posts ADD CONSTRAINT posts_access_level_check CHECK (access_level IN ('members','verified'));
+  END IF;
+END $;
+CREATE INDEX IF NOT EXISTS posts_access_level_feed_idx ON posts (access_level, created_at DESC);
 ALTER TABLE posts ALTER COLUMN body SET DEFAULT '';
 ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_check;
 ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_content_check;
