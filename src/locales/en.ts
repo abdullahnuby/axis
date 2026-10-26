@@ -955,5 +955,5 @@ export const EN_MESSAGES: Record<string, string> = {
   "توثيق العضوية": "Membership verification",
   "AXIS · المعاينة محدودة قبل اعتماد التوثيق.": "AXIS · Your preview is limited until your membership is approved.",
   "دي معاينة محدودة: هتشوف المنشورات اللي أصحابها اختاروا إتاحتها لكل الأعضاء. لتفتح باقي النقاشات والرسائل، وثّق عضويتك.": "This is a limited preview. You'll see posts their authors chose to share with registered members. Verify your membership to unlock other discussions and messaging.",
-  "اختيار جمهور المنشور غير صالح.": "The selected post audience is invalid.",
+  "اختيار جمهور المنشور غير صالح.": "The selected post audience is invalid."
 };
