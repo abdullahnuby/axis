@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Match current group-leave confirmation wording
+
+- Updated the destructive-action smoke assertion to the actual group-leave confirmation copy used by the current GroupDetailClient.
+
 ## 2026-10-26 — Make environment template placeholders explicit
 
 - Added safe, clearly non-secret placeholders for the pooled/direct Neon URLs and both 64-character hex keys, matching the setup documentation and smoke checks. These values must be replaced before local use.
