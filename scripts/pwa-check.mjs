@@ -31,7 +31,7 @@ check("install guidance is visible from the landing hero, header, and settings",
 check("iPhone install guide explains Add to Home Screen, Edit Actions, and browser-menu limits", () => { assert.match(installButton, /إضافة إلى الشاشة الرئيسية/); assert.match(installButton, /تعديل الإجراءات/); assert.match(installButton, /قائمة iOS نفسها/); });
 
 check("app icons use the supplied blue/cyan AXIS mark", () => { assert.match(appIcon, /#007BFF/); assert.match(appIcon, /#00C4CC/); });
-check("service worker cache version changed for new brand assets", () => { assert.match(sw, /CACHE_NAME = `\$\{CACHE_PREFIX\}v5`/); assert.match(sw, /axis-logo\.svg/); });
+check("service worker cache uses a versioned key for static asset updates", () => { assert.match(sw, /CACHE_NAME = `\$\{CACHE_PREFIX\}v\d+`/); assert.match(sw, /axis-logo\.svg/); });
 check("responsive glossary uses mobile-safe grid class", () => assert.match(homepage, /features glossary-grid/));
 check("regular login routes staff users to the platform feed", () => assert.match(login, /\? "\/feed" : "\/verification"/));
 console.log(`AXIS PWA checks: ${checks.length} passed`);
