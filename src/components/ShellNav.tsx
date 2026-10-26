@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Settings, UserRound, Bell, BriefcaseBusiness, Users, MessageCircle, Menu, X, Languages, LogOut } from "lucide-react";
-import { MobileCreatePostButton } from "@/components/MobileCreatePostButton";
 
 const sideItems = [
   { href: "/feed", text: "الرئيسية", icon: Home },
@@ -57,7 +56,6 @@ export function MobileNav() {
     <nav className="mobile-bottom" aria-label="التنقل الرئيسي">
       {item("/feed", "الرئيسية", Home)}
       {item("/people", "الأعضاء", Users)}
-      <MobileCreatePostButton/>
       {item("/groups", "الجروبات", BriefcaseBusiness)}
       {item("/messages", "الرسائل", MessageCircle)}
       <button type="button" className={`mobile-more ${moreActive || open ? "active" : ""}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={19}/><span>المزيد</span></button>
