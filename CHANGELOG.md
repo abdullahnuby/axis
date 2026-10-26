@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Make environment template placeholders explicit
+
+- Added safe, clearly non-secret placeholders for the pooled/direct Neon URLs and both 64-character hex keys, matching the setup documentation and smoke checks. These values must be replaced before local use.
+
 ## 2026-10-26 — Update mobile zoom accessibility regression check
 
 - The mobile smoke check now verifies that page zoom remains enabled for accessibility while form controls retain 16px sizing and touch-friendly behavior.
