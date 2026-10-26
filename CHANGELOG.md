@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Update feed copy regression assertions
+
+- Synced feed/profile smoke assertions to the current Arabic headings and profile hero structure, keeping the regression test aligned with the shipped UI copy.
+
 ## 2026-10-26 — Move navigation smoke checks to ShellNav
 
 - Updated route-navigation assertions to inspect the shared `ShellNav` source, where the current destinations are defined, instead of looking for route entries in `AppShell`.
