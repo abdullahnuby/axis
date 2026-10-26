@@ -164,9 +164,11 @@ await check("mobile navigation exposes current destinations and the feed compose
 });
 await check("directory, groups, direct messaging, and account recovery are wired into navigation", async () => {
   const shell = await read("src/components/AppShell.tsx");
-  assert.match(shell, /href: "\/people"/);
-  assert.match(shell, /href: "\/groups"/);
-  assert.match(shell, /href: "\/messages"/);
+  const nav = await read("src/components/ShellNav.tsx");
+  assert.match(shell, /<MobileNav verified=\{canViewVerifiedContent\}\/?>/);
+  assert.match(nav, /href: "\/people"/);
+  assert.match(nav, /href: "\/groups"/);
+  assert.match(nav, /href: "\/messages"/);
   assert.match(await read("src/components/AuthForm.tsx"), /href="\/forgot-password"/);
 });
 await check("feed removes the decorative hero, uses natural social copy, and keeps mobile text readable", async () => {
