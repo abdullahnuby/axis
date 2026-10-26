@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Refresh mobile navigation smoke assertions
+
+- Updated static checks to match the current shared `MobileNav` component and its actual destinations instead of the removed `MobileCreatePostButton` component.
+
 ## 2026-10-26 — Correct comment API smoke matcher
 
 - Updated the feed interaction regression check to match the actual `loadComments(postId)` API URL template, so it validates the implementation rather than an obsolete local variable name.
