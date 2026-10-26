@@ -192,7 +192,7 @@ await check("post sharing is an in-platform repost to profile and feed, not an e
   const profilePage = await read("src/app/(app)/profile/page.tsx");
   const profileClient = await read("src/components/ProfileClient.tsx");
   assert.doesNotMatch(feed, /navigator\.share|clipboard\.writeText/);
-  assert.match(feed, /مشاركة داخل AXIS/);
+  assert.match(feed, /إعادة نشر داخل AXIS/);
   assert.match(feed, /confirmInternalShare/);
   assert.match(feed, /api\/posts\/\$\{sharingPost\.id\}\/share/);
   assert.match(feed, /shared-post-original/);
