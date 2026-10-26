@@ -1442,3 +1442,23 @@ html[data-reduce-motion="true"] *,html[data-reduce-motion="true"] *::before,html
 .more-sheet-item.danger{color:#9B2C24}
 .more-sheet-legal{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;padding:12px 0 0;margin-top:6px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
 @media(min-width:761px){.more-sheet-backdrop{display:none}}
+
+/* Mobile chrome: round header buttons + floating pill bottom bar (final override block) */
+@media(max-width:760px){
+  .topbar.app-topbar{height:56px!important;min-height:56px!important;border-bottom:0;box-shadow:0 1px 0 var(--line)}
+  .topbar.app-topbar .topbar-actions{gap:8px!important}
+  .topbar.app-topbar .topbar-actions .icon-btn{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;border-radius:50%!important;background:#EEF3F8!important;color:#1B2B44;border:0!important;display:grid;place-items:center;position:relative}
+  .topbar.app-topbar .topbar-actions .icon-btn svg{width:20px;height:20px}
+  .topbar.app-topbar .header-settings,.topbar.app-topbar .topbar-actions>button[aria-label="تسجيل الخروج"],.topbar.app-topbar .header-install-action,.topbar.app-topbar .staff-admin-shortcut{display:none!important}
+  .topbar.app-topbar .notification-count-badge{position:absolute;top:-3px;inset-inline-end:-3px}
+  .topbar.app-topbar .brand-word{font-size:20px!important}
+  .topbar.app-topbar .brand-mark{width:30px!important;height:30px!important}
+
+  .mobile-bottom{left:10px!important;right:10px!important;bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;height:62px!important;min-height:62px!important;padding:6px!important;border:1px solid #DCE7F1!important;border-radius:999px!important;background:rgba(255,255,255,.96)!important;box-shadow:0 8px 28px rgba(8,35,56,.16)!important;gap:2px!important;align-items:center}
+  .mobile-bottom a,.mobile-bottom .mobile-more{height:48px;min-height:48px!important;border-radius:999px!important;flex:1;display:grid!important;place-items:center;padding:0!important;color:#4A586E;transition:background .15s,color .15s}
+  .mobile-bottom a span,.mobile-bottom .mobile-more span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .mobile-bottom a svg,.mobile-bottom .mobile-more svg{width:24px!important;height:24px!important;padding:0!important;background:transparent!important}
+  .mobile-bottom a.active,.mobile-bottom .mobile-more.active{background:#E4F0FF!important;color:var(--blue)!important}
+  .mobile-bottom a.active svg{width:24px!important;height:24px!important;padding:0!important;background:transparent!important}
+  .shell-layout{padding-bottom:104px!important}
+}

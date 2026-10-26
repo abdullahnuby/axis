@@ -41,7 +41,7 @@ export function MobileNav() {
   useEffect(() => { setOpen(false); }, [pathname]);
   const item = (href: string, text: string, Icon: typeof Home) => {
     const active = isActive(pathname, href);
-    return <Link href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}><Icon size={19}/><span>{text}</span></Link>;
+    return <Link href={href} aria-label={text} className={active ? "active" : ""} aria-current={active ? "page" : undefined}><Icon size={19}/><span>{text}</span></Link>;
   };
   const moreActive = moreItems.some((m) => isActive(pathname, m.href));
   function switchLocale() {
@@ -58,7 +58,7 @@ export function MobileNav() {
       {item("/people", "الأعضاء", Users)}
       {item("/groups", "الجروبات", BriefcaseBusiness)}
       {item("/messages", "الرسائل", MessageCircle)}
-      <button type="button" className={`mobile-more ${moreActive || open ? "active" : ""}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={19}/><span>المزيد</span></button>
+      <button type="button" aria-label="المزيد" className={`mobile-more ${moreActive || open ? "active" : ""}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={19}/><span>المزيد</span></button>
     </nav>
     {open && <div className="more-sheet-backdrop" onClick={() => setOpen(false)}>
       <div className="more-sheet" role="dialog" aria-modal="true" aria-label="المزيد" onClick={(e) => e.stopPropagation()}>
