@@ -14,6 +14,10 @@ export async function GET(request: Request) {
   const q = cleanText(url.searchParams.get("q"), 140);
   const sharedPostId = cleanText(url.searchParams.get("post"), 36);
   const followingOnly = canViewVerifiedContent && url.searchParams.get("following") === "1";
+  const sortParam = url.searchParams.get("sort");
+  const sortBy = sortParam === "engagement" || sortParam === "discussion" ? sortParam : "latest";
+  const offsetValue = Number.parseInt(url.searchParams.get("offset") || "0", 10);
+  const offset = Number.isFinite(offsetValue) ? Math.min(10000, Math.max(0, offsetValue)) : 0;
   const beforeRaw = url.searchParams.get("before");
   const before = beforeRaw && !Number.isNaN(Date.parse(beforeRaw)) ? new Date(beforeRaw).toISOString() : null;
   if (sharedPostId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sharedPostId)) return jsonError("رابط المنشور غير صالح.", 400);
@@ -34,12 +38,21 @@ export async function GET(request: Request) {
       su.username AS shared_username,su.display_name AS shared_display_name,su.role AS shared_author_role,
       su.seniority_code AS shared_seniority_code,su.job_title AS shared_job_title,
       su.specialty AS shared_profile_specialty,su.verified_badges AS shared_verified_badges,su.avatar_color AS shared_avatar_color,(su.avatar_image_mime IS NOT NULL) AS shared_has_avatar,
-      (SELECT count(*)::int FROM post_likes l WHERE l.post_id=p.id) AS like_count,
-      (SELECT count(*)::int FROM comments c WHERE c.post_id=p.id) AS comment_count,
+      COALESCE(like_stats.like_count,0)::int AS like_count,
+      COALESCE(comment_stats.comment_count,0)::int AS comment_count,
+      COALESCE(share_stats.share_count,0)::int AS share_count,
+      ((COALESCE(like_stats.like_count,0)::numeric
+        + COALESCE(comment_stats.comment_count,0)::numeric * 2.5
+        + COALESCE(share_stats.share_count,0)::numeric * 3)
+        / POWER(1 + GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600, 0) / 18.0, 0.7)
+      )::numeric(12,3) AS engagement_score,
       EXISTS(SELECT 1 FROM post_likes l WHERE l.post_id=p.id AND l.user_id=$1) AS has_liked
       FROM posts p JOIN users u ON u.id=p.author_id
       LEFT JOIN posts sp ON sp.id=p.shared_post_id
       LEFT JOIN users su ON su.id=sp.author_id
+      LEFT JOIN LATERAL (SELECT count(*)::int AS like_count FROM post_likes l WHERE l.post_id=p.id) like_stats ON TRUE
+      LEFT JOIN LATERAL (SELECT count(*)::int AS comment_count FROM comments c WHERE c.post_id=p.id) comment_stats ON TRUE
+      LEFT JOIN LATERAL (SELECT count(*)::int AS share_count FROM posts shares WHERE shares.shared_post_id=p.id AND shares.group_id IS NULL) share_stats ON TRUE
       WHERE u.verification_status='verified' AND u.account_status='active'
         AND (p.access_level='members' OR $7::boolean)
         AND (p.group_id IS NULL OR ($7::boolean AND $4::uuid IS NOT NULL AND EXISTS(SELECT 1 FROM engineering_groups pg WHERE pg.id=p.group_id AND (pg.visibility='public' OR EXISTS(SELECT 1 FROM group_members gm WHERE gm.group_id=pg.id AND gm.user_id=$1 AND gm.status='active')))))
@@ -49,8 +62,17 @@ export async function GET(request: Request) {
              OR sp.body ILIKE '%'||$3||'%' OR su.display_name ILIKE '%'||$3||'%' OR su.username ILIKE '%'||$3||'%')
         AND ($4::uuid IS NULL OR p.id=$4::uuid)
         AND (NOT $5::boolean OR EXISTS(SELECT 1 FROM user_follows f WHERE f.follower_id=$1 AND f.following_id=p.author_id))
-        AND ($6::timestamptz IS NULL OR (p.main_feed_pinned_at IS NULL AND p.created_at < $6::timestamptz))
-      ORDER BY p.main_feed_pinned_at DESC NULLS LAST, p.created_at DESC LIMIT 31`, [user!.id, specialty, q, sharedPostId || null, followingOnly, before, canViewVerifiedContent]);
+        AND ($8::text <> 'latest' OR $6::timestamptz IS NULL OR (p.main_feed_pinned_at IS NULL AND p.created_at < $6::timestamptz))
+      ORDER BY p.main_feed_pinned_at DESC NULLS LAST,
+        CASE WHEN $8::text = 'engagement' THEN
+          ((COALESCE(like_stats.like_count,0)::numeric
+            + COALESCE(comment_stats.comment_count,0)::numeric * 2.5
+            + COALESCE(share_stats.share_count,0)::numeric * 3)
+            / POWER(1 + GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600, 0) / 18.0, 0.7))
+          ELSE NULL END DESC NULLS LAST,
+        CASE WHEN $8::text = 'discussion' THEN COALESCE(comment_stats.comment_count,0) ELSE NULL END DESC NULLS LAST,
+        p.created_at DESC, p.id DESC
+      LIMIT 31 OFFSET $9`, [user!.id, specialty, q, sharedPostId || null, followingOnly, before, canViewVerifiedContent, sortBy, offset]);
     const hasMore = result.rows.length > 30;
     const pageRows = hasMore ? result.rows.slice(0,30) : result.rows;
     const nextCursor = hasMore && pageRows.length ? new Date(pageRows[pageRows.length-1].created_at as string).toISOString() : null;
