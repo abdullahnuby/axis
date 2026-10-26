@@ -764,26 +764,23 @@ export function FeedClient({ user }: { user: SessionUser }) {
 
       <section className="feed-stream" aria-label="بوستات المجتمع">
         <div className="feed-stream-header feed-stream-header-filterable">
-          <div className="feed-stream-heading">
-            <div><h2>آخر البوستات</h2><p>{q ? `نتائج البحث عن «${q}»` : followingOnly ? "بوستات الناس اللي بتتابعها" : filter ? `بوستات من مجال ${filter}` : "شوف الناس بتتكلم في إيه"}</p><div className="feed-controls-stack">
-  <div className="feed-sort-switch" role="group" aria-label="ترتيب المنشورات">
-    <button type="button" className={sortBy === "latest" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("latest")}>الأحدث</button>
-    <button type="button" className={sortBy === "engagement" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("engagement")}>الأكثر تفاعلًا</button>
-    <button type="button" className={sortBy === "discussion" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("discussion")}>الأكثر نقاشًا</button>
-  </div>
-  {canViewVerifiedContent && <div className="feed-scope-switch"><button type="button" className={!followingOnly?"active":""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setFollowingOnly(true)}>بتابعهم</button></div>}
-  {!canViewVerifiedContent && <span className="feed-limited-mode">معاينة محدودة</span>}
-</div></div>
+          <div className="feed-toolbar-row" aria-label="أدوات ترتيب وتصفية المنشورات">
+            <div className="feed-sort-switch" role="group" aria-label="ترتيب المنشورات">
+              <button type="button" className={sortBy === "latest" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("latest")}>الأحدث</button>
+              <button type="button" className={sortBy === "engagement" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("engagement")}>الأكثر تفاعلًا</button>
+              <button type="button" className={sortBy === "discussion" ? "active" : ""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setSortBy("discussion")}>الأكثر نقاشًا</button>
+            </div>
+            {canViewVerifiedContent ? <div className="feed-scope-switch" role="group" aria-label="نطاق المنشورات"><button type="button" className={!followingOnly?"active":""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setFollowingOnly(false)}>الكل</button><button type="button" className={followingOnly?"active":""} disabled={isLoading || isRefreshing || isLoadingMore} onClick={() => setFollowingOnly(true)}>بتابعهم</button></div> : <span className="feed-limited-mode">معاينة محدودة</span>}
+            <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
+              <SlidersHorizontal size={16} aria-hidden="true"/>
+              <span className="sr-only">فلترة المشاركات حسب التخصص</span>
+              <select id="feed-specialty-filter" value={filter} onChange={event => setFilter(event.target.value)} aria-label="فلترة المشاركات حسب التخصص">
+                <option value="">كل التخصصات</option>
+                {SPECIALTIES.map(item => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <button type="button" className="feed-refresh-button" onClick={() => void load()} disabled={isLoading || isRefreshing || isLoadingMore} aria-label="تحديث المنشورات" title="تحديث المنشورات"><RefreshCw size={15} className={isRefreshing ? "spin-icon" : ""}/><span>تحديث</span></button>
           </div>
-          <button type="button" className="feed-refresh-button" onClick={() => void load()} disabled={isLoading || isRefreshing || isLoadingMore} aria-label="تحديث المنشورات" title="تحديث المنشورات"><RefreshCw size={15} className={isRefreshing ? "spin-icon" : ""}/><span>تحديث</span></button>
-          <label className="feed-specialty-filter" htmlFor="feed-specialty-filter">
-            <SlidersHorizontal size={16} aria-hidden="true"/>
-            <span className="sr-only">فلترة المشاركات حسب التخصص</span>
-            <select id="feed-specialty-filter" value={filter} onChange={event => setFilter(event.target.value)} aria-label="فلترة المشاركات حسب التخصص">
-              <option value="">كل التخصصات</option>
-              {SPECIALTIES.map(item => <option key={item} value={item}>{item}</option>)}
-            </select>
-          </label>
         </div>
 
         {isRefreshing && <div className="feed-refresh-line"><RefreshCw size={14} className="spin-icon"/> بنحدّث المشاركات…</div>}
