@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Move navigation smoke checks to ShellNav
+
+- Updated route-navigation assertions to inspect the shared `ShellNav` source, where the current destinations are defined, instead of looking for route entries in `AppShell`.
+
 ## 2026-10-26 — Refresh mobile navigation smoke assertions
 
 - Updated static checks to match the current shared `MobileNav` component and its actual destinations instead of the removed `MobileCreatePostButton` component.
