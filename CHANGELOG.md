@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-26 — Restore environment template required by setup and CI
+
+- Restored the documented `.env.example` template with variable names and safe blank placeholders only; it contains no production secrets.
+- Fixed the locale dictionary comma style after the audience-control change so the source remains parseable by both Next.js and the localization smoke check.
+
 ## 2026-10-26 — Admin curation of preview-post visibility
 
 - Added an administrator-only control in each standalone feed post menu to switch audience between verified engineers and all registered members, including members awaiting verification.
