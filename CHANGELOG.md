@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Update mobile zoom accessibility regression check
+
+- The mobile smoke check now verifies that page zoom remains enabled for accessibility while form controls retain 16px sizing and touch-friendly behavior.
+
 ## 2026-10-26 — Refresh internal repost copy assertion
 
 - Updated the smoke check to match the current “إعادة نشر داخل AXIS” dialog heading for the in-platform repost flow.
