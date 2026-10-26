@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Correct comment API smoke matcher
+
+- Updated the feed interaction regression check to match the actual `loadComments(postId)` API URL template, so it validates the implementation rather than an obsolete local variable name.
+
 ## 2026-10-26 — Align smoke checks with App Router route groups
 
 - Updated stale page paths to the current `src/app/(app)` group and aligned the feed guard assertion with the intended registered-member preview. Profile, settings, and notifications remain verification-gated.
