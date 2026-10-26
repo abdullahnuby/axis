@@ -543,15 +543,15 @@ await check("login remember-me controls whether the session cookie persists", as
   assert.match(auth, /rememberMe \? \{ maxAge:/);
   assert.doesNotMatch(auth, /maxAge: REMEMBER_SESSION_DAYS[^,]*,\s*\}\);/);
 });
-await check("the central mobile action opens and focuses the feed composer", async () => {
+await check("mobile destinations work and the feed supports opening its composer directly", async () => {
   const shell = await read("src/components/AppShell.tsx");
-  const action = await read("src/components/MobileCreatePostButton.tsx");
+  const nav = await read("src/components/ShellNav.tsx");
   const feed = await read("src/components/FeedClient.tsx");
-  assert.match(shell, /<MobileCreatePostButton\/>/);
-  assert.match(action, /axis-open-composer/);
-  assert.match(action, /router\.push\("\/feed\?compose=1"\)/);
-  assert.match(feed, /window\.addEventListener\("axis-open-composer"/);
+  assert.match(shell, /<MobileNav verified=\{canViewVerifiedContent\}\/?>/);
+  assert.match(nav, /item\("\/feed", "الرئيسية", Home\)/);
+  assert.match(feed, /searchParams\.get\("compose"\) !== "1"/);
   assert.match(feed, /getElementById\("feed-post-body"\)\?\.focus/);
+  assert.match(feed, /id="compose"/);
 });
 await check("the feed no longer fetches or displays events/news widgets", async () => {
   const feed = await read("src/components/FeedClient.tsx");
