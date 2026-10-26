@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Fix Latin-number formatting smoke check
+
+- Updated the locale regression test to accept the correct separate `numberingSystem: "latn"` option and reject calls that omit Latin-number settings or duplicate the Unicode locale extension.
+
 ## 2026-10-26 — Align composer navigation checks with current mobile shell
 
 - Updated the test for opening the composer to verify the current mobile destination bar and the feed's `?compose=1` entry point, rather than the removed center-button component.
