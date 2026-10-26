@@ -519,7 +519,7 @@ await check("public privacy, terms, and community-guideline pages are linked acr
   assert.match(shell, /href="\/terms"/);
   assert.match(privacy, /مستندات التحقق/);
   assert.match(terms, /مسؤولية المحتوى/);
-  assert.match(guidelines, /سرية المشروعات والعملاء/);
+  assert.match(guidelines, /أسماء العملاء/);
 });
 
 
