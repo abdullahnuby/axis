@@ -45,7 +45,7 @@ await check("people directory has load-more pagination and staff can reach admin
   const people = await read("src/components/PeopleClient.tsx");
   const header = await read("src/components/AppHeader.tsx");
   assert.match(people, /offset:String\(people\.length\)/);
-  assert.match(people, /عرض مهندسين أكتر/);
+  assert.match(people, /عرض أعضاء أكتر/);
   assert.match(header, /staff-admin-shortcut/);
   assert.match(header, /href="\/admin"/);
 });
